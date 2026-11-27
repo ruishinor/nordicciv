@@ -555,13 +555,13 @@ async def main():
             await pg5.wait_for_timeout(700)
             ucard.update(await pg5.evaluate("""(() => { const c = document.getElementById('uplink-card'), a = c.querySelector('a.uplink-open');
                 return { shown: !c.hidden, text: c.innerText, href: a?.href, target: a?.target, rel: a?.rel, ref: a?.referrerPolicy,
-                         links: c.querySelectorAll('a[href]').length, maps: [...c.querySelectorAll('a.maps-open')].map((m) => m.href.startsWith('https://www.google.com/maps/') && m.target === '_blank' && m.rel.includes('noopener') && m.rel.includes('noreferrer')),
+                         links: c.querySelectorAll('a[href]').length, maps: [...c.querySelectorAll('a.maps-open')].map((m) => m.href.startsWith('https://www.google.com/maps/') && m.target === '_blank' && m.rel.includes('noopener') && m.rel.includes('noreferrer') && !m.textContent.trim() && !!m.title && !!m.getAttribute('aria-label') && !!m.querySelector('svg')),
                          media: c.querySelectorAll('img,iframe,video,object,embed,source').length,
                          selected: __app.uplinks.selected }; })()"""))
         utxt = ucard.get("text", "")
         ok("28 uplink selection: hover names it; a click opens a compact card (name, location, provider, page-check date, no-live-claim note) with two distinct actions — 'Open uplink' to the provider's https page and 'Open in Maps' to the place — both in a new tab without opener or referrer, and no media",
-           bool(upt) and ucard.get("shown") and upt["name"] in utxt and "Location" in utxt and "Provider" in utxt and "Open uplink" in utxt and "Open in Maps" in utxt
-           and "does not know whether the camera is live" in utxt and "Page checked 2026" in utxt and upt["name"] in ucard.get("tip", "")
+           bool(upt) and ucard.get("shown") and upt["name"] in utxt and "Location" in utxt and "Provider" in utxt and "Open uplink" in utxt
+           and "current camera feed" in utxt and "Page checked 2026" in utxt and upt["name"] in ucard.get("tip", "")
            and ucard.get("href") == upt["url"] and ucard.get("href", "").startswith("https://") and ucard.get("target") == "_blank"
            and "noopener" in ucard.get("rel", "") and "noreferrer" in ucard.get("rel", "") and ucard.get("ref") == "no-referrer"
            and ucard.get("links") == 2 and ucard.get("maps") == [True] and ucard.get("media") == 0 and ucard.get("selected") == upt["id"],

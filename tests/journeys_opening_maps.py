@@ -245,7 +245,7 @@ async def run(b, URL, ok, errors, timings, geo_of):
     await pm.wait_for_function("import('./js/render/art/relief.js').then(m => m.munisReady())", timeout=30000)
     links = await pm.evaluate("""(async () => { const a = __app, out = {}; const rel = await import('./js/render/art/relief.js');
         const wait = (ms) => new Promise((r) => setTimeout(r, ms));
-        const grab = (sel) => [...document.querySelectorAll(sel)].map((l) => ({ text: l.textContent.trim(), href: l.href, target: l.target, rel: l.rel,
+        const grab = (sel) => [...document.querySelectorAll(sel)].map((l) => ({ text: l.textContent.trim(), label: l.getAttribute('aria-label'), title: l.title, icon: !!l.querySelector('svg[aria-hidden=true]'), href: l.href, target: l.target, rel: l.rel,
             ref: l.referrerPolicy, kind: l.dataset.mapsOut, tab: l.closest('[data-tab]')?.dataset.tab || '' }));
         for (const id of ['NO-1525', 'SE-2584', 'DK-101', 'NO-4601', 'SE-0180']) {
           a.selectCity(id, { fly: false }); await wait(300);
@@ -264,7 +264,7 @@ async def run(b, URL, ok, errors, timings, geo_of):
     for cid in ("NO-1525", "SE-2584", "DK-101"):
         L = o[cid]["links"]
         muni = next((x for x in L if x["kind"] == "municipality"), None)
-        if not muni or muni["tab"] != "Overview" or muni["text"] != "Open in Maps ↗":
+        if not muni or muni["tab"] != "Overview" or muni["text"] or not muni["icon"]:
             probs.append(f"{cid}: municipality link {muni}")
             continue
         lat, lon, z, path = _latlon(muni["href"])
@@ -280,7 +280,7 @@ async def run(b, URL, ok, errors, timings, geo_of):
     zm = {cid: _latlon(next(x for x in o[cid]["links"] if x["kind"] == "municipality")["href"])[2] for cid in ("NO-1525", "SE-2584", "DK-101")}
     if not zm["SE-2584"] < zm["NO-1525"] < zm["DK-101"]:
         probs.append(f"municipality zoom does not follow size: {zm}")
-    if "Open København in Maps ↗" not in [x["text"] for x in o["DK-101"]["links"]]:
+    if not any((x["label"] or "").startswith("Open København in Maps:") for x in o["DK-101"]["links"]):
         probs.append("Copenhagen: no 'Open København in Maps'")
     for st in ("NO-15", "SE-25", "DK-083"):
         L = o[st]["links"]
@@ -307,7 +307,7 @@ async def run(b, URL, ok, errors, timings, geo_of):
             probs.append(f"{cid}: {lat},{lon} z{z} vs {c['lat']},{c['lon']} {c['pos']}")
     every = [x for v in o.values() for x in v["links"]] + [x for c in cams.values() for x in c["links"]]
     bad_attr = [x["href"][:40] for x in every if x["target"] != "_blank" or "noopener" not in x["rel"] or "noreferrer" not in x["rel"] or x["ref"] != "no-referrer"
-                or not x["href"].startswith("https://www.google.com/maps/")]
+                or not x["href"].startswith("https://www.google.com/maps/") or x["text"] or not x["icon"] or not x["title"] or not x["label"]]
     ok("40 Open in Maps (Norway, Sweden, Denmark): municipalities open on their whole extent (centre checked with pyproj, zoom by size), the main settlement "
        "separately at town/city scale, regions as a landscape overview, landmarks close up, airports marked at their own position, camera uplinks next to "
        "'Open uplink' (close where the position is published, wider where it is only a place); every link a new-tab https Google Maps link without opener or referrer",
@@ -374,7 +374,7 @@ async def run(b, URL, ok, errors, timings, geo_of):
     await mq.wait_for_timeout(1400)
     mob = await mq.evaluate("""(async () => { const l = document.querySelector('#city-panel a[data-maps-out=municipality]'); l?.scrollIntoView({ block: 'center' });
         await new Promise((r) => setTimeout(r, 300)); const r = l?.getBoundingClientRect();
-        const panel = r && r.height >= 22 && r.width >= 80 && r.top >= 0 && r.bottom <= innerHeight && document.elementFromPoint(r.x + r.width / 2, r.y + r.height / 2)?.closest('a') === l;
+        const panel = r && r.height >= 44 && r.width >= 44 && r.top >= 0 && r.bottom <= innerHeight && document.elementFromPoint(r.x + r.width / 2, r.y + r.height / 2)?.closest('a') === l;
         __app.clearSelection(); __app.uplinks.open('ln-gaustabanen'); await new Promise((r2) => setTimeout(r2, 1200));
         const as = [...document.querySelectorAll('#uplink-card a')].map((a) => a.getBoundingClientRect());
         return { panel, card: as.length === 2 && as.every((x) => x.height >= 22 && x.bottom <= innerHeight && x.right <= innerWidth && x.left >= 0) }; })()""")

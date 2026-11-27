@@ -196,8 +196,7 @@ export function openCityPanel(city, ctx) {
   const townLabel = townName && townName !== city.name ? `Open ${townName} in Maps` : `Open the ${city.population >= 50000 ? "city" : "town"} in Maps`;
   const mapsHtml = muniMaps || townMaps ? `<div class="cp-actions" role="group" aria-label="See the real place">
       ${mapsLink(muniMaps, { id: "municipality" })}
-      ${townMaps ? mapsLink(townMaps, { label: townLabel, id: "settlement" }) : ""}</div>
-    <p class="muted tiny">A satellite view in Google Maps, in a new tab: ${townMaps ? `the whole municipality, or ${esc(townName)}, its main settlement` : "the whole municipality (its population is spread out, with no single main settlement)"}. NordicCiv keeps your place here.</p>` : "";
+      ${townMaps ? mapsLink(townMaps, { label: townLabel, id: "settlement" }) : ""}</div>` : "";
 
   const srcRows = (SOURCES[city.country] || []).map(([k, v]) => row(k, "", v)).join("");
   const status = `<ul class="status-list">
@@ -221,7 +220,7 @@ export function openCityPanel(city, ctx) {
         <p class="muted small">Yields are game names for real figures: five count jobs at the place of work (2024), Gold is economic output (estimate). They are not production, research output or welfare quality. <a href="#" data-pedia-yields>What each yield measures ›</a></p>` },
       { tab: "Overview", title: "Economic profile", html: specSummary },
       { tab: "Overview", title: "Explore from here", html: actions },
-      mapsHtml && { tab: "Overview", title: "The real place", html: mapsHtml },
+      mapsHtml && { tab: "Overview", title: "Maps", html: mapsHtml },
       ...extraSections(ctx, city, "Overview"),
       { tab: "Economy", title: "Economic output", html: gdpBlock },
       { tab: "Economy", title: "Specialisations", html: specs + (detailTxt ? `<p class="muted small">Finer detail published by ${COUNTRY[city.country]}: ${esc(detailTxt)}</p>` : "") },

@@ -73,7 +73,7 @@ export function mapsLink(target, { label = MAPS_LABEL, cls = "chip maps-open", i
   const what = target.what || (target.pin ? "This place" : "Satellite view");
   const title = `${what} in Google Maps (opens in a new tab)`;
   return `<a class="${esc(cls)}" href="${esc(href)}" target="_blank" rel="noopener noreferrer external" referrerpolicy="no-referrer"
-    data-maps-out="${esc(id || target.kind || "")}" title="${esc(title)}" aria-label="${esc(`${label}: ${what} (opens Google Maps in a new tab)`)}">${esc(label)} <span aria-hidden="true">↗</span></a>`;
+    data-maps-out="${esc(id || target.kind || "")}" title="${esc(title)}" aria-label="${esc(`${label}: ${what} (opens Google Maps in a new tab)`)}"><svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">${target.kind === "settlement" || target.pin ? '<path d="M20 10c0 5-8 10-8 10S4 15 4 10a8 8 0 1 1 16 0Z"/><circle cx="12" cy="10" r="2.5"/>' : '<circle cx="12" cy="12" r="9"/><ellipse cx="12" cy="12" rx="4" ry="9"/><path d="M3 12h18M5 7h14M5 17h14"/>'}</svg></a>`;
 }
 
 // ---- targets: one per kind of place -----------------------------------------------------------------------------

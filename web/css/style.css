@@ -776,10 +776,10 @@ button.link { background:none; border:0; padding:0; color:#f0d48a; cursor:pointe
 .sh-all ul { margin: 4px 0 0; padding-left: 18px; max-height: 220px; overflow: auto; line-height: 1.5; }
 
 /* v0.5: "Open in Maps" — an ordinary outbound link styled as a chip (app/maps.js) */
-a.maps-open { text-decoration: none; display: inline-flex; align-items: center; gap: 4px; cursor: pointer; }
+a.maps-open, a.maps-open.sm, .uplink-card a.maps-open { text-decoration: none; display: inline-flex; align-items: center; justify-content: center; box-sizing: border-box; width: 44px; height: 44px; padding: 0; flex: 0 0 44px; cursor: pointer; }
 a.maps-open:hover { border-color: var(--gold-bright); background: rgba(201,164,92,.14); }
 a.maps-open:focus-visible { outline: 2px solid var(--gold-bright); outline-offset: 2px; }
-.uplink-card .maps-open { padding: 4px 12px; font-size: 13px; }
+a.maps-open svg { flex-shrink: 0; }
 /* a site with a map link: name over its details, the link beside both, so nothing is cut short */
 .site.has-maps { display: grid; grid-template-columns: minmax(0, 1fr) auto; column-gap: 8px; align-items: center; }
 .site.has-maps > span:first-child { white-space: normal; overflow: visible; }

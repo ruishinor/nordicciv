@@ -128,8 +128,11 @@ class Maps(unittest.TestCase):
 
     def test_link_markup(self):
         a = self.out["link"]
-        for attr in ('target="_blank"', 'rel="noopener noreferrer external"', 'referrerpolicy="no-referrer"', ">Open in Maps "):
+        for attr in ('target="_blank"', 'rel="noopener noreferrer external"', 'referrerpolicy="no-referrer"', 'aria-label="Open in Maps:'):
             self.assertIn(attr, a)
+        self.assertIn("<svg aria-hidden=\"true\"", a)
+        self.assertNotIn(">Open in Maps ", a)
+        self.assertIn("title=\"", a)
         self.assertNotIn("<img", self.out["escaped"])
         self.assertIn("&lt;img", self.out["escaped"])
 

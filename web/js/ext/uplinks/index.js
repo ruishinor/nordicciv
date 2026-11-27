@@ -24,7 +24,7 @@ const HOSTS = {
   camstreamer: /^camstreamer\.com$/, panomax: /^\d+\.panomax\.com$/,
   webcamcollections: /^webcamcollections\.com$/, skylinewebcams: /^www\.skylinewebcams\.com$/,
 };
-const NOTE = "Open uplink visits the provider's own page in a new tab; Open in Maps shows the place in Google Maps. NordicCiv shows no camera pictures and does not know whether the camera is live; the provider's page does.";
+const NOTE = "Check the provider’s website for the current camera feed.";
 // a few uplinks for Discover: distinct landscapes across the three countries (ids from uplinks.json)
 const DISCOVER = ["ln-reinefjorden", "cs-425493061", "pm-1267069", "wcc-sweden-are-areskutan", "ln-abisko", "ln-gaustabanen",
   "pm-3058468", "wcc-sweden-ulvon", "cs-1943", "wcc-sweden-gotland-farosund-harbour", "cs-847741412", "wcc-sweden-bastad-hovs-hallar"];
