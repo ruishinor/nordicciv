@@ -33,6 +33,17 @@ def select(name, s=None):
     return pre + f"__app.selectCity(__app.data.cities.find(x => x.name === {json.dumps(name)}), {{fly:false}});"
 
 
+SH_ON = "__app.ui.setMapToggle?.('shelters', true);"
+
+
+def SH_PICK(text, s, muni=None):
+    """Centre on a shelter whose published address contains `text` (or the largest in `muni`) and open its card."""
+    find = (f"[...d.shelters].filter((r) => r.muni === {json.dumps(muni)}).sort((p, q) => q.places - p.places)[0]" if muni
+            else f"d.shelters.find((r) => (r.address || '').includes({json.dumps(text)}))")
+    return (f"(() => {{ const d = __app.shelters.data, r = {find}; __app.cam.stop?.(); __app.cam.x = r.x; __app.cam.y = r.y; "
+            f"__app.cam.scale = {s}; __app.invalidate(); setTimeout(() => __app.shelters.openCard(r), 400); }})()")
+
+
 STATES = [
     ("01-overview", DESKTOP, "__app.home();", 1500),
     ("02-regional-south", DESKTOP, cam(560, 1450, 1.15), 0),
@@ -59,6 +70,15 @@ STATES = [
     ("22-first-run", DESKTOP, "", 0),
     ("23-what-stands-out", DESKTOP, select("Røst", 6), 0),
     ("24-discovery-card", DESKTOP, "__app.explore.show(__app.explore.discoveries[0]);", 0),
+    # v0.4 public shelters (the layer is off by default; each state switches it on itself)
+    ("25-shelters-overview-off", DESKTOP, "__app.ui.setMapToggle?.('shelters', false); __app.home();", 1500),
+    ("26-shelters-regional", DESKTOP, SH_ON + cam(560, 1430, 1.5), 0),
+    ("27-shelters-local-oslo", DESKTOP, SH_ON + cam(598, 1437, 7), 0),
+    ("28-shelters-selected", DESKTOP, SH_ON + SH_PICK("Holmlia bad", 12), 0),
+    ("29-shelters-society-tab", DESKTOP, select("Oslo", 3.2) + "setTimeout(() => { document.querySelector('[data-cptab=\"Society\"]')?.click(); "
+     "setTimeout(() => [...document.querySelectorAll('#city-panel .cp-section')].find((x) => /public shelters/i.test(x.innerText))?.scrollIntoView(), 200); }, 300);", 0),
+    ("30-shelters-lens", DESKTOP, "__app.setLens('shelter_places');" + cam(560, 1150, 0.62), 0),
+    ("31-shelters-mobile-card", MOBILE, SH_ON + SH_PICK("Bergen", 7, muni="NO-4601"), 0),
 ]
 
 

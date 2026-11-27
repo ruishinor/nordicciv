@@ -14,6 +14,11 @@ def _extra_sources():
         out += RESOURCE_SOURCES
     except ImportError:
         pass
+    try:
+        from .shelters import Shelters
+        out.append(Shelters())
+    except ImportError:
+        pass
     return out
 
 

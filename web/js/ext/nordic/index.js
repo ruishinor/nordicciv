@@ -448,6 +448,8 @@ export function install(app) {
         out.push(obs(`Most concentrated local economies (1,000+ jobs): ${exposed.map(([x, h]) => `${cityLink(x)} (${esc(x.type.label.toLowerCase())})`).join(", ")}. Their jobs depend most on a few industry groups; the indicator measures concentration, not risk.`,
           { hl: exposed.map(([x]) => x.id), source: "Herfindahl index of job shares across 14 industry groups" }));
       }
+      // civil preparedness: public shelters as documented (ext/shelters), never folded into a score
+      try { out.push(...(app.shelters?.councilNotes?.(c, r, obs) || [])); } catch (e) { console.error(e); }
       return out;
     },
   };

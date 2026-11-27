@@ -551,6 +551,7 @@ def main(argv=None):
     check_places(r, cities, world)
     check_munis(r, munis, cities)
     check_lenses(r, lenses, sources, world)
+    check_shelters(r, load("shelters"), cities, world, lenses, mode)
     if res:
         check_resources(r, res, world)
     check_sources(r, sources)
@@ -564,6 +565,96 @@ def main(argv=None):
         cr = argv[argv.index("--candidate") + 1] if "--candidate" in argv else None
         check_release(r, cities, nation, accept="--accept" in argv, evidence=ev, candidate_root=cr)
     return _finish(r)
+
+
+def check_shelters(r, sh, cities, world, lenses, mode):
+    """Public shelters (v0.4): schema, identity, positions, municipal association, capacity, coverage wording."""
+    if sh is None:
+        r.add("FAIL" if mode == "release" else "WARN", "shelters: shelters.json missing")
+        return
+    rows = sh["shelters"]
+    ids = [x["id"] for x in rows]
+    r.ok(len(ids) == len(set(ids)) and all(re.fullmatch(r"[0-9a-f-]{36}", i) for i in ids),
+         f"shelters: {len(ids)} records, every DSB lokalId present, well-formed and unique")
+    r.ok(sh["source"].get("number_matched") == len(rows),
+         f"shelters: all {sh['source'].get('number_matched')} features the WFS reports as matched are in the build ({len(rows)})")
+    rooms = [x["room"] for x in rows]
+    r.ok(all(isinstance(v, int) for v in rooms) and len(rooms) == len(set(rooms)), "shelters: room numbers are integers and unique")
+    bad_pl = [x["id"] for x in rows if not (x["places"] is None or (isinstance(x["places"], int) and x["places"] >= 0))]
+    r.ok(not bad_pl, f"shelters: registered places are non-negative integers or null when not stated, never a placeholder ({len(bad_pl)} bad)")
+    zero = sum(1 for x in rows if x["places"] == 0)
+    miss = sum(1 for x in rows if x["places"] is None)
+    r.add("NOTE", f"shelters: {zero} record(s) registered with 0 places (kept as 0), {miss} without a stated figure (kept as null)")
+    # positions: inside Norway's envelope, on (or one hex from) Norwegian land, and the map transform round-trips
+    out_bb = [x["id"] for x in rows if not (4.0 <= x["lon"] <= 31.5 and 57.5 <= x["lat"] <= 71.5)]
+    r.ok(not out_bb, f"shelters: every position lies within mainland Norway's lon/lat envelope ({len(out_bb)} outside)")
+    from .core import geo as _geo
+    from pyproj import Transformer
+    fr = _geo.Frame(world["projection"]["x0_km"], world["projection"]["y1_km"])
+    back = Transformer.from_crs(_geo.NORDIC_LAEA, "EPSG:4258", always_xy=True)
+    import numpy as _np
+    bx, by = back.transform(_np.array([x["x"] for x in rows]) + fr.x0, fr.y1 - _np.array([x["y"] for x in rows]))
+    err = max(max(abs(a - x["lon"]) * 55.0, abs(b - x["lat"]) * 111.2) for a, b, x in zip(bx, by, rows))  # km
+    r.ok(err < 0.005, f"shelters: map positions transform back to the published ETRS89 coordinates (worst {err * 1000:.1f} m; 3-decimal km rounding)")
+    owner, grid = world["owner"], world["grid"]
+    states = world["states"]
+    def nordic_no(c):
+        return c >= 0 and owner[c] >= 0 and states[owner[c]]["country"] == "NO"
+    off = [x["id"] for x in rows if not nordic_no(x["cell"])]
+    r.add("NOTE", f"shelters: {len(rows) - len(off)} of {len(rows)} sit on a Norwegian land hex; {len(off)} fall on coastal hexes the "
+                  "9.7 km grid counts as sea (each is inside, or ≤ 1.5 km from, its municipality's outline; true position kept)")
+    # municipal association
+    by_id = {c["id"]: c for c in cities}
+    bad_m = [x["id"] for x in rows if by_id.get(x["muni"], {}).get("country") != "NO"]
+    r.ok(not bad_m, f"shelters: every record belongs to a Norwegian municipality of the app ({len(bad_m)} not)")
+    far = [x for x in rows if x.get("assigned", {}).get("distance_m", 0) > 1500]
+    r.ok(not far, f"shelters: {sum(1 for x in rows if 'assigned' in x)} record(s) just outside a simplified outline were assigned to the nearest municipality (≤ 1,500 m; distance kept)")
+    agg = {}
+    for x in rows:
+        a = agg.setdefault(x["muni"], [0, 0])
+        a[0] += 1
+        a[1] += x["places"] or 0
+    mm = [m for m, a in sh["munis"].items() if [a["n"], a["places"]] != agg.get(m)]
+    r.ok(not mm and set(agg) == set(sh["munis"]), f"shelters: municipal counts and place totals equal the sums of their records ({len(mm)} off)")
+    reg = {}
+    for m, a in agg.items():
+        k = by_id[m]["states"][0]
+        reg[k] = [reg.get(k, [0, 0])[0] + a[0], reg.get(k, [0, 0])[1] + a[1]]
+    rm = [k for k, a in sh["regions"].items() if [a["n"], a["places"]] != reg.get(k)]
+    r.ok(not rm and set(reg) == set(sh["regions"]), f"shelters: county totals equal the sums of their municipalities ({len(rm)} off)")
+    t = sh["totals"]
+    r.ok(t["shelters"] == len(rows) and t["places"] == sum(x["places"] or 0 for x in rows), f"shelters: national totals {t['shelters']} shelters, {t['places']:,} places")
+    # coverage and wording: SE/DK are 'not integrated', never zero; the meaning texts that keep the numbers honest exist
+    cov = sh.get("coverage", {})
+    r.ok(cov.get("NO", {}).get("status") == "integrated" and all(cov.get(cc, {}).get("status") == "not_integrated" and cov[cc].get("reason") for cc in ("SE", "DK")),
+         "shelters: coverage says Norway integrated, Sweden and Denmark not integrated (with reasons)")
+    r.ok(all(k in sh.get("meaning", {}) for k in ("places", "public", "absence", "residents")) and sh["source"].get("license") and sh["source"].get("attribution"),
+         "shelters: capacity meaning, public/private distinction, absence caveat, licence and attribution are published with the data")
+    if mode in ("source", "release"):
+        # independent re-read of the cached WFS answer (regular expressions, not the build's XML parser)
+        raw = (ROOT / "data" / "raw" / "dsb_shelters" / "tilfluktsrom_4258.gml")
+        if raw.exists():
+            txt = raw.read_text(encoding="utf-8")
+            recs = re.findall(r"<app:lokalId>([^<]+)</app:lokalId>.*?<gml:pos>([-\d.]+) ([-\d.]+)</gml:pos>.*?<app:romnr>(\d+)</app:romnr>\s*"
+                              r"<app:plasser>(\d*)</app:plasser>", txt, re.S)
+            src = {i: (float(la), float(lo), int(rm), int(pl) if pl else None) for i, la, lo, rm, pl in recs}
+            built = {x["id"]: (x["lat"], x["lon"], x["room"], x["places"]) for x in rows}
+            diff = [i for i in set(src) | set(built) if src.get(i) != built.get(i)]
+            hits = re.search(r'numberMatched="(\d+)"', (raw.parent / "hits.xml").read_text())
+            r.ok(not diff and len(src) == int(hits.group(1)), f"source: every shelter record (id, position, room, places) equals the cached WFS answer "
+                 f"({len(src)} read independently, {len(diff)} differ; WFS reports {hits.group(1)} matched)")
+        else:
+            r.add("FAIL", "source: cached WFS answer for shelters missing")
+    lens = next((l for l in lenses["lenses"] if l["id"] == "shelter_places"), None)
+    if lens:
+        mv = lens.get("muni_values", {})
+        se_dk = [k for k, v in mv.items() if not k.startswith("NO-") and v is not None]
+        no_none = [k for k, v in mv.items() if k.startswith("NO-") and v is None]
+        zero_ok = all((mv.get(k) == 0) == (k not in sh["munis"]) for k in mv if k.startswith("NO-"))
+        r.ok(not se_dk and not no_none and zero_ok, f"lens shelter_places: Sweden/Denmark no data ({len(se_dk)} valued), every Norwegian municipality valued, "
+             "'no public shelter' exactly where the register has none")
+    else:
+        r.add("FAIL", "lens shelter_places missing")
 
 
 def _finish(r):

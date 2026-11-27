@@ -41,7 +41,7 @@ URL = _pos[0] if _pos else "http://127.0.0.1:8765/"
 CANDIDATE = Path(_arg("--candidate", str(ROOT))).resolve()
 OUT = Path(_arg("--out", str(ROOT / "tests" / "results"))).resolve()
 # every journey must run and pass for a release (journey ids are the leading numbers of the names below)
-MANDATORY = [str(i) for i in range(0, 22)]
+MANDATORY = [str(i) for i in range(0, 27)]  # 22–26: public shelters (v0.4)
 AXE = ROOT / "tests" / ".node" / "node_modules" / "axe-core" / "axe.min.js"
 AXE_ALT = Path(os.environ.get("NORDICCIV_AXE", "/nonexistent"))
 
@@ -407,6 +407,104 @@ async def main():
            intro and disc["shown"] and disc["city"] and disc["city"] in disc["text"] and not intro_after and "fastest-shrinking" in st and lens_after == "growth"
            and axe3 is not None and not a11y,
            f"intro={intro} card={disc} introAfterReload={intro_after} lens={lens_after} axe(hint, card)={a11y if axe3 else 'not installed'} standout={st[:60]!r}")
+
+        # 22–26. public shelters (v0.4): optional layer, scale tiers, selection, municipality panel, Council/Almanac/lens, mobile
+        pg4 = await ctx.new_page()
+        pg4.on("pageerror", lambda e: errors.append("shelters: " + str(e)))
+        pg4.on("console", lambda m: errors.append("shelters: " + m.text) if m.type == "error" else None)
+        await pg4.goto(URL, wait_until="networkidle")
+        await pg4.evaluate("localStorage.setItem('nc-intro', '1'); document.getElementById('intro')?.remove()")
+        await pg4.wait_for_function("window.__app && __app.shelters && __app.shelters.data", timeout=30000)
+        lay = await pg4.evaluate("""(async () => { const a = __app, sh = a.shelters, R = a.w.grid.R;
+            const def = sh.on; const t = (rpx) => sh.items(rpx);
+            const far = t(2.5), mid = t(9), near = t(40), close = t(90);
+            const singlesExact = near.filter((i) => i.kind === 'one').every((i) => i.x === i.members[0].x && i.y === i.members[0].y);
+            const all = (l) => l.reduce((p, i) => p + i.n, 0);
+            const overlap = (l, rpx) => { const s = rpx / R, d = sh.symbolPx(rpx) / s; let k = 0;
+              for (let i = 0; i < l.length; i++) for (let j = i + 1; j < l.length; j++) if ((l[i].x - l[j].x) ** 2 + (l[i].y - l[j].y) ** 2 < (d * 0.98) ** 2) k++; return k; };
+            const before = a.staticLayers().find((l) => l.id === 'shelters').visible();
+            a.ui.setMapToggle('shelters', true);
+            const after = a.staticLayers().find((l) => l.id === 'shelters').visible();
+            const inMenu = a.ui.mapToggles().some((x) => x.id === 'shelters');
+            return { def, before, after, inMenu, far: far.length, mid: mid.length, near: near.length, close: close.length, singlesExact,
+                     counts: [all(far), all(mid), all(near), all(close)], overlapNear: overlap(near, 40), tiers: [sh.tier(2.5), sh.tier(9), sh.tier(40)] }; })()""")
+        ok("22 shelters layer: off by default, in the Map menu, county → municipality → record tiers, every record counted once, no overlapping symbols, singles at their true position",
+           lay["def"] is False and lay["before"] is False and lay["after"] and lay["inMenu"] and lay["far"] <= 15 and lay["mid"] <= 135 and lay["near"] > lay["mid"]
+           and set(lay["counts"]) == {555} and lay["overlapNear"] == 0 and lay["singlesExact"] and lay["tiers"] == ["region", "muni", "record"], lay)
+        # 23. select one shelter on the map: the card shows the published record, its meaning and the emergency note
+        await pg4.evaluate("(() => { const a = __app; a.flyTo(598, 1436, 40 / a.w.grid.R, 0); })()")
+        await pg4.wait_for_timeout(1500)
+        pt = await pg4.evaluate("""(() => { const a = __app, R = a.cam.scale * a.w.grid.R;
+            const it = a.shelters.items(R).filter((i) => i.kind === 'one').map((i) => [i, ...a.cam.toScreen(i.x, i.y)])
+              .filter(([, x, y]) => x > 420 && x < 1000 && y > 200 && y < 700 && !a.hitCity(x, y - a.shelters.symbolPx(R) * 0.42))[0];
+            return it ? { x: it[1], y: it[2] - a.shelters.symbolPx(R) * 0.42, id: it[0].members[0].id, places: it[0].members[0].places } : null; })()""")
+        card = {}
+        if pt:
+            await pg4.mouse.click(pt["x"], pt["y"])
+            await pg4.wait_for_timeout(700)
+            card = await pg4.evaluate("""(() => { const c = document.getElementById('shelter-card'); return { shown: !c.hidden, text: c.innerText }; })()""")
+            await pg4.keyboard.press("Escape")
+            await pg4.wait_for_timeout(200)
+            card["closed"] = await pg4.evaluate("document.getElementById('shelter-card').hidden")
+        txt = card.get("text", "")
+        ok("23 shelter selection: a click opens its card (places, municipality, source, date, not-availability note, emergency note); Escape closes it",
+           bool(pt) and card.get("shown") and f"{pt['places']:,}".replace(",", ",") in txt.replace("\u202f", ",") and "Municipality" in txt and "DSB" in txt
+           and "extracted 2026" in txt and "does not say whether the shelter is open" in txt and "In an emergency" in txt and card.get("closed"),
+           {**(pt or {}), "card": txt[:160]})
+        # 24. municipality panel, Society tab
+        soc = await pg4.evaluate("""(async () => { const a = __app; const out = {};
+            const sec = async (id) => { a.selectCity(id, { fly: false }); await new Promise((r) => setTimeout(r, 300));
+              document.querySelector('[data-cptab="Society"]')?.click(); await new Promise((r) => setTimeout(r, 200));
+              const h = [...document.querySelectorAll('#city-panel .cp-section')].find((x) => /public shelters/i.test(x.innerText)); return h ? h.innerText : null; };
+            out.oslo = await sec('NO-0301'); out.none = await sec('NO-1856'); out.se = await sec('SE-0180');
+            a.ui.setMapToggle('shelters', false); await sec('NO-0301');
+            document.querySelector('[data-shelter-show="NO-0301"]')?.click(); await new Promise((r) => setTimeout(r, 300));
+            out.layerOn = a.shelters.on; return out; })()""")
+        hasNone = "NO-1856" not in await pg4.evaluate("Object.keys(__app.shelters.data.munis).join(',')")
+        ok("24 Society tab: shelter count, registered places, source and date, private-shelter caveat; 'none' and 'not integrated' worded as such; 'show on map' turns the layer on",
+           soc["oslo"] and "33" in soc["oslo"] and "55,462" in soc["oslo"] and "not a measure" in soc["oslo"] and "extracted" in soc["oslo"]
+           and hasNone and soc["none"] and "no public shelter" in soc["none"] and "does not mean there is no protection" in soc["none"]
+           and soc["se"] and "not integrated" in soc["se"] and "not zero" in soc["se"] and soc["layerOn"] is True,
+           {k: (v[:70] if isinstance(v, str) else v) for k, v in soc.items()})
+        # 25. Council, Almanac, lens
+        rest = await pg4.evaluate("""(async () => { const a = __app; a.clearSelection();
+            const notes = a.shelters.councilNotes(null, null, (t) => t).join(' ');
+            const oslo = a.shelters.councilNotes(a.cityById.get('NO-0301'), null, (t) => t).join(' ');
+            a.pedia.open(a.shelters.page); await new Promise((r) => setTimeout(r, 200));
+            const page = document.getElementById('pedia-body').innerText; a.pedia.close();
+            const lens = a.lensById.get('shelter_places');
+            const mv = lens?.muni_values || {};
+            return { notes, oslo, page: page.slice(0, 4000), lens: !!lens, seNull: mv['SE-0180'] === null, osloBand: mv['NO-0301'],
+                     noneZero: mv['NO-1856'] === 0, cats: (lens?.categories || []).length }; })()""")
+        ok("25 Council and Almanac explain public vs private, capacity vs availability, SE/DK not integrated; lens: Norway banded, Sweden/Denmark no data, 'none' its own class",
+           "555 public shelters" in rest["notes"] and "not integrated" in rest["notes"] and "55,462" in rest["oslo"] and "private" in rest["oslo"]
+           and "Registered places" in rest["page"] and "Private shelters" in rest["page"] and "cannot tell you" in rest["page"] and "NLOD" in rest["page"]
+           and rest["lens"] and rest["seNull"] and rest["noneZero"] and rest["osloBand"] == 4 and rest["cats"] == 5,
+           {k: (v[:60] if isinstance(v, str) else v) for k, v in rest.items()})
+        await pg4.close()
+        # 26. phone: the Map menu switch, a tap on a shelter opens the card inside the screen, the card closes
+        mctx = await b.new_context(viewport={"width": 390, "height": 844}, is_mobile=True, has_touch=True, device_scale_factor=2)
+        await mctx.add_init_script("try { localStorage.setItem('nc-intro', '1') } catch (e) {}")
+        mp = await mctx.new_page()
+        mp.on("pageerror", lambda e: errors.append("shelters mobile: " + str(e)))
+        await mp.goto(URL, wait_until="networkidle")
+        await mp.wait_for_function("window.__app && __app.shelters && __app.shelters.data", timeout=30000)
+        await mp.evaluate("(() => { const a = __app; a.ui.setMapToggle('shelters', true); a.flyTo(598, 1436, 40 / a.w.grid.R, 0); })()")
+        await mp.wait_for_timeout(1500)
+        mpt = await mp.evaluate("""(() => { const a = __app, R = a.cam.scale * a.w.grid.R;
+            const it = a.shelters.items(R).filter((i) => i.kind === 'one').map((i) => [i, ...a.cam.toScreen(i.x, i.y)])
+              .filter(([, x, y]) => x > 40 && x < 350 && y > 150 && y < 600 && !a.hitCity(x, y - a.shelters.symbolPx(R) * 0.42))[0];
+            return it ? { x: it[1], y: it[2] - a.shelters.symbolPx(R) * 0.42 } : null; })()""")
+        mcard = {}
+        if mpt:
+            await mp.touchscreen.tap(mpt["x"], mpt["y"])
+            await mp.wait_for_timeout(800)
+            mcard = await mp.evaluate("""(() => { const c = document.getElementById('shelter-card'); const r = c.getBoundingClientRect();
+                return { shown: !c.hidden, inView: r.left >= 0 && r.right <= innerWidth && r.top >= 0 && r.bottom <= innerHeight }; })()""")
+            await mp.tap("#shelter-card [data-sc='close']")
+            mcard["closed"] = await mp.evaluate("document.getElementById('shelter-card').hidden")
+        await mctx.close()
+        ok("26 phone: tapping a shelter opens its card fully on screen; it closes", bool(mpt) and mcard.get("shown") and mcard.get("inView") and mcard.get("closed"), {**(mpt or {}), **mcard})
 
         ok("20 no console errors", not errors, errors[:3])
         await b.close()

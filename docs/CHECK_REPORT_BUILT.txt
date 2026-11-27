@@ -1,9 +1,9 @@
-NOTE  validation mode: built; data hash 30aad91639999a52
+NOTE  validation mode: built; data hash 284a808a1f1bcc0d
 PASS  files: world.json parses as strict JSON numbers (no NaN/Infinity) [2.13 MB]
 PASS  files: cities.json parses as strict JSON numbers (no NaN/Infinity) [1.99 MB]
 PASS  files: states.json parses as strict JSON numbers (no NaN/Infinity) [0.07 MB]
 PASS  files: nation.json parses as strict JSON numbers (no NaN/Infinity) [0.02 MB]
-PASS  files: lenses.json parses as strict JSON numbers (no NaN/Infinity) [1.22 MB]
+PASS  files: lenses.json parses as strict JSON numbers (no NaN/Infinity) [1.26 MB]
 PASS  files: sources.json parses as strict JSON numbers (no NaN/Infinity) [0.04 MB]
 PASS  files: resources.json parses as strict JSON numbers (no NaN/Infinity) [0.14 MB]
 PASS  files: infrastructure.json parses as strict JSON numbers (no NaN/Infinity) [0.14 MB]
@@ -81,6 +81,23 @@ PASS  lens forest: source ['gisco_grids'], unit '% tree cover', resolution hex
 PASS  lens farmland: source ['gisco_grids'], unit '% of land', resolution hex
 PASS  lens cover: source ['gisco_grids'], unit '', resolution hex
 PASS  lens urban_growth: source ['gisco_grids'], unit 'km² (1 km cells)', resolution hex
+PASS  lens shelter_places: source ['dsb_shelters'], unit '', resolution municipality
+PASS  shelters: 555 records, every DSB lokalId present, well-formed and unique
+PASS  shelters: all 555 features the WFS reports as matched are in the build (555)
+PASS  shelters: room numbers are integers and unique
+PASS  shelters: registered places are non-negative integers or null when not stated, never a placeholder (0 bad)
+NOTE  shelters: 1 record(s) registered with 0 places (kept as 0), 0 without a stated figure (kept as null)
+PASS  shelters: every position lies within mainland Norway's lon/lat envelope (0 outside)
+PASS  shelters: map positions transform back to the published ETRS89 coordinates (worst 0.7 m; 3-decimal km rounding)
+NOTE  shelters: 522 of 555 sit on a Norwegian land hex; 33 fall on coastal hexes the 9.7 km grid counts as sea (each is inside, or ≤ 1.5 km from, its municipality's outline; true position kept)
+PASS  shelters: every record belongs to a Norwegian municipality of the app (0 not)
+PASS  shelters: 4 record(s) just outside a simplified outline were assigned to the nearest municipality (≤ 1,500 m; distance kept)
+PASS  shelters: municipal counts and place totals equal the sums of their records (0 off)
+PASS  shelters: county totals equal the sums of their municipalities (0 off)
+PASS  shelters: national totals 555 shelters, 296,937 places
+PASS  shelters: coverage says Norway integrated, Sweden and Denmark not integrated (with reasons)
+PASS  shelters: capacity meaning, public/private distinction, absence caveat, licence and attribution are published with the data
+PASS  lens shelter_places: Sweden/Denmark no data (0 valued), every Norwegian municipality valued, 'no public shelter' exactly where the register has none
 PASS  resources: 687 sites, all inside the map (0 outside)
 PASS  resources: 0 on foreign hexes []
 PASS  source gisco_grids: 926 files, licence: Eurostat/GISCO reuse policy (free reuse with attribution: © 
@@ -98,6 +115,7 @@ PASS  source wikidata: 5 files, licence: CC0 1.0
 PASS  source sodir: 3 files, licence: NLOD 2.0 (Norwegian Licence for Open Government Data)
 PASS  source sgu: 2 files, licence: CC0 1.0 (SGU open data)
 PASS  source links: 2 files, licence: CC0 1.0 (Wikidata); CC BY 4.0 (Eurostat)
+PASS  source dsb_shelters: 4 files, licence: NLOD 1.0 (Norwegian Licence for Open Government Data)
 SKIP  source reconciliation and cache verification not run in 'built' mode
 
-95 pass, 5 note, 0 warn, 1 skipped, 0 fail → PASS (mode: built)
+111 pass, 7 note, 0 warn, 1 skipped, 0 fail → PASS (mode: built)

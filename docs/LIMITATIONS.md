@@ -11,6 +11,18 @@
   **housing prices**, **education attainment** and **healthcare provider locations**.
 - **Cross-border commuting** (e.g. Øresund): no harmonised municipal flow table was integrated; the Council says so.
 
+## Civil preparedness: public shelters (v0.4)
+
+- **Norway only, public shelters only.** Private shelters (most of Norway's ~2.5 million places, per DSB) are not
+  published and not shown. Sweden and Denmark: not integrated (missing coverage, not zero; see METHODOLOGY).
+- **Registered places are not availability.** Nothing in the register says whether a shelter is open, ready, inspected
+  or accessible; the app says so on every card and section.
+- **Snapshot.** Extracted 2026-11-27. Shelters added, removed or moved since are not reflected until the source is
+  fetched again (the Beredskap101 snapshot from mid-2026 already differs by one removed room and one moved position).
+- **Simplified boundaries.** Four records are assigned to the nearest municipality outline (≤ 110 m).
+- **Not an emergency service.** The app is educational. In an emergency, follow current instructions from the
+  authorities; DSB's own map is linked from every card.
+
 ## Known caveats
 
 - **Below 1 km the landscape only interpolates.** The relief image is painted from 1 km CORINE, EU-DEM and tree-cover
@@ -94,3 +106,7 @@
 17. **Indre Østfold 2026** stays comparable (two small areas, no visible effect), with the adjustment noted.
 18. **Release candidates** are identified by content hash and verified in a staging folder before promotion; the last
     known-good release stays in `dist/release/` until then (previous release kept in `dist/previous/`).
+
+19. **Public shelters (v0.4) as an optional infrastructure layer, not a workspace.** One Map-menu switch (off by default),
+    a card, a Society-tab section, Council notes under Resilience, an Almanac page and one lens; no new top-bar button,
+    no score. Grouping instead of displacement, so no symbol stands anywhere a record is not.

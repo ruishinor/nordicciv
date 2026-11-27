@@ -814,6 +814,14 @@ const RAW = {
     ],
   },
 
+  // ---- civil preparedness (v0.4): a shield with an arched doorway — a public shelter (the category, not a building)
+  'c-shelter': {
+    bg: '#24395a',
+    paths: [
+      F('M4 4.4Q12 2.2 20 4.4V12c0 4.6-3.6 7.8-8 9.8C7.6 19.8 4 16.6 4 12Z' + 'M9.3 17.4v-5.1a2.7 2.7 0 0 1 5.4 0v5.1Z'),
+      D('M8.2 17.6h7.6', 1.2),
+    ],
+  },
   // ---- tile improvements and trade
   't-road': {
     bg: '#6a5434',

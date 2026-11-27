@@ -213,6 +213,7 @@ export function openCityPanel(city, ctx) {
       { tab: "Economy", title: "Resources, wonders & hubs", html: siteHtml },
       { tab: "Society", title: `Population ${Object.keys(city.pop_series || {})[0] || 2008}–${nation.year}`, html: popChart(city) + breakNotes(city) },
       { tab: "Society", title: "People and place", html: profile },
+      ...extraSections(ctx, city, "Society"),
       peers.length && { tab: "Society", title: "Similar-sized municipalities", html: peerHtml },
       { tab: "Sources", title: "Data status", html: status },
       { tab: "Sources", title: "Tables", html: srcRows + row("Economic output", "", nation.gdp_vintage || "") + row("Boundary", "", "Municipal polygons for display; statistics refer to the municipality as published") },
@@ -232,8 +233,25 @@ export function openCityPanel(city, ctx) {
       panel.querySelectorAll("[data-act]").forEach((b) => (b.onclick = () => window.__app?.emit?.("discover", { act: b.dataset.act, city: city.id })));
       panel.querySelectorAll("[data-cptab-go]").forEach((b) => (b.onclick = () => panel.querySelector(`[data-cptab="${b.dataset.cptabGo}"]`)?.click()));
       panel.querySelector("[data-pedia-yields]")?.addEventListener("click", (e) => { e.preventDefault(); ctx.onPedia?.("yields"); });
+      for (const fn of ctx.extraWire || []) {
+        try { fn(panel, city); } catch (err) { console.error("city panel wiring failed", err); }
+      }
     },
   });
 }
 
 export const closeCityPanel = hidePanel;
+
+// Sections contributed by extensions (app.addCitySections): fn(city) → [{tab, title, html, wire?}]; a failing
+// provider is logged and skipped so the panel always opens.
+function extraSections(ctx, city, tab) {
+  const out = [];
+  for (const fn of ctx.extraSections || []) {
+    try {
+      for (const s of fn(city) || []) if (s && (s.tab || "Society") === tab) out.push({ tab, ...s });
+    } catch (err) {
+      console.error("city panel section failed", err);
+    }
+  }
+  return out;
+}

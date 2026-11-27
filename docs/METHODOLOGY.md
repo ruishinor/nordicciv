@@ -182,6 +182,47 @@ density, 65+ share, jobs per 100 residents, distance to a larger municipality fo
 strongest specialisation from ×2.5, each with its value, rank, definition and its neighbours in that ranking.
 "Discover" shows one of 18 facts computed the same way (single extremes, with the population filter in the sentence).
 
+## Civil preparedness: public shelters (v0.4)
+
+**Source.** DSB's *Tilfluktsrom – Offentlige* (NLOD 1.0), read through Kartverket's WFS
+(`app:Tilfluktsrom`, GML 3.2, EPSG:4258), all 555 features the service reports as matched, DSB extraction date
+2026-11-27. Fields kept: `lokalId` (identifier), `romnr` (shelter room number), `plasser` (registered places),
+`adresse` (the published address/description), position. The dataset has no municipality field, no opening status and
+no private shelters. `data/raw/dsb_shelters/` holds the answer, the capabilities, the schema and the hit count.
+
+**Positions.** ETRS89 latitude/longitude (GML axis order lat, lon) transformed with PROJ to the map's Lambert
+azimuthal equal-area frame. The build checks the transform back to the published coordinates (worst 0.7 m, from
+rounding). Records are never moved: on the map, records that would overlap share one group symbol at the mean of their
+true positions, with a count; a single record is drawn exactly at its position.
+
+**Municipality.** Point in polygon against the Kartverket 2024 boundaries used everywhere else. Four shore records fall
+just outside the simplified outlines (19–110 m) and are assigned to the nearest municipality, with the distance kept;
+beyond 1,500 m the build fails rather than guess.
+
+**Missing vs zero.** An empty `plasser` would be stored as null ("not stated"); a published 0 stays 0 (one record).
+A Norwegian municipality with no public shelter has its own class ("no public shelter in DSB's register; private
+shelters not shown"); Swedish and Danish municipalities have no value at all (dataset not integrated).
+
+**Scale.** Far out, the layer shows one symbol per county (count at the mean position of its records); at the region view
+one per municipality; from about 14 px per hex every record. A second merging pass guarantees no two symbols overlap.
+The layer is off by default.
+
+**What is not computed.** No places-per-resident ratio, coverage share, ranking, vulnerability class or preparedness
+score: public shelters serve whoever is present, private shelters are unpublished, and registered places are capacity on
+record, not availability. The lens shows registered places in five bands, labelled "not a preparedness score".
+
+**Sweden and Denmark.** Investigated, not integrated (missing coverage, not zero): Sweden's register (Myndigheten för
+civilt försvar, ~64,000 shelters, open to anyone nearby in war) is published as a map, but no openly licensed dataset
+was found, and Sweden has no separate "public" class, so it would not match the Norwegian one. Denmark has no published
+national dataset of shelter locations; its inspection of public shelters (*betondækningsgrave*) ran in 2025–26 without
+an open release.
+
+**Reuse from Beredskap101.** Its shelter map uses a static snapshot (`src/data/shelters.json`: room number, places,
+address, lat/lng; no identifier, no extraction date, no acquisition script). NordicCiv keeps the official source and
+reuses Beredskap101's wording conventions (public vs private, the 72-hour readying, "follow official instructions").
+Compared with today's register, the snapshot has one extra room (8061, Gudbrandsdalsvegen 190, no longer published)
+and one position 173 m away from the current one (room 31679); every other room, place count and position is identical.
+
 ## Validation (`python -m pipeline check --mode built|source|release`)
 
 Modes: **built** (shipped files only), **source** (independent reconciliation with the original downloads, values

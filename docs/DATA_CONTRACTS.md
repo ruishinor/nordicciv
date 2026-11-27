@@ -37,6 +37,18 @@ km in the Nordic LAEA frame described in `world.json.projection` (x right, y dow
 | `coast.json` | shore lines traced from the relief land mask |
 | `relief/index.json` | relief image levels (`L0` 1 km whole image, `L1` 0.5 km tiles), `gray` (Analyze), `sea`, `hex_fallback` (land hexes with no 1 km data), `sha256` |
 
+## Added in v0.4
+
+| File / field | Meaning |
+|---|---|
+| `shelters.json → source` | authority, dataset, licence (NLOD 1.0) and attribution, WFS request, DSB extraction date, retrieval time, SHA-256, `number_matched` |
+| `shelters.json → coverage` | `{NO: integrated, SE/DK: not_integrated + reason}`: missing coverage is never zero |
+| `shelters.json → meaning`, `rules` | the wording for capacity, public vs private, absence, residents; municipality and position rules |
+| `shelters.json → shelters[]` | `{id (DSB lokalId), room, places (int ≥ 0, or null = not stated), address (as published), lat, lon (ETRS89), x, y (map km), cell, muni, assigned?: {method, distance_m}}` |
+| `shelters.json → munis{}`, `regions{}` | per municipality / county: `n`, `places`, `zero`, `missing`, `anchor` (mean of members' true positions, for group symbols only) |
+| `shelters.json → totals` | `shelters`, `places`, `munis_with`, `munis_no`, `assigned_nearest` |
+| `lenses.json → shelter_places` | category lens, municipality resolution: 0 = no public shelter in the register, 1–4 = registered-place bands; SE/DK null |
+
 ## Changed or added in v0.3
 
 | File / field | Meaning |

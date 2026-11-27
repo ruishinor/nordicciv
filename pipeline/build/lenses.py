@@ -18,7 +18,11 @@ LENS_ICON = {"density": "l-density", "growth": "l-people", "ageing": "l-age", "y
              "jobs_ratio": "l-commute", "share_BC": "i-manufacturing", "share_A": "i-agriculture", "share_J": "i-information",
              "share_I": "i-accommodation", "share_O": "i-public_admin", "specialisation": "d-commercial-hub", "income": "l-income",
              "hospital": "i-health", "school": "i-education", "road_reach": "t-road", "remoteness": "map", "elevation": "terrain",
-             "forest": "l-forest", "farmland": "l-farmland", "cover": "layers", "urban_growth": "l-developed"}
+             "forest": "l-forest", "farmland": "l-farmland", "cover": "layers", "urban_growth": "l-developed", "shelter_places": "c-shelter"}
+# (lower bound of registered places, legend label, colour); class 0 = no public shelter in the register
+SHELTER_BANDS = [(0, "No public shelter in DSB's register (private shelters not shown)", "#5d6670"),
+                 (1, "Under 1,000 registered places", "#2f4f74"), (1000, "1,000–4,999", "#4f7fa0"),
+                 (5000, "5,000–19,999", "#a9a06a"), (20000, "20,000 or more", "#e3c46a")]
 GROUPS = [
     {"id": "people", "name": "People", "icon": "g-people"},
     {"id": "economy", "name": "Economy", "icon": "g-prosperity"},
@@ -228,6 +232,33 @@ def build():
         domain=[0, 10], description="Number of 1 km cells in the hex whose CORINE class became artificial (built-up, "
                                     "industrial, mines, transport) between 1990 and 2018.",
         note="1 km cells take one class each, so only substantial change registers.")
+
+    # civil preparedness (v0.4): registered places in DSB's public shelters, by municipality, in bands. Norway only;
+    # Swedish and Danish municipalities carry no value ("no data": dataset not integrated), never 0. A Norwegian
+    # municipality without a public shelter is its own class, worded so it cannot be read as "no protection".
+    sh_path = WEB_DATA / "shelters.json"
+    if sh_path.exists():
+        sh = read_json(sh_path)
+        bands = SHELTER_BANDS
+        def band(c):
+            if c["country"] != "NO":
+                return None
+            a = sh["munis"].get(c["id"])
+            places = a["places"] if a else 0
+            if not a:
+                return 0
+            # a municipality with shelters is never in class 0, even if their registered places sum to 0
+            return max(1, next(k for k, (lo, _n, _c) in reversed(list(enumerate(bands))) if places >= lo))
+        add("shelter_places", "welfare", "Public shelter places (Norway)", "🛡️", "", "category",
+            muni_lens(band, 0), resolution="municipality", source="dsb_shelters",
+            ramp=[c for _l, _n, c in bands], domain=[0, len(bands) - 1],
+            categories=[{"id": f"b{k}", "name": nm, "color": col} for k, (_lo, nm, col) in enumerate(bands)],
+            description="Registered places in the municipality's public shelters, summed from DSB's register "
+                        f"(extracted {sh['source']['extracted']}). Public shelters only: private shelters, which hold most "
+                        "of Norway's places, are not published. Capacity on record, not availability or readiness; "
+                        "not compared with population, because shelters serve whoever is present. Sweden and Denmark: "
+                        "dataset not integrated (no data), not zero.",
+            note="Not a preparedness score. Sweden and Denmark show as no data: not integrated, not zero.")
 
     owned = [i for i in range(n) if owner[i] >= 0]
     for l in lenses:  # pack: only Scandinavian land hexes carry values (the browser expands them)

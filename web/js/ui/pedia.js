@@ -249,7 +249,10 @@ export function initPedia(data) {
       b.setAttribute("aria-current", on ? "page" : "false");
     });
   };
-  nav.innerHTML = `<div class="hd">Almanac</div>` + Object.keys(pages).map((p) => `<button data-page="${esc(p)}">${esc(p)}</button>`).join("");
+  const renderNav = () => {
+    nav.innerHTML = `<div class="hd">Almanac</div>` + Object.keys(pages).map((p) => `<button data-page="${esc(p)}">${esc(p)}</button>`).join("");
+  };
+  renderNav();
   nav.onclick = (e) => {
     const b = e.target.closest("button[data-page]");
     if (b) show(b.dataset.page);
@@ -281,6 +284,15 @@ export function initPedia(data) {
       (nav.querySelector("button.active") || card.querySelector("[data-close]"))?.focus();
     },
     close,
+    /** Add a page (an extension's topic), placed before `before` when that page exists. */
+    addPage(name, render, { before = "Limitations" } = {}) {
+      const entries = Object.entries(pages).filter(([k]) => k !== name);
+      const k = entries.findIndex(([p]) => p === before);
+      entries.splice(k < 0 ? entries.length : k, 0, [name, render]);
+      for (const p of Object.keys(pages)) delete pages[p];
+      for (const [p, f] of entries) pages[p] = f;
+      renderNav();
+    },
     get isOpen() {
       return !modal.hidden;
     },
