@@ -1,0 +1,72 @@
+{
+ "01-overview": {
+  "wall_s": 8.4,
+  "perf": null,
+  "errors": []
+ },
+ "02-regional-south": {
+  "wall_s": 6.73,
+  "perf": null,
+  "errors": []
+ },
+ "03-bergen-profile": {
+  "wall_s": 6.77,
+  "perf": null,
+  "errors": []
+ },
+ "04-kiruna-council": {
+  "wall_s": 6.83,
+  "perf": null,
+  "errors": []
+ },
+ "05-western-norway-terrain": {
+  "wall_s": 6.72,
+  "perf": null,
+  "errors": []
+ },
+ "06-coast-fjord-detail": {
+  "wall_s": 6.76,
+  "perf": null,
+  "errors": []
+ },
+ "07-small-municipality-frederiksberg": {
+  "wall_s": 6.83,
+  "perf": null,
+  "errors": []
+ },
+ "08-specialisation-lens": {
+  "wall_s": 6.68,
+  "perf": null,
+  "errors": []
+ },
+ "09-population-density-lens": {
+  "wall_s": 6.71,
+  "perf": null,
+  "errors": []
+ },
+ "10-growth-lens-oresund": {
+  "wall_s": 6.72,
+  "perf": null,
+  "errors": []
+ },
+ "11-lofoten": {
+  "wall_s": 6.7,
+  "perf": null,
+  "errors": []
+ },
+ "12-stockholm-archipelago": {
+  "wall_s": 6.69,
+  "perf": null,
+  "errors": []
+ },
+ "13-mobile-overview": {
+  "wall_s": 8.05,
+  "perf": null,
+  "errors": []
+ },
+ "14-mobile-tromso": {
+  "wall_s": 6.69,
+  "perf": null,
+  "errors": []
+ }
+}

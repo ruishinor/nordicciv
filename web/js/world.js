@@ -207,6 +207,20 @@ export function applyLens(w, lens, band = null) {
   w.rgb = rgb;
   w.dim = band ? dim : null;
   w.colors = rgb.map((c) => css(c));
+  // Municipal and regional lenses also colour the municipal polygons (render/map.js drawAnalyzeLand), so a
+  // municipality that owns no hex still shows its own value.
+  w.muniColors = null;
+  if (lens && lens.muni_values) {
+    const stops = lens.ramp.map(parseHex);
+    const t = lensScale(lens);
+    w.muniColors = new Map();
+    for (const [id, v] of Object.entries(lens.muni_values)) {
+      const tv = v == null ? null : t(v);
+      let c = tv == null ? NO_DATA : rampColor(stops, tv);
+      if (band && (tv == null || tv < band[0] || tv > band[1])) c = mix(desaturate(c, 0.92), DIM_RGB, 0.66);
+      w.muniColors.set(id, css(c));
+    }
+  }
 }
 
 // --- state labels ---------------------------------------------------------------------------------------------

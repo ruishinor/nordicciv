@@ -49,12 +49,21 @@ def build():
     muni_of = [by_idx.get(muni_ids[county[i]]) if county[i] >= 0 else None for i in range(n)]
     lenses = []
 
+    class MuniValues(list):
+        """Hex values plus one value per municipality (muni_values), so municipalities that own no hex (Frederiksberg,
+        Solna, Utsira …) still get their own colour on the polygon layer (NC-T04)."""
+        by_id: dict
+
     def muni_lens(fn, digits=4):
-        out = []
+        out = MuniValues()
         for i in range(n):
             c = muni_of[i]
             v = fn(c) if (c is not None and owner[i] >= 0) else None
             out.append(None if v is None else round(v, digits))
+        out.by_id = {}
+        for c in cities:
+            v = fn(c)
+            out.by_id[c["id"]] = None if v is None else round(v, digits)
         return out
 
     def add(id, group, name, emoji, unit, fmt, values, scale="linear", ramp=RAMP_SEQ, higher="neutral", source="",
@@ -64,7 +73,9 @@ def build():
             d = [max(d[0], 0.1), max(d[1], 1)]
         lens = {"id": id, "group": group, "name": name, "icon": LENS_ICON.get(id, f"l-{id}"), "emoji": emoji, "unit": unit, "format": fmt,
                 "scale": scale, "domain": [round(d[0], 4), round(d[1], 4)], "ramp": ramp, "higher_is": higher,
-                "source": source, "description": description, "resolution": resolution, "values": values}
+                "source": source, "description": description, "resolution": resolution, "values": list(values)}
+        if hasattr(values, "by_id"):
+            lens["muni_values"] = values.by_id
         res_note = {"hex": "Measured on the 1 km grid and aggregated to the hex.",
                     "municipality": "One published value per municipality, repeated on each of its hexes.",
                     "region": "One value per county/län/landsdel, repeated on each of its hexes.",

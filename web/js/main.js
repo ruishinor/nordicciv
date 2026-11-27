@@ -17,6 +17,7 @@ import { createEmitter, createHashState, createModes, createUi, createMapToggles
 import { drawHighlight, drawOverlays, invalidateHighlight, highlightBounds } from "./render/overlays.js";
 import { resourceFilterSig, layerActive, layerError, Z as LAYER_Z } from "./render/map.js";
 import { installExtensions } from "./ext/index.js";
+import { initRelief, muniAt, muniNear } from "./render/art/relief.js";
 import { initShare } from "./app/share.js";
 import { initHelp } from "./app/help.js";
 
@@ -115,6 +116,8 @@ async function main() {
   // plus a margin. Panning blits it; zooming blits it scaled and re-renders once the camera settles.
   const cache = { cv: document.createElement("canvas"), key: null, vp: null, hits: { resources: [] } };
   const cctx = cache.cv.getContext("2d");
+  // Continuous relief, municipal polygons and borders load after the first frame; the map redraws as each arrives.
+  initRelief(loadJSON, () => { cache.key = null; requestDraw(); });
   // Each registered layer's id, visibility and own sig() are part of the key, so toggling or restyling a layer
   // re-renders the cache (and nothing else does).
   const layersSig = () => staticLayers.map((l) => {
@@ -930,6 +933,12 @@ async function main() {
   let lastTap = null; // {t, x, y}
   let pendingTap = 0;
 
+  function muniUnder(mx, my, tolPx = 0) {
+    const [x, y] = cam.toWorld(mx, my);
+    const id = tolPx ? muniNear(x, y, tolPx / cam.scale) : muniAt(x, y);
+    return id ? cityById.get(id) || null : null;
+  }
+
   function hover(mx, my) {
     const city = hitCity(mx, my);
     const cell = cellAt(mx, my);
@@ -948,7 +957,7 @@ async function main() {
     }
     if (city) showCityTooltip(mx, my, city);
     else if (tip != null && tip !== "") showHtmlTooltip(mx, my, tip);
-    else if (cell >= 0) showCellTooltip(mx, my, w, cell, state.lens, state.showResources);
+    else if (cell >= 0) showCellTooltip(mx, my, w, cell, state.lens, state.showResources, muniUnder(mx, my));
     else hideTooltip();
     if (events.has("hover")) emitHover(cell, city || w.cityByCell.get(cell) || null, hitResource(mx, my), mx, my, lh);
   }
@@ -1021,7 +1030,9 @@ async function main() {
     const cell = cellAt(mx, my);
     const banner = hitCity(mx, my);
     const lh = banner ? null : hitLayer(mx, my); // a layer's site wins over the city tile under it, not its banner
-    const city = banner || w.cityByCell.get(cell);
+    // The municipality under the pointer comes from its polygon (NC-T04); the hex owner is only a fallback.
+    const polyCity = banner ? null : muniUnder(mx, my, 6);
+    const city = banner || polyCity || w.cityByCell.get(cell);
     const owner = cell >= 0 ? w.raw.owner[cell] : -1;
     const resource = hitResource(mx, my);
     clearTimeout(pendingTap);
@@ -1047,7 +1058,7 @@ async function main() {
       if (modes.mode && layerClick()) return;
       // NordicCiv: every land hex belongs to a municipality, and each municipality is a city: open it.
       const muniCity = !city && owner >= 0 && w.raw.county?.[cell] >= 0 ? cityById?.get(w.raw.counties[w.raw.county[cell]].geoid) : null;
-      if (city) selectCity(city);
+      if (city) selectCity(city, { fly: !polyCity });
       else if (muniCity) selectCity(muniCity, { fly: false });
       else if (owner >= 0) {
         // On phones the bottom sheet would hide the state, so bring it into the visible part of the map.
@@ -1266,6 +1277,10 @@ async function main() {
     modeParams: { get: () => modes.modeParams, enumerable: true },
   });
   window.__app = app;
+  // Rendering timings for tests and profiling: medians (ms) of the last static renders, frames and warm-up strips.
+  const med = (a) => { const v = [...a].sort((x, y) => x - y); return v.length ? +v[v.length >> 1].toFixed(1) : null; };
+  window.__perf = () => ({ static_ms: med(perf.static), frame_ms: med(perf.frame), warm_ms: med(perf.warm),
+    static_n: perf.static.length, frame_n: perf.frame.length });
 
   // --- go --------------------------------------------------------------------------------------------------------
   renderTopbar(nation);

@@ -30,7 +30,7 @@ from pyproj import Transformer
 from scipy import ndimage
 
 from ..core import geo
-from ..core.paths import INTERIM, WEB_DATA
+from ..core.paths import INTERIM, RAW, WEB_DATA
 from ..core.store import read_json, write_json
 
 OUT = WEB_DATA / "relief"
@@ -44,12 +44,12 @@ PAL = {
     1: (150, 128, 112), 2: (166, 146, 124), 3: (150, 136, 124), 4: (146, 140, 130), 5: (138, 142, 150),
     6: (156, 150, 140), 7: (166, 150, 126), 8: (150, 144, 128), 9: (150, 152, 120), 10: (132, 160, 92),
     11: (140, 162, 98),
-    12: (190, 180, 118), 13: (188, 178, 114), 14: (176, 172, 106), 15: (170, 168, 96), 16: (176, 170, 100),
-    17: (160, 160, 92), 18: (146, 168, 92), 19: (164, 166, 100), 20: (170, 170, 106), 21: (138, 158, 86),
-    22: (130, 150, 80),
-    23: (86, 124, 58), 24: (54, 92, 52), 25: (68, 108, 56), 26: (160, 166, 104), 27: (150, 142, 98),
-    28: (130, 132, 86), 29: (112, 136, 76), 30: (222, 208, 160), 31: (146, 142, 134), 32: (160, 154, 132),
-    33: (110, 100, 86), 34: (236, 242, 246), 35: (116, 132, 90), 36: (132, 126, 86), 37: (124, 132, 96),
+    12: (202, 186, 104), 13: (198, 182, 100), 14: (184, 176, 96), 15: (170, 168, 96), 16: (176, 170, 100),
+    17: (160, 160, 88), 18: (128, 168, 76), 19: (160, 166, 90), 20: (170, 174, 94), 21: (128, 156, 76),
+    22: (122, 148, 72),
+    23: (80, 132, 52), 24: (44, 92, 46), 25: (60, 112, 50), 26: (150, 168, 92), 27: (150, 144, 92),
+    28: (130, 132, 86), 29: (100, 138, 64), 30: (222, 208, 160), 31: (146, 142, 134), 32: (160, 154, 132),
+    33: (110, 100, 86), 34: (236, 242, 246), 35: (106, 130, 80), 36: (128, 126, 78), 37: (124, 132, 96),
     38: (180, 176, 160), 39: (180, 170, 140),
 }
 FOREST = {23, 24, 25}
@@ -127,7 +127,11 @@ def build():
     land1 = np.zeros(shp, np.float32)
     land1[gy, gx] = (~np.isin(clc, list(SEA | LAKE)) & ((clc > 0) | np.isfinite(g["elev"][keep]))).astype(np.float32)
     lake1 = np.isin(cls, list(LAKE)).astype(np.float32)
-    elev = np.where(np.isfinite(elev), elev, np.where(land1 > 0, 0, -20)).astype(np.float32)
+    known = np.isfinite(elev)
+    if (~known).any():  # extend elevation into the sea and beyond the data so the hillshade has no edge cliffs
+        idx = ndimage.distance_transform_edt(~known, return_distances=False, return_indices=True)
+        elev = np.where(known, elev, np.minimum(elev[idx[0], idx[1]], 0) - 5 * (land1 < 0.5))
+    elev = elev.astype(np.float32)
     # fill unclassified land from neighbours (nearest classified cell)
     unk = (cls <= 0) & (land1 > 0)
     if unk.any():
@@ -198,7 +202,23 @@ def build():
     near_sea = ndimage.binary_dilation((land_c < 0.5) & (lake_c < 0.5), iterations=int(2 / RES))
     use_poly = ((cc == 1) | (cc == 3) | (cc == 0)) & zone & near_sea
     alpha_land = np.where(use_poly, poly, np.maximum(poly, smooth_land))
-    alpha_land *= np.clip((valid - 0.5) * 4, 0, 1)  # nothing outside the 1 km data (Russia, Belarus: hex art only)
+    # no 1 km data beyond the EU/EFTA grid (Russia, Belarus): leave those to the hex art, with a 3 km margin
+    nod = Image.new("L", (nx, ny), 0)
+    dn = ImageDraw.Draw(nod)
+    from shapely.geometry import shape
+    ne = read_json(RAW / "natural_earth" / "ne_10m_admin_0_countries.geojson")
+    for f in ne["features"]:
+        if f["properties"].get("ISO_A2") not in ("RU", "BY", "UA"):
+            continue
+        g = shape(f["geometry"])
+        for poly_ in (g.geoms if hasattr(g, "geoms") else [g]):
+            lo, la = np.asarray(poly_.exterior.coords).T
+            x_, y_ = frame.from_ll(lo, la)
+            pts = list(zip((x_ / RES).tolist(), (y_ / RES).tolist()))
+            if len(pts) >= 3:
+                dn.polygon(pts, fill=255)
+    nodata = ndimage.binary_dilation(np.asarray(nod) > 0, iterations=int(3 / RES))
+    alpha_land *= ~nodata
     lake_a = np.clip((lake_c - 0.42) / 0.2, 0, 1) * (alpha_land > 0.5)
 
     # --- hillshade -----------------------------------------------------------------------------------------------
@@ -231,6 +251,9 @@ def build():
     depth = ndimage.gaussian_filter(lake_a, 2)
     lake_rgb = LAKE_RGB * (1.04 - 0.18 * depth[..., None]) + (tex * 3)[..., None]
     rgb = rgb * (1 - lake_a[..., None]) + lake_rgb * lake_a[..., None]
+    lum = rgb.mean(axis=-1, keepdims=True)
+    boost = 1 + 0.18 * np.clip(nord, 0, 1)[..., None] * (1 - lake_a[..., None])
+    rgb = lum + (rgb - lum) * boost
     rgb = np.clip(rgb, 0, 255).astype(np.uint8)
     alpha = np.clip(alpha_land * 255, 0, 255).astype(np.uint8)
 
@@ -266,7 +289,7 @@ def build():
     hx = geo.cell_at(mx.ravel() if False else ((np.arange(nx) + 0.5) * RES)[None, :].repeat(ny, 0).ravel(),
                      ((np.arange(ny) + 0.5) * RES)[:, None].repeat(nx, 1).ravel(), gw["radius"], gw["cols"], gw["rows"])
     ok = hx >= 0
-    cov = np.bincount(hx[ok], weights=np.clip((valid.ravel()[ok] - 0.5) * 4, 0, 1), minlength=gw["cols"] * gw["rows"])
+    cov = np.bincount(hx[ok], weights=(~nodata).ravel()[ok].astype(float), minlength=gw["cols"] * gw["rows"])
     cnt = np.bincount(hx[ok], minlength=gw["cols"] * gw["rows"])
     frac = cov / np.maximum(cnt, 1)
     water = world["water"]

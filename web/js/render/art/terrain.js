@@ -66,7 +66,34 @@ const WARM = [255, 241, 196], COOL = [38, 52, 86];
 
 // --- entry point -------------------------------------------------------------------------------------------------
 
-export function drawTerrainGlyphs(ctx, cells, w, { Rpx, s, lod, bridges } = {}) {
+// Relief mode (render/art/relief.js paints the continuous ground): per-hex ground decals would re-draw the tiles,
+// and the hillshade already shows every hill, so only the upright pieces that give the map its game look stay —
+// mountains on the high, rugged ground and about half of the tree clumps — thinned by a fixed hash per stamp.
+const RELIEF_DROP = new Set(["pasture", "meadow", "marsh", "ice", "cracks", "suburbGround", "hill", "tuft", "rocks", "sage", "cactus", "dune", "pivot", "mesa"]);
+function keepInRelief(w, st) {
+  if (RELIEF_DROP.has(st.n)) return false;
+  if (st.n === "mtn" || st.n === "ridge") {
+    // one mountain piece per hex, only on summits: hexes whose highest 1 km cell is ≥ 1,000 m and higher than in
+    // all six neighbours (EU-DEM). The hillshade draws the ranges; the pieces mark their real peaks.
+    return peaks(w)[st.i] === 1;
+  }
+  if (st.n === "clump" || st.n === "tree") return hash01(st.i, 911 + Math.round(st.x * 13 + st.y * 7)) < 0.45;
+  return true;
+}
+
+function peaks(w) {
+  if (w._peaks) return w._peaks;
+  const n = w.grid.size, em = w.raw.elev_max || w.raw.elev, out = new Uint8Array(n);
+  for (let i = 0; i < n; i++) {
+    if (w.water[i] || !(em[i] >= 1000)) continue;
+    let top = true;
+    for (let d = 0; d < 6 && top; d++) { const j = w.grid.neighbour(i, d); if (j >= 0 && em[j] > em[i]) top = false; }
+    out[i] = top ? 1 : 0;
+  }
+  return (w._peaks = out);
+}
+
+export function drawTerrainGlyphs(ctx, cells, w, { Rpx, s, lod, bridges, relief = false } = {}) {
   const R = w.grid.R;
   s = s ?? Rpx / R;
   Rpx = Rpx ?? R * s;
@@ -75,8 +102,10 @@ export function drawTerrainGlyphs(ctx, cells, w, { Rpx, s, lod, bridges } = {}) 
   const dpr = dev / s || 1;
   const upx = bucketPx(R * dev, { min: 6, max: 256 });
   ctx.save();
-  drawTextures(ctx, cells, w, s, dpr, lod, Rpx);
-  drawFields(ctx, cells, w, s, dpr, lod, Rpx);
+  if (!relief) {
+    drawTextures(ctx, cells, w, s, dpr, lod, Rpx);
+    drawFields(ctx, cells, w, s, dpr, lod, Rpx);
+  }
   const ground = [], upright = [];
   // Bridges join relief across neighbouring hexes; a lone specimen hex (the dev gallery) is drawn without them.
   bridges = bridges ?? !(Array.isArray(cells) && cells.length === 1);
@@ -91,8 +120,13 @@ export function drawTerrainGlyphs(ctx, cells, w, { Rpx, s, lod, bridges } = {}) 
       pl = { g: env.ground.length ? env.ground : NONE, u: env.upright.length ? env.upright : NONE };
       plans.set(i, pl);
     }
-    for (const st of pl.g) ground.push(st);
-    for (const st of pl.u) upright.push(st);
+    let mtn = false;
+    for (const st of pl.g) if (!relief || keepInRelief(w, st)) ground.push(st);
+    for (const st of pl.u) {
+      if (relief && !keepInRelief(w, st)) continue;
+      if (relief && (st.n === "mtn" || st.n === "ridge")) { if (mtn) continue; mtn = true; }
+      upright.push(st);
+    }
   }
   upright.sort((a, b) => a.z - b.z);
   // Stamps wholly outside the canvas are skipped (the visible range includes a margin of cells).
@@ -660,7 +694,7 @@ function planCell(env, i) {
   const h = (salt) => hash01(i, salt);
   const vary = (salt, n) => Math.floor(h(salt) * n) % n;
   const put = (list, name, arg, v, px, py, f = 1, z = py) =>
-    list.push({ spr: sprite(env, name, arg, v), x: x + px * R, y: y + py * R, k: R * f, a, z: y + z * R });
+    list.push({ spr: sprite(env, name, arg, v), x: x + px * R, y: y + py * R, k: R * f, a, z: y + z * R, n: name, i });
   const up = (name, arg, v, px, py, f, z) => put(env.upright, name, arg, v, px, py, f, z);
   const flat = (name, arg, v, px = 0, py = 0, f = 1) => put(env.ground, name, arg, v, px, py, f);
   if (tiled) {

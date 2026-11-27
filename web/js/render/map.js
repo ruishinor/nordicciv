@@ -17,6 +17,24 @@ import { drawTerrainGlyphs, GLYPHS_MIN_RPX } from "./art/terrain.js";
 import { drawCityTile, cityTileVisible, cityIsDot, metroSpill } from "./art/city.js";
 import { drawWater, drawRivers, strokeSegs } from "./art/water.js";
 import { lodFor } from "./art/lod.js";
+import { drawRelief, drawReliefTextured, reliefReady, fallbackHexes, drawBorderLines, bordersReady, drawCoast, munisReady, muniFeatures, muniFeature, muniPath, muniLevel } from "./art/relief.js";
+
+// Water under the relief image where a hex is land but the ground is sea (fjords, sounds, skerry belts).
+const SHORE_WATER = "rgb(38,92,138)";
+let landLayer = null; // offscreen canvas for Analyze mode (lens colours clipped to land and shaded)
+// The water colour under a land hex: the mean of its water neighbours (two rings), so the sea shows no hex steps.
+function shoreWater(w, i) {
+  if (!w._shore) w._shore = new Map();
+  let c = w._shore.get(i);
+  if (c) return c;
+  const acc = [0, 0, 0];
+  let n = 0;
+  const add = (j) => { if (j >= 0 && w.water[j] && w.water[j] !== 3) { const t = w.terrainColors[j]; acc[0] += t[0]; acc[1] += t[1]; acc[2] += t[2]; n++; } };
+  for (let d = 0; d < 6; d++) { const j = w.grid.neighbour(i, d); add(j); if (j >= 0) for (let e = 0; e < 6; e++) add(w.grid.neighbour(j, e)); }
+  c = n ? `rgb(${Math.round(acc[0] / n)},${Math.round(acc[1] / n)},${Math.round(acc[2] / n)})` : SHORE_WATER;
+  w._shore.set(i, c);
+  return c;
+}
 
 export const OCEAN_BG = OCEAN_DEEP_CSS;
 export { cityIsDot } from "./art/city.js";
@@ -145,25 +163,44 @@ export function drawStatic(ctx, vp, w, opts) {
   // Corners grown by ~0.7px so neighbouring fills overlap (no seams).
   const grow = (R + 0.7 / s) / R;
   const K = grid.corners.map(([x, y]) => [x * grow, y * grow]);
-  const tile = (i) => {
+  const tileColor = (i, color, c2 = ctx) => {
     const x = grid.cx(i), y = grid.cy(i);
-    ctx.beginPath();
-    ctx.moveTo(x + K[0][0], y + K[0][1]);
-    for (let k = 1; k < 6; k++) ctx.lineTo(x + K[k][0], y + K[k][1]);
-    ctx.fillStyle = w.colors[i];
-    ctx.fill();
+    c2.beginPath();
+    c2.moveTo(x + K[0][0], y + K[0][1]);
+    for (let k = 1; k < 6; k++) c2.lineTo(x + K[k][0], y + K[k][1]);
+    c2.fillStyle = color;
+    c2.fill();
   };
+  const tile = (i, c2 = ctx) => tileColor(i, w.colors[i], c2);
+
+  // Relief mode: a continuous painted landscape (render/art/relief.js) instead of one flat colour per hex. Hexes stay
+  // the unit of statistics and interaction; only the ground is drawn continuously. Without the image: hex tiles.
+  const relief = opts.relief !== false && reliefReady();
+  const fallback = relief ? fallbackHexes() : null;
 
   // 1. Water tiles, then the water art (texture, per-cell decoration, coast foam).
-  for (const i of cells) if (w.water[i]) tile(i);
-  drawWater(ctx, vp, w, cells, { Rpx, s, lod });
+  if (relief) {
+    for (const i of cells) {
+      if (w.water[i]) tile(i);
+      else if (!fallback.has(i)) tileColor(i, shoreWater(w, i));
+    }
+  } else for (const i of cells) if (w.water[i]) tile(i);
+  drawWater(ctx, vp, w, cells, { Rpx, s, lod, shore: !relief });
   lap("water");
 
-  // 2. Land tiles.
+  // 2. Land: the relief image (Explore), lens colours clipped to the land and shaded by the relief (Analyze), or tiles.
   upTo(Z.LAND);
-  for (const i of cells) if (!w.water[i]) tile(i);
+  if (relief && !opts.lens) {
+    drawReliefTextured(ctx, vp);
+    worldT();
+    for (const i of cells) if (!w.water[i] && fallback.has(i)) tile(i);
+  } else if (relief && opts.lens) {
+    drawAnalyzeLand(ctx, vp, w, cells, opts, tile, worldT);
+  } else {
+    for (const i of cells) if (!w.water[i]) tile(i);
+  }
   lap("land");
-  if (w.dim) drawBandEdge(ctx, w, r0, r1, c0, c1, s);
+  if (w.dim && !relief) drawBandEdge(ctx, w, r0, r1, c0, c1, s);
 
   // 3. Hex grid lines once hexes are big enough to read.
   upTo(Z.GRID);
@@ -178,7 +215,7 @@ export function drawStatic(ctx, vp, w, opts) {
     }
     ctx.lineJoin = "miter";
     ctx.lineCap = "butt";
-    ctx.strokeStyle = `rgba(0,0,0,${Math.min(0.14, (Rpx - 11) * 0.012)})`;
+    ctx.strokeStyle = relief && !opts.lens ? `rgba(20,24,16,${Math.min(0.10, (Rpx - 11) * 0.008)})` : `rgba(0,0,0,${Math.min(0.14, (Rpx - 11) * 0.012)})`;
     ctx.lineWidth = 1 / s;
     ctx.stroke();
   }
@@ -186,7 +223,7 @@ export function drawStatic(ctx, vp, w, opts) {
   // 4. Biome + relief glyphs (terrain view only, readable sizes only).
   lap("grid");
   upTo(Z.GLYPHS);
-  if (!opts.lens && Rpx > GLYPHS_MIN_RPX) drawTerrainGlyphs(ctx, cells, w, { Rpx, s, lod });
+  if (!opts.lens && Rpx > GLYPHS_MIN_RPX) drawTerrainGlyphs(ctx, cells, w, { Rpx, s, lod, relief });
   lap("glyphs");
 
   // 5. Rivers and borders, clipped to the world rectangle.
@@ -196,7 +233,8 @@ export function drawStatic(ctx, vp, w, opts) {
   ctx.rect(0, 0, W, H);
   ctx.clip();
   drawRivers(ctx, w, { s, Rpx, lod, lens: !!opts.lens });
-  drawBorders(ctx, w, s, Rpx, !!opts.lens);
+  if (relief && bordersReady()) drawPolygonBorders(ctx, vp, w, s, Rpx, !!opts.lens);
+  else drawBorders(ctx, w, s, Rpx, !!opts.lens);
   ctx.restore();
 
   // 6. City tiles.
@@ -318,6 +356,55 @@ function drawEdgeFog(ctx, vp, W, H) {
   // No cloud puffs: soft radial blobs read as a rendering glitch; the flat mist bands read as open sea.
 }
 
+
+// Analyze mode over the relief: lens colours (municipal polygons for municipal and regional lenses, hexes for hex
+// lenses) are painted on an offscreen layer, clipped to the land mask and multiplied by the gray hillshade, so the
+// statistic stays the dominant signal and the terrain only orients.
+function drawAnalyzeLand(ctx, vp, w, cells, opts, tile, worldT) {
+  const cv = ctx.canvas;
+  if (!landLayer || landLayer.width !== cv.width || landLayer.height !== cv.height) {
+    landLayer = document.createElement("canvas");
+    landLayer.width = cv.width;
+    landLayer.height = cv.height;
+  }
+  const L = landLayer.getContext("2d");
+  L.setTransform(1, 0, 0, 1, 0, 0);
+  L.globalCompositeOperation = "source-over";
+  L.globalAlpha = 1;
+  L.clearRect(0, 0, landLayer.width, landLayer.height);
+  L.setTransform(ctx.getTransform());
+  const polys = opts.lens && w.muniColors && munisReady();
+  for (const i of cells) if (!w.water[i] && (!polys || w.raw.owner[i] < 0)) tile(i, L);
+  if (polys) {
+    const level = muniLevel(vp.s * vp.dpr);
+    for (const f of muniFeatures()) {
+      const b = f.bbox;
+      if (b[2] < vp.x0 || b[0] > vp.x1 || b[3] < vp.y0 || b[1] > vp.y1) continue;
+      L.fillStyle = w.muniColors.get(f.id) || "#55534d";
+      L.fill(muniPath(f, level), "evenodd");
+    }
+  }
+  L.globalCompositeOperation = "destination-in";
+  drawRelief(L, vp, { gray: true });
+  L.globalCompositeOperation = "multiply";
+  L.globalAlpha = 0.85;
+  drawRelief(L, vp, { gray: true });
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
+  ctx.drawImage(landLayer, 0, 0);
+  worldT();
+  for (const i of cells) if (!w.water[i] && fallbackHexes()?.has(i)) tile(i);
+}
+
+// Borders from the administrative polygons (coastline removed): municipal lines at municipal zoom, region lines,
+// and the national borders on top in gold.
+function drawPolygonBorders(ctx, vp, w, s, Rpx, lens) {
+  if (Rpx > 9) drawBorderLines(ctx, vp, "municipality", { width: Math.min(1.1, 0.35 + Rpx * 0.012) / s, color: lens ? "rgba(20,20,20,.32)" : "rgba(30,26,18,.30)", dash: Rpx > 30 ? [4 / s, 3 / s] : null });
+  drawBorderLines(ctx, vp, "region", { width: Math.max(2.2, Math.min(5, Rpx * 0.16)) / s, color: lens ? "rgba(255,255,255,.18)" : "rgba(255,236,190,.16)" });
+  drawBorderLines(ctx, vp, "region", { width: Math.max(0.8, Math.min(1.8, Rpx * 0.07)) / s, color: lens ? "rgba(15,15,15,.6)" : "rgba(20,14,6,.55)" });
+  drawBorderLines(ctx, vp, "country", { width: Math.max(2.5, Math.min(6, Rpx * 0.22)) / s, color: "rgba(20,14,6,.35)" });
+  drawBorderLines(ctx, vp, "country", { width: Math.max(1.3, Math.min(3, Rpx * 0.12)) / s, color: "rgba(255,226,150,.9)" });
+  if (Rpx > 22 && !lens) drawCoast(ctx, vp, { width: Math.min(1.6, 0.6 + Rpx * 0.01) / s, color: "rgba(250,240,210,.38)" });
+}
 
 function drawBorders(ctx, w, s, Rpx, lens) {
   // Inner colour band per state (Civ-style), then the edge lines.
@@ -665,7 +752,25 @@ export function drawOverlay(ctx, cam, w, state, now = performance.now()) {
   if (now && selAnim.key !== state.selectedState) selAnim = { key: state.selectedState, t0: now };
   const t = now && !reducedMotion.matches && si >= 0 ? Math.min(SELECT_ANIM_MS, Math.max(0, now - selAnim.t0)) : -1;
   if (si >= 0) drawSelectedState(ctx, cam, w, si, t);
-  if (state.selectedCity && state.selectedCity.cell != null) {
+  const sf = state.selectedCity && muniFeature(state.selectedCity.id);
+  if (sf) {
+    // the selected municipality's own territory (its polygon), never the hexes of its neighbours
+    const path = muniPath(sf, muniLevel(s * (ctx.getTransform().a / s || 1)));
+    ctx.save();
+    ctx.fillStyle = "rgba(255,226,140,.12)";
+    ctx.fill(path, "evenodd");
+    ctx.lineJoin = "round";
+    ctx.strokeStyle = "rgba(20,14,4,.55)";
+    ctx.lineWidth = 5 / s;
+    ctx.stroke(path);
+    ctx.strokeStyle = "rgba(255,214,110,.55)";
+    ctx.lineWidth = 4 / s;
+    ctx.stroke(path);
+    ctx.strokeStyle = "#ffe9a8";
+    ctx.lineWidth = 1.6 / s;
+    ctx.stroke(path);
+    ctx.restore();
+  } else if (state.selectedCity && state.selectedCity.cell != null) {
     const i = state.selectedCity.cell;
     hexPath(ctx, grid, i, 1.0);
     ctx.lineJoin = "round";

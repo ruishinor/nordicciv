@@ -24,6 +24,12 @@ export function initRelief(loadJSON, invalidate) {
   }).catch((e) => console.warn("relief unavailable", e));
   loadJSON("munis", true).then((m) => { if (m) { state.munis = decodeMunis(m); invalidate(); } });
   loadJSON("coast", true).then((c) => { if (c) { state.coast = decodeLines(c); invalidate(); } });
+  loadJSON("borders", true).then((b) => {
+    if (!b) return;
+    state.borders = { country: decodeLines({ lines: b.country, scale: b.scale }), region: decodeLines({ lines: b.region, scale: b.scale }),
+      municipality: decodeLines({ lines: b.municipality, scale: b.scale }) };
+    invalidate();
+  });
   return state;
 }
 
@@ -81,6 +87,78 @@ export function drawRelief(ctx, vp, { gray = false } = {}) {
       }
     }
   }
+  ctx.restore();
+  return true;
+}
+
+// ---- close-zoom ground texture ------------------------------------------------------------------------------------
+// Below 1 km the relief image only interpolates, so close in it reads soft. A neutral grain (canopy speckle and fine
+// noise around mid-grey) is blended over the land with soft-light, anchored to the map so it never swims while
+// panning, at a scale chosen per zoom bucket so its grain stays at a few device pixels. It carries no information.
+let grain = null;
+function grainCanvas() {
+  if (grain) return grain;
+  const N = 256;
+  const c = document.createElement("canvas");
+  c.width = c.height = N;
+  const g = c.getContext("2d");
+  g.fillStyle = "rgb(128,128,128)";
+  g.fillRect(0, 0, N, N);
+  let seed = 1234567;
+  const rnd = () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
+  const dot = (x, y, r, col) => {
+    for (const dx of [-N, 0, N]) for (const dy of [-N, 0, N]) {
+      const gr = g.createRadialGradient(x + dx, y + dy, 0, x + dx, y + dy, r);
+      gr.addColorStop(0, col);
+      gr.addColorStop(1, "rgba(128,128,128,0)");
+      g.fillStyle = gr;
+      g.fillRect(x + dx - r, y + dy - r, 2 * r, 2 * r);
+    }
+  };
+  for (let k = 0; k < 900; k++) dot(rnd() * N, rnd() * N, 1.6 + rnd() * 2.6, `rgba(40,40,40,${0.35 + rnd() * 0.3})`);
+  for (let k = 0; k < 700; k++) dot(rnd() * N, rnd() * N, 1.2 + rnd() * 1.8, `rgba(225,225,225,${0.25 + rnd() * 0.3})`);
+  const id = g.getImageData(0, 0, N, N);
+  for (let i = 0; i < id.data.length; i += 4) {
+    const n = (rnd() - 0.5) * 18;
+    id.data[i] += n; id.data[i + 1] += n; id.data[i + 2] += n;
+  }
+  g.putImageData(id, 0, 0);
+  grain = c;
+  return c;
+}
+
+let texLayer = null;
+/** Explore-mode relief with the close-zoom grain; falls back to the plain image when zoomed out. */
+export function drawReliefTextured(ctx, vp) {
+  const devPerKm = vp.s * vp.dpr;
+  if (devPerKm < 3.5 || typeof DOMMatrix === "undefined") return drawRelief(ctx, vp);
+  const cv = ctx.canvas;
+  if (!texLayer || texLayer.width !== cv.width || texLayer.height !== cv.height) {
+    texLayer = document.createElement("canvas");
+    texLayer.width = cv.width;
+    texLayer.height = cv.height;
+  }
+  const L = texLayer.getContext("2d");
+  L.setTransform(1, 0, 0, 1, 0, 0);
+  L.globalCompositeOperation = "source-over";
+  L.globalAlpha = 1;
+  L.clearRect(0, 0, texLayer.width, texLayer.height);
+  L.setTransform(ctx.getTransform());
+  if (!drawRelief(L, vp)) return false;
+  // pattern scale: one grain pixel ≈ 1.3 device px, quantised to powers of two (no swimming between renders)
+  const kmPerPx = Math.pow(2, Math.round(Math.log2(1.3 / devPerKm)));
+  const pat = L.createPattern(grainCanvas(), "repeat");
+  pat.setTransform(new DOMMatrix([kmPerPx, 0, 0, kmPerPx, 0, 0]));
+  L.globalCompositeOperation = "soft-light";
+  L.globalAlpha = Math.min(0.9, (devPerKm - 3.5) / 6 + 0.35);
+  L.fillStyle = pat;
+  L.fillRect(vp.x0, vp.y0, vp.x1 - vp.x0, vp.y1 - vp.y0);
+  L.globalAlpha = 1;
+  L.globalCompositeOperation = "destination-in";
+  drawRelief(L, vp);
+  ctx.save();
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
+  ctx.drawImage(texLayer, 0, 0);
   ctx.restore();
   return true;
 }
@@ -199,11 +277,28 @@ function decodeLines(c) {
   });
 }
 
+export const bordersReady = () => !!state?.borders;
+export const fallbackHexes = () => {
+  if (!state?.index) return null;
+  return state.fallback || (state.fallback = new Set(state.index.hex_fallback || []));
+};
+
+/** Stroke border lines of one kind ("country" | "region" | "municipality") inside the viewport. */
+export function drawBorderLines(ctx, vp, kind, { width, color, dash = null }) {
+  const L = state?.borders?.[kind];
+  if (!L) return;
+  strokeLines(ctx, vp, L, width, color, dash);
+}
+
 /** Stroke the shore lines inside the viewport (world units). */
 export function drawCoast(ctx, vp, { width, color }) {
   if (!state?.coast) return;
+  strokeLines(ctx, vp, state.coast, width, color);
+}
+
+function strokeLines(ctx, vp, lines, width, color, dash = null) {
   ctx.beginPath();
-  for (const { r, b } of state.coast) {
+  for (const { r, b } of lines) {
     if (b[2] < vp.x0 || b[0] > vp.x1 || b[3] < vp.y0 || b[1] > vp.y1) continue;
     ctx.moveTo(r[0], r[1]);
     for (let k = 2; k < r.length; k += 2) ctx.lineTo(r[k], r[k + 1]);
@@ -212,5 +307,7 @@ export function drawCoast(ctx, vp, { width, color }) {
   ctx.lineWidth = width;
   ctx.lineJoin = "round";
   ctx.lineCap = "round";
+  ctx.setLineDash(dash || []);
   ctx.stroke();
+  ctx.setLineDash([]);
 }

@@ -54,7 +54,7 @@ export function drawWater(ctx, vp, w, cells, opts = {}) {
   drawOceanTexture(ctx, vp, o);
   worldT(ctx, vp);
   drawWaterGlyphs(ctx, cells, w, o);
-  pendingShore = { w, cells, opts: o };
+  pendingShore = opts.shore === false ? null : { w, cells, opts: o };
 }
 
 /** Soften the steps between sea tiles of different depth: each sea cell whose colour differs from a sea neighbour

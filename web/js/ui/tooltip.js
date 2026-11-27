@@ -7,7 +7,7 @@ const el = () => document.getElementById("tooltip");
 
 const nameOf = (table, id) => table.find((t) => t.id === id)?.name;
 
-export function showCellTooltip(mx, my, w, i, lens, showResources = true) {
+export function showCellTooltip(mx, my, w, i, lens, showResources = true, muni = null) {
   const raw = w.raw;
   const lines = [];
   const city = w.cityByCell.get(i);
@@ -26,11 +26,22 @@ export function showCellTooltip(mx, my, w, i, lens, showResources = true) {
     lines.push(`<b>${esc(terrain)}</b> <span class="muted">· ${int(raw.elev[i])} m</span>`);
   }
   const o = raw.owner[i];
-  if (o >= 0) {
-    const county = raw.county[i] >= 0 ? raw.counties[raw.county[i]].name + ", " : "";
-    lines.push(`${esc(county)}${esc(raw.states[o].name)}`);
-    if (Number.isFinite(raw.pop?.[i])) lines.push(`<span class="muted">≈ ${int(raw.pop[i])} residents in this hex (estimate) · ${Math.round(raw.tcd?.[i] ?? 0)}% tree cover</span>`);
-    if (lens) lines.push(`${glyph(lens, 13)} ${esc(lens.name)}: <b>${formatLensValue(lens, lens.values[i])}</b>`);
+  if (muni) {
+    // the municipality under the pointer, from its polygon (not the hex's dominant owner)
+    lines.push(`<b>${esc(muni.name)}</b> <span class="muted">· municipality, ${esc(raw.states[muni.region]?.name || "")}</span>`);
+  }
+  if (o >= 0 || muni) {
+    if (!muni && o >= 0) {
+      const county = raw.county[i] >= 0 ? raw.counties[raw.county[i]].name + ", " : "";
+      lines.push(`${esc(county)}${esc(raw.states[o].name)}`);
+    }
+    if (o >= 0 && Number.isFinite(raw.pop?.[i])) lines.push(`<span class="muted">This hex (93.5 km²): ≈ ${int(raw.pop[i])} residents (estimate) · ${Math.round(raw.tcd?.[i] ?? 0)}% tree cover</span>`);
+    if (lens) {
+      const perMuni = lens.muni_values && muni;
+      const v = perMuni ? lens.muni_values[muni.id] : lens.values[i];
+      const unitOf = perMuni ? (lens.resolution === "region" ? "region value" : "municipal value") : lens.resolution === "hex" ? "hex value" : lens.resolution === "derived" ? "estimate" : `${lens.resolution} value`;
+      lines.push(`${glyph(lens, 13)} ${esc(lens.name)}: <b>${formatLensValue(lens, v)}</b> <span class="muted">(${unitOf})</span>`);
+    }
   } else if (o === FOREIGN) {
     lines.push(`<span class="muted">Outside Norway, Sweden and Denmark (not mapped)</span>`);
   }

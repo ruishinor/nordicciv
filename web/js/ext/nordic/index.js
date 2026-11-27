@@ -3,6 +3,7 @@
 // Every observation is computed from the loaded data and names its source; nothing is generated text from a model.
 import { esc, int, compact, money, pct, popShort } from "../../format.js";
 import { icon } from "../../ui/icon.js";
+import { reliefReady } from "../../render/art/relief.js";
 
 const COUNTRY = { NO: "Norway", SE: "Sweden", DK: "Denmark" };
 const FLAG = { NO: "🇳🇴", SE: "🇸🇪", DK: "🇩🇰" };
@@ -592,12 +593,14 @@ export function install(app) {
   app.on("data", (e) => { if (e?.name === "infrastructure") { ferryPaths = null; app.invalidate?.(); } });
 
   // ---- 1 km coastline detail: fjords, sounds, small lakes and skerries finer than a hex (detail.json, lazy) -------
+  // Only for the hex-tile fallback: once the continuous relief image is loaded it shows these at 0.5 km with a
+  // smooth shore (render/art/relief.js), and the 1 km squares would bring the blocks back (NC-V01).
   let detail = null, detailLoading = false;
   const COVER_COL = new Map((w.raw.tables?.cover || []).map((c) => [c.id, c.color]));
   const detailLayer = {
     id: "detail-1km", z: 25, minRpx: 7,
-    visible: () => true,
-    sig: () => (detail ? "d1" : "d0"),
+    visible: () => !reliefReady(),
+    sig: () => (detail ? "d1" : "d0") + (reliefReady() ? "r" : ""),
     draw(ctx, vp, _w, o) {
       if (!detail) {
         if (!detailLoading) {
