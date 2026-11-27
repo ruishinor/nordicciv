@@ -108,7 +108,7 @@ class CameraUplinks(Source):
         country="ALL",
         description="Webcams their operators publish for anyone to watch, in Norway, Sweden and Denmark, kept as a "
                     "name, a position, a category, a provider and the provider's public viewing page. NordicCiv links "
-                    "out to the provider and never loads, copies or relays the camera's pictures.",
+                    "to the provider's public viewing page.",
         used_for=["Camera uplinks map layer", "municipality panel: camera uplinks", "Discover"],
     )
 

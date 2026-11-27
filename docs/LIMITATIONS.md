@@ -14,7 +14,7 @@
 ## Civil preparedness: public shelters (v0.4)
 
 - **Norway only, public shelters only.** Private shelters (most of Norway's ~2.5 million places, per DSB) are not
-  published and not shown. Sweden and Denmark: not integrated (missing coverage, not zero; see METHODOLOGY).
+  published and not shown. Sweden and Denmark: data unavailable (see METHODOLOGY).
 - **Registered places are not availability.** Nothing in the register says whether a shelter is open, ready, inspected
   or accessible; the app says so on every card and section.
 - **Snapshot.** Extracted 2026-11-27. Shelters added, removed or moved since are not reflected until the source is
@@ -48,7 +48,7 @@
   and settlement points are the EuroGeographics name positions; zoom levels are chosen so the place is in view, not to
   frame any particular building.
 
-## Known caveats
+## Dataset coverage and resolution
 
 - **Below 1 km the landscape only interpolates.** The relief image is painted from 1 km CORINE, EU-DEM and tree-cover
   cells; class boundaries are blended over about one cell and wobbled by a fixed noise field, and the grain seen close
@@ -58,7 +58,7 @@
   the Stockholm archipelago, follow 1 km cells and merge small skerries into larger shapes.
 - **Swedish municipal polygons** are a simplified Valmyndigheten file that, in archipelagos, includes water (Vaxholm's
   polygon is ~2× its land area). They are used for selection, borders and choropleths, not for areas or the coast.
-- **Unrecorded boundary adjustments.** Breaks are recorded only from evidence: SSB's zeros, the absorbed-unit
+- **Unrecorded boundary adjustments.** Boundary breaks are identified using SSB's zeros, the absorbed-unit
   arithmetic and SSB's classification of divided municipalities. Twelve municipalities show a one-year change above 6 %
   with no recorded change (e.g. Stad +6.3 % in 2020, which may be the transfer of Bryggja); their panels say so and the
   validation report lists them, but their growth figures are not suppressed.

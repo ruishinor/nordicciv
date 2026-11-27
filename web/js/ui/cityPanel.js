@@ -167,8 +167,8 @@ export function openCityPanel(city, ctx) {
   const sites = sitesIn(city);
   const siteHtml = sites.length
     ? `<div class="site-list">${sites.slice(0, 14).map((s) => `<div class="site${s.maps ? " has-maps" : ""}"><span>${s.t ? glyph(s.t, 13) : s.wonder ? "🏛️" : "•"} ${esc(s.name)}</span><span class="muted">${esc(s.kind)}${s.val ? " · " + esc(s.val) : ""}</span>${s.maps ? mapsLink(s.maps, { cls: "chip sm maps-open", label: "Open in Maps" }) : ""}</div>`).join("")}${sites.length > 14 ? `<p class="muted">+${sites.length - 14} more</p>` : ""}</div>
-       <p class="muted small">Sites above the inclusion thresholds in the Almanac; absence here is not evidence of absence.</p>`
-    : `<p class="muted">No site above the map's inclusion thresholds (power plants, oil and gas fields, Swedish mines, wonders, ports, major airports) lies in this municipality. That is not evidence that none exists.</p>`;
+       <p class="muted small">The Almanac lists the site types and minimum sizes included on the map.</p>`
+    : `<p class="muted">No sites of the types and sizes shown on this map are listed here.</p>`;
 
   const peers = (city.peers || []).map((id) => ctx.cities?.find((c) => c.id === id)).filter(Boolean);
   const peerHtml = peers.length ? `<div class="chips">${peers.map((p) => `<button class="chip" data-city="${esc(p.id)}" title="${esc(p.full)}">${FLAG[p.country] || ""} ${esc(p.name)} · ${popShort(p.population)}</button>`).join("")}</div>
@@ -177,7 +177,7 @@ export function openCityPanel(city, ctx) {
     ? `<div class="stat-row"><span class="sl">${icon("y-gold", "🪙", { size: 14 })}Economic output (estimate)</span><span><b>≈ ${money(city.gdp)}</b><span class="cmp">${city.population ? "≈ " + money(city.gdp / city.population) + " per resident" : ""}</span></span></div>
       <p class="muted small">${esc(city.gdp_region_name || city.gdp_region)}'s published ${city.gdp_year} output (${esc(city.gdp_concept || "")}) shared ${city.gdp_method === "sector"
         ? "by each industry's regional value added and this municipality's jobs in that industry (real estate by residents)" : "by this municipality's share of the region's jobs"}.
-        An estimate, not an official municipal statistic. ${fin(city.gdp_jobshare) ? `A plain job-share split would give ≈ ${money(city.gdp_jobshare)}.` : ""}
+        Estimated from published regional statistics. ${fin(city.gdp_jobshare) ? `A plain job-share split would give ≈ ${money(city.gdp_jobshare)}.` : ""}
         Concepts differ between countries; Norway excludes the continental shelf.</p>` : `<p class="muted">No output estimate.</p>`;
 
   const actions = `<div class="cp-actions" role="group" aria-label="Explore from here">

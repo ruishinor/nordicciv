@@ -22,7 +22,7 @@ km in the Nordic LAEA frame described in `world.json.projection` (x right, y dow
 | `cities[].pop_series` | population by year; `null` = not available (never 0) |
 | `cities[].pop_terr` | territory code per year: `0` = today's boundaries, `k > 0` = another territory described in `pop_terr_notes[k]`, `null` = no value. Two years are comparable only with equal, non-null codes. |
 | `cities[].pop_status` | years that are not plain observations: `"boundary"` (agency could not reconstruct), `"missing"` |
-| `cities[].pop_breaks` | `[{rule R1/R2/R3, kind, years, related, terr, note, source}]` — the evidence for each break |
+| `cities[].pop_breaks` | `[{rule R1/R2/R3, kind, years, related, terr, note, source}]` — the source and rule for each boundary break |
 | `cities[].pop_review` | unexplained one-year changes above 6 % (`[{years, change}]`), shown as a caution |
 | `cities[].growth`, `growth_note` | 2016–26 change on one territory, else `null` with the reason |
 | `cities[].yields_hi`, `jobs_unallocated` | upper bounds for lower-bound yields; jobs in suppressed cells |
