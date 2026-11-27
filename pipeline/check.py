@@ -24,7 +24,29 @@ import re
 import sys
 from collections import defaultdict
 
+from .build.yields import YIELDS
 from .core.paths import INTERIM, RAW, ROOT, WEB_DATA
+
+
+def _ranks_independent(vals, his):
+    """Independent re-derivation of the published ranking convention (vectorised; not the build's code):
+    rank = 1 + #greater; interval = [1 + #(lo_j > hi_i), 1 + #(hi_j > lo_i, j != i)]."""
+    import numpy as np
+    have = np.array([v is not None for v in vals])
+    lo = np.array([v if v is not None else np.nan for v in vals], dtype=float)
+    hi = np.array([h if h is not None else (v if v is not None else np.nan) for v, h in zip(vals, his)], dtype=float)
+    L, H = lo[have], hi[have]
+    rank = 1 + (L[None, :] > L[:, None]).sum(1)
+    best = 1 + (L[None, :] > H[:, None]).sum(1)
+    gt = H[None, :] > L[:, None]
+    np.fill_diagonal(gt, False)
+    worst = 1 + gt.sum(1)
+    out_r, out_i, k = [None] * len(vals), [None] * len(vals), 0
+    for i in range(len(vals)):
+        if have[i]:
+            out_r[i], out_i[i] = int(rank[k]), [int(best[k]), int(worst[k])]
+            k += 1
+    return out_r, out_i
 
 TOL_POP = 0.0005  # municipal sums vs national totals: Sweden adds random noise from 2025; DK has ~90 without municipality
 YEARS = list(range(2008, 2027))
@@ -172,9 +194,67 @@ def check_cities(r, cities, world, nation, states):
         if c["jobs_total"] is None:
             continue
         s = sum(c["jobs"].values()) + (c.get("jobs_unallocated") or 0)
-        if abs(s - c["jobs_total"]) > 0.5 and not (c["country"] == "SE" and abs(s - c["jobs_total"]) <= 50):
+        # SCB applies a disclosure-protection method, so its totals need not equal the sum of components (TAB3204
+        # note); the tolerance is 1 %. NO and DK must match exactly.
+        tol = 0.01 * c["jobs_total"] if c["country"] == "SE" else 0.5
+        if abs(s - c["jobs_total"]) > tol:
             ident.append((c["name"], s, c["jobs_total"]))
     r.ok(not ident, f"industry: groups (+ suppressed remainder) add up to total jobs in every municipality ({len(ident)} off: {ident[:3]})")
+    # the suppressed remainder must be compatible with the published total and with the classification
+    res_bad = []
+    for c in cities:
+        if c["jobs_total"] is None:
+            continue
+        raw = c["jobs_total"] - sum(c["jobs"].values())
+        un = c.get("jobs_unallocated") or 0
+        if c["jobs_partial"]:
+            if raw < 0 or abs(un - raw) > 0.5:
+                res_bad.append((c["name"], "remainder", raw, un))
+            for y in c["yields_partial"]:
+                if abs(c["yields_hi"][y] - c["yields"][y] - un) > 0.5:
+                    res_bad.append((c["name"], y, "upper bound ≠ lower bound + remainder"))
+            groups = {g for yy in YIELDS for g in yy["groups"] if yy["key"] in c["yields_partial"]}
+            if not set(c["jobs_partial"]) & groups and c["yields_partial"]:
+                res_bad.append((c["name"], "partial yield without a suppressed group"))
+        else:
+            if un or c.get("yields_hi"):
+                res_bad.append((c["name"], "remainder or upper bound without any suppressed group"))
+            if c["country"] != "SE" and abs(raw) > 0.5:
+                res_bad.append((c["name"], "unsuppressed groups do not add up", raw))
+        for yy in YIELDS:
+            part = any(g in c["jobs_partial"] for g in yy["groups"])
+            if part != (yy["key"] in c["yields_partial"]):
+                res_bad.append((c["name"], yy["key"], "partial flag does not follow the suppressed groups"))
+    r.ok(not res_bad, f"suppression: remainders are non-negative, equal total − published groups, bound only yields that "
+                      f"contain a suppressed group, and are absent where nothing is suppressed ({len(res_bad)} off: {res_bad[:3]})")
+    # ranks follow the single convention (pipeline/build/ranking.py)
+    rk_bad = []
+    keys = ["population", "gdp", "growth", "density"] + [yy["key"] for yy in YIELDS]
+    for k in keys:
+        vals = [c["yields"].get(k) if k in c["yields"] else c.get(k) for c in cities]
+        his = [(c.get("yields_hi") or {}).get(k, v) if v is not None else None for c, v in zip(cities, vals)]
+        comp, ivs = _ranks_independent(vals, his)
+        for c, v, rk, iv in zip(cities, vals, comp, ivs):
+            if c["ranks"].get(k) != rk:
+                rk_bad.append((c["name"], k, "rank", c["ranks"].get(k), rk))
+            rr = (c.get("rank_range") or {}).get(k)
+            want = iv if iv and iv[0] != iv[1] else None
+            if rr != want:
+                rk_bad.append((c["name"], k, "interval", rr, want))
+            if rr and not (rr[0] <= c["ranks"][k] <= rr[1]):
+                rk_bad.append((c["name"], k, "rank outside interval", c["ranks"][k], rr))
+    n_iv = sum(len(c.get("rank_range") or {}) for c in cities)
+    r.ok(not rk_bad, f"ranking: {n_iv} published intervals; every rank is a competition rank (ties share), every interval is "
+                     f"the possible-rank interval for the published bounds and contains the rank ({len(rk_bad)} off: {rk_bad[:3]})")
+    st_bad = []
+    for k in [yy["key"] for yy in YIELDS] + ["population"]:
+        vals = [(s_["yields"].get(k) if k != "population" else s_["population"]) for s_ in states]
+        his = [(s_.get("yields_hi") or {}).get(k, v) if v is not None else None for s_, v in zip(states, vals)]
+        for s_, rk, iv in zip(states, *_ranks_independent(vals, his)):
+            rr = (s_.get("rank_range") or {}).get(k)
+            if s_["ranks"].get(k) != rk or rr != (iv if iv and iv[0] != iv[1] else None):
+                st_bad.append((s_["name"], k))
+    r.ok(not st_bad, f"ranking: region ranks and intervals follow the same convention ({len(st_bad)} off: {st_bad[:3]})")
     over = [c["name"] for c in cities if c["jobs_total"] is not None and sum(c["jobs"].values()) > c["jobs_total"] + 50]
     r.ok(not over, f"industry: no double counting — group sums never exceed total jobs ({len(over)})")
     uncertain = sum(1 for c in cities if c.get("rank_range"))
@@ -292,11 +372,20 @@ def check_source(r, cities, nation, states, gdp_by_region):
         for y in YEARS:
             v = muni.get((code, str(y)))
             mine = c["pop_series"].get(str(y))
-            if v and mine != v and c["pop_status"].get(str(y)) is None:
-                bad.append((c["name"], y, v, mine))
-            if v == 0 and mine is not None:
-                bad.append((c["name"], y, "source 0", mine))
-    r.ok(not bad, f"source join: every Norwegian municipality-year equals SSB 07459 or is explicitly unavailable ({len(bad)} off: {bad[:3]})")
+            st = c["pop_status"].get(str(y))  # None = observed
+            # each status is validated against the source value it claims; a status never excuses a mismatch
+            if st is None:
+                okv = v is not None and v != 0 and mine == v
+            elif st == "boundary":
+                okv = v == 0 and mine is None
+            elif st == "missing":
+                okv = v is None and mine is None
+            else:
+                okv = False
+            if not okv:
+                bad.append((c["name"], y, st or "observed", v, mine))
+    r.ok(not bad, f"source join: every Norwegian municipality-year matches SSB 07459 according to its status "
+                  f"(observed = equal and non-zero, boundary = source 0, missing = source empty) ({len(bad)} off: {bad[:3]})")
     rest = {y: muni.get(("K-Rest", str(y)), 0) for y in YEARS}
     off = []
     for y in YEARS:

@@ -48,7 +48,7 @@ export function openStatePanel(idx, ctx) {
     headExtra: `<div class="cp-pop">${icon("pop", "👥", { size: 16 })} <b>${int(st.population)}</b> residents${growth}</div>
       <div class="cp-pop"><span class="muted">${int(st.jobs_total)} jobs · ${Number.isFinite(st.density) ? st.density.toFixed(1) : "–"} residents/km² · aged 65+ ${pct(st.share_65plus)}</span></div>`,
     sections: [
-      st.yields && { title: `Yields · rank among the ${count} regions`, html: `<div class="yield-grid">${yieldTiles(nation, st, count)}</div>
+      st.yields && { title: `Yields · rank among the ${count} regions`, html: `<div class="yield-grid">${yieldTiles(nation, st, nation.rank_of?.regions || count)}</div>
         <p class="muted small">Gold is the sum of the municipalities' output estimates: for Swedish län and Danish regions it equals the published regional output; for Norway's 2024 counties split from Viken, Vestfold og Telemark and Troms og Finnmark it is an estimate (≈). ≥ = lower bound.</p>` },
       { title: "Population 2008–2026", html: popChart(st) + popBasis(st) },
       { title: "Land", html: landBar },

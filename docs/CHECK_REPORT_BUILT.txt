@@ -1,4 +1,4 @@
-NOTE  validation mode: built; data hash c68ec9d6f2447f1b
+NOTE  validation mode: built; data hash 0a19fe50f12bae11
 PASS  files: world.json parses as strict JSON numbers (no NaN/Infinity) [2.13 MB]
 PASS  files: cities.json parses as strict JSON numbers (no NaN/Infinity) [1.95 MB]
 PASS  files: states.json parses as strict JSON numbers (no NaN/Infinity) [0.07 MB]
@@ -34,6 +34,9 @@ PASS  history: Scandinavia 2026 = sum of the three published national totals (22
 PASS  history: national series name their published source (not a sum of municipalities)
 PASS  suppression: every partial yield has an upper bound ≥ its lower bound (0 missing)
 PASS  industry: groups (+ suppressed remainder) add up to total jobs in every municipality (0 off: [])
+PASS  suppression: remainders are non-negative, equal total − published groups, bound only yields that contain a suppressed group, and are absent where nothing is suppressed (0 off: [])
+PASS  ranking: 2969 published intervals; every rank is a competition rank (ties share), every interval is the possible-rank interval for the published bounds and contains the rank (0 off: [])
+PASS  ranking: region ranks and intervals follow the same convention (0 off: [])
 PASS  industry: no double counting — group sums never exceed total jobs (0)
 NOTE  suppression: 307 municipalities with a suppressed yield component; 745 carry at least one rank interval instead of an exact rank
 PASS  economy: every municipal output value is flagged as an estimate
@@ -55,7 +58,7 @@ PASS  places: Stavanger banner 2.1 km from its reference position
 PASS  geometry: every municipality has its own polygon (0 without: [])
 PASS  geometry: no empty polygons (0)
 PASS  geometry fixture: Frederiksberg, Solna, Sundbyberg, Haugesund, Utsira, Røst, Værøy, Rælingen, Randaberg are selectable polygons (9/9)
-NOTE  geometry: 745 polygons, 227610 rings, 113805 vertices at full detail
+NOTE  geometry: 745 polygons, 3643 rings, 113805 vertices at full detail
 PASS  lens density: source ['ssb', 'scb', 'dst', 'gisco_grids'], unit 'people / km²', resolution derived
 PASS  lens growth: source ['ssb', 'scb', 'dst'], unit '% change', resolution municipality
 PASS  lens ageing: source ['ssb', 'scb', 'dst'], unit 'share of residents', resolution municipality
@@ -97,4 +100,4 @@ PASS  source sgu: 2 files, licence: CC0 1.0 (SGU open data)
 PASS  source links: 2 files, licence: CC0 1.0 (Wikidata); CC BY 4.0 (Eurostat)
 SKIP  source reconciliation and cache verification not run in 'built' mode
 
-92 pass, 5 note, 0 warn, 1 skipped, 0 fail → PASS (mode: built)
+95 pass, 5 note, 0 warn, 1 skipped, 0 fail → PASS (mode: built)

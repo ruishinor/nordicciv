@@ -5,6 +5,7 @@
 // lenses.json, no DOM, so it is easy to check from the console (`window.__app.reports`). The second half renders.
 import { compact, dollars, esc, int, money, pct } from "../format.js";
 import { hasIcon } from "../icons.js";
+import { rankList } from "../stats.js";
 import { icon, glyph } from "./icon.js";
 import { DISTRICT_ICON } from "./infoPanel.js";
 
@@ -104,21 +105,20 @@ function areas(states, cities) {
 
 // Top TOP rows by valueOf(o); null values are skipped. opts: {asc, min (population), fmt, exact (full-precision
 // text for the row's tooltip), subOf}
-// Ties break by name, then id, so the order is the same on every load. `partial(o)` marks values that are lower
-// bounds (suppressed components): shown with ≥, and the board's ranks below the first such row read as approximate.
-function rank(list, valueOf, { asc = false, min = 0, fmt = count3, exact = int, subOf = null, partial = null } = {}) {
-  let uncertain = false;
-  return list
-    .filter((r) => !min || (r.o.population ?? 0) >= min)
-    .map((r) => ({ r, v: valueOf(r.o) }))
-    .filter((x) => fin(x.v))
-    .sort((a, b) => (asc ? a.v - b.v : b.v - a.v) || String(a.r.name).localeCompare(String(b.r.name)) || String(a.r.ref).localeCompare(String(b.r.ref)))
+// Ranks follow the shared convention (stats.js rankList): competition ranks within the listed population (equal
+// values share a rank), shown in a deterministic order (name, then id). `hiOf(o)` gives the upper bound of a value
+// that is a lower bound (suppressed cells): such values are shown with ≥, and any area whose position the bounds
+// make uncertain shows its possible-rank interval instead of one number.
+function rank(list, valueOf, { asc = false, min = 0, fmt = count3, exact = int, subOf = null, hiOf = null } = {}) {
+  const pool = list.filter((r) => !min || (r.o.population ?? 0) >= min);
+  return rankList(pool, (r) => valueOf(r.o), { asc, hiOf: hiOf ? (r) => hiOf(r.o) : null })
     .slice(0, TOP)
-    .map(({ r, v }, i) => {
-      const lb = partial ? !!partial(r.o) : false;
-      uncertain ||= lb;
+    .map(({ x: r, v, rank: rk, range }) => {
+      const h = hiOf ? hiOf(r.o) : null;
+      const lb = fin(h) && h > v;
       const sub = (subOf ? subOf(r.o) : r.sub) + (lb ? " · lower bound (suppressed cells)" : "");
-      return { rank: i + 1, approx: uncertain, kind: r.kind, ref: r.ref, name: r.name, sub, value: v, text: (lb ? "≥" : "") + fmt(v), exact: exact ? exact(v) : "" };
+      return { rank: range ? `${range[0]}–${range[1]}` : rk, approx: !!range, kind: r.kind, ref: r.ref, name: r.name, sub, value: v,
+        text: (lb ? "≥" : "") + fmt(v), exact: exact ? exact(v) : "" };
     });
 }
 
@@ -309,16 +309,18 @@ function reportJobs(rep, def, nation, n, st, metros) {
     const s = ratio(y(o), o.employed);
     return s != null ? `${pct(s)} of jobs` : "";
   };
+  const yHi = (o) => o.yields_hi?.[key];
+  const lqHi = (o) => (fin(yHi(o)) && nShare ? ratio(ratio(yHi(o), o.employed), nShare) : null);
   const fmtLq = (v) => `×${v.toFixed(2)}`;
   const exactLq = (v) => `×${v.toFixed(3)}`;
   rep.boards.modes = [
     { id: "abs", label: "Most jobs", hint: `${def.yield?.measure || "jobs"}, place of work 2024. ≥ marks lower bounds where the agency suppressed small cells.`,
-      states: rank(st, y, { partial: (o) => (o.yields_partial || []).includes(key) }), metros: rank(metros, y, { partial: (o) => (o.yields_partial || []).includes(key) }) },
+      states: rank(st, y, { hiOf: yHi }), metros: rank(metros, y, { hiOf: yHi }) },
     {
       id: "rel", label: "Specialisation",
       hint: `Share of the area's jobs in ${def.label.toLowerCase()} ÷ the Scandinavian share (${pct(nShare)}); municipalities of ${compact(METRO_MIN)}+ people.`,
-      states: rank(st, lq, { fmt: fmtLq, exact: exactLq, subOf: shareSub, partial: (o) => (o.yields_partial || []).includes(key) }),
-      metros: rank(metros, lq, { fmt: fmtLq, exact: exactLq, subOf: shareSub, min: METRO_MIN, partial: (o) => (o.yields_partial || []).includes(key) }),
+      states: rank(st, lq, { fmt: fmtLq, exact: exactLq, subOf: shareSub, hiOf: lqHi }),
+      metros: rank(metros, lq, { fmt: fmtLq, exact: exactLq, subOf: shareSub, min: METRO_MIN, hiOf: lqHi }),
     },
   ];
 }
@@ -364,7 +366,7 @@ function boardHtml(rows) {
       const w = max > 0 ? (Math.abs(r.value) / max) * 100 : 0;
       const tip = `Open ${r.name}${r.exact && r.exact !== r.text ? ` (${r.exact})` : ""}`;
       return `<li><button class="yr-row" data-kind="${r.kind}" data-ref="${esc(r.ref)}" title="${esc(tip)}">
-        <span class="yr-rk" ${r.approx ? 'title="Approximate: a lower bound above or here makes the exact order uncertain"' : ""}>${r.approx ? "≈" : ""}${r.rank}</span>
+        <span class="yr-rk${r.approx ? " range" : ""}" ${r.approx ? 'title="Possible ranks: suppressed cells make the exact position uncertain"' : ""}>${r.rank}</span>
         <span class="yr-nm">${esc(r.name)}${r.sub ? ` <span class="muted">${esc(r.sub)}</span>` : ""}</span>
         <span class="yr-v">${esc(r.text)}</span>
         <span class="yr-track"><i style="width:${w.toFixed(1)}%"></i></span></button></li>`;

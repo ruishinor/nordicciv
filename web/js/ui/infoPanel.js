@@ -1,6 +1,6 @@
 // Shared building blocks for the city and state panels (both render into #city-panel).
-import { compact, dollars, esc, int, money, pct, yieldValue } from "../format.js";
-import { icon, glyph } from "./icon.js";
+import { compact, dollars, esc, int, money, pct } from "../format.js";
+import { icon } from "./icon.js";
 
 // Industry → a "district" glyph: SVG icons i-<key> from icons.js; these emoji are only the fallback.
 export const DISTRICT_ICON = {
@@ -13,21 +13,6 @@ export const DISTRICT_ICON = {
 
 const panelEl = () => document.getElementById("city-panel");
 
-// Yield tiles; `ranks` (optional) adds "#3 of 49" under each.
-export function yieldGrid(nation, yields, ranks = null, rankOf = 0) {
-  return nation.yields
-    .map((y) => {
-      const v = yields?.[y.key];
-      const r = ranks?.[y.key];
-      const label = y.key === "gold" ? "GDP" : y.label;
-      return `<div class="yield-tile" title="${esc(y.label)}${y.key === "gold" ? " (GDP)" : ""}: ${esc(y.description || "")}">
-        <div class="ico" style="color:${esc(y.color)}">${glyph(y, 20)}</div>
-        <div class="val" style="color:${esc(y.color)}">${yieldValue(y, v)}</div>
-        <div class="lbl">${esc(label)}</div>
-        ${r ? `<div class="rank" title="Rank among the ${rankOf} mapped states (1 = largest)">#${r} of ${rankOf}</div>` : ""}</div>`;
-    })
-    .join("");
-}
 
 // One "value ▲ US value" row. higherIsGood: true / false / null (neutral).
 export function statRow(ic, fallback, label, v, nv, fmt, higherIsGood) {

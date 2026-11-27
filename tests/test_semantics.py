@@ -14,7 +14,7 @@ from unittest import mock
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
-from pipeline.build import gva, history  # noqa: E402
+from pipeline.build import gva, history, ranking  # noqa: E402
 from pipeline.core import fetch  # noqa: E402
 
 WEB = ROOT / "web" / "data"
@@ -85,6 +85,37 @@ class SectorAllocationTest(unittest.TestCase):
         self.assertAlmostEqual(sum(k.values()), 200)
 
 
+RANK_CASES = json.loads((ROOT / "tests" / "fixtures" / "ranking_cases.json").read_text())["cases"]
+
+
+class RankingConventionTest(unittest.TestCase):
+    def test_hand_calculated_cases_and_attainability(self):
+        import itertools
+        for case in RANK_CASES:
+            lo, hi = case["lo"], case["hi"] or case["lo"]
+            self.assertEqual(ranking.competition(lo), case["rank"], case["name"])
+            self.assertEqual(ranking.intervals(lo, hi), case["interval"], case["name"])
+            # brute force: the interval ends are exactly the best and worst competition rank over all integer
+            # assignments inside the bounds (so the interval is neither too wide nor too narrow for these bounds)
+            idx = [i for i, v in enumerate(lo) if v is not None]
+            seen = {i: set() for i in idx}
+            for combo in itertools.product(*[range(lo[i], hi[i] + 1) for i in idx]):
+                rk = ranking.competition(list(combo))
+                for i, r in zip(idx, rk):
+                    seen[i].add(r)
+            for i in idx:
+                self.assertEqual([min(seen[i]), max(seen[i])], case["interval"][i], (case["name"], i))
+
+    def test_browser_implementation_matches_fixture(self):
+        import shutil
+        import subprocess
+        node = shutil.which("node")
+        if not node:
+            self.skipTest("node not installed")
+        out = subprocess.run([node, str(ROOT / "tests" / "ranking_parity.mjs")], capture_output=True, text=True, timeout=60)
+        self.assertEqual(out.returncode, 0, out.stdout + out.stderr)
+
+
 class CacheIntegrityTest(unittest.TestCase):
     def test_fingerprint_detects_changed_request_and_corruption(self):
         with tempfile.TemporaryDirectory() as d, mock.patch.object(fetch, "RAW", Path(d)):
@@ -148,11 +179,14 @@ class ShippedDataFixturesTest(unittest.TestCase):
             for k in c["yields_partial"]:
                 self.assertGreaterEqual(c["yields_hi"][k], c["yields"][k])
 
-    def test_rank_ranges_are_ordered(self):
+    def test_published_ranks_lie_inside_their_intervals(self):
+        n = 0
         for c in self.cities.values():
-            for k, (lo, hi) in (c.get("rank_range") or {}).items():
-                self.assertLessEqual(lo, hi)
-                self.assertLessEqual(lo, c["ranks"][k])
+            for k, (best, worst) in (c.get("rank_range") or {}).items():
+                n += 1
+                self.assertLess(best, worst, (c["name"], k))
+                self.assertTrue(best <= c["ranks"][k] <= worst, (c["name"], k, c["ranks"][k], best, worst))
+        self.assertGreater(n, 0)
 
     def test_regional_output_reconciles(self):
         by = {}

@@ -21,7 +21,7 @@ from ..core import jsonstat
 from ..core.paths import INTERIM, RAW, WEB_DATA
 from ..core.store import read_json, write_json
 from ..sources.stats import estat_records
-from . import admin, gva, history
+from . import admin, gva, history, ranking
 from .yields import CITY_TYPES, LQ_MIN, LQ_MIN_JOBS, YIELDS
 
 GDP_YEAR = 2023
@@ -285,7 +285,7 @@ def build():
         c["prominence"] = round((c["population"] or 0) * boost)
     _nearest_bigger(cities)
     cities.sort(key=lambda c: -c["prominence"])
-    _ranks(cities)
+    rank_of = {"municipalities": _ranks(cities)}
     write_json(WEB_DATA / "cities.json", cities)
 
     # --- regions (states.json) ---------------------------------------------------------------------------------
@@ -309,7 +309,7 @@ def build():
         st.update({"fips": r["id"], "abbr": r["id"], "name": r["name"], "country": r["country"],
                    "municipalities": len(members), "land": land, "hexes": len(cells_r)})
         states.append(st)
-    _rank_states(states)
+    rank_of["regions"] = _rank_states(states)
     write_json(WEB_DATA / "states.json", states)
 
     # --- nation ----------------------------------------------------------------------------------------------------
@@ -345,6 +345,10 @@ def build():
         "year": POP_YEAR, "gdp_vintage": f"Regional accounts {GDP_YEAR} (SSB 09391, SCB TAB3138, DST NRHP), euro at "
                                          f"Eurostat {GDP_YEAR} average rates",
         "nation": nat, "countries": countries,
+        "rank_of": rank_of,
+        "ranking": ("Ranks are competition ranks within the areas that have a value (1 = largest; equal values share a "
+                    "rank). Where suppressed cells make a value a lower bound, the possible-rank interval is shown: "
+                    "the best and worst rank consistent with every value lying within its published bounds."),
         "extra_regio": {"NO_continental_shelf_eur": shelf_eur,
                         "note": "Norway's continental shelf (oil and gas extraction, pipeline transport) produced "
                                 f"≈ €{shelf_eur/1e9:.0f} bn of gross value added in {GDP_YEAR}. It belongs to no county "
@@ -430,12 +434,18 @@ def _aggregate(members):
     for y_ in YIELDS:
         vals = [c["yields"].get(y_["key"]) for c in members]
         yields[y_["key"]] = sum(v for v in vals if v is not None) if any(v is not None for v in vals) else None
+    # upper bounds: each member at its own upper bound (members are independent, so the sum is attainable)
+    yields_hi = {}
+    for y_ in YIELDS:
+        if any(y_["key"] in (c.get("yields_hi") or {}) for c in members):
+            yields_hi[y_["key"]] = sum((c.get("yields_hi") or {}).get(y_["key"], c["yields"].get(y_["key"]) or 0) for c in members)
     age = {k: sum((c["age"].get(k) or 0) for c in members) for k in ("0_19", "20_64", "65_plus")}
     at = sum(age.values()) or None
     land = sum(c["land_km2"] or 0 for c in members)
     return {
         "population": pop, "pop_series": series, "growth": (p1 / p0 - 1) if p0 and p1 else None,
         "growth_years": GROWTH_YEARS, "jobs": jobs, "jobs_total": jt, "employed": jt, "yields": yields,
+        "yields_hi": yields_hi,
         "gdp": yields.get("gold"), "gdp_year": GDP_YEAR, "age": age,
         "share_65plus": age["65_plus"] / at if at else None, "share_0_19": age["0_19"] / at if at else None,
         "land_km2": land, "density": pop / land if land else None,
@@ -444,27 +454,19 @@ def _aggregate(members):
 
 
 def _ranks(cities):
+    """Competition ranks and possible-rank intervals for municipalities (convention in ranking.py). Returns the size
+    of each comparison population (areas with a value)."""
+    n_of = {}
     keys = ["population", "gdp", "growth", "density"] + [y["key"] for y in YIELDS]
     for k in keys:
-        vals = []
-        for c in cities:
-            v = c["yields"].get(k) if k in c["yields"] else c.get(k)
-            vals.append(v)
-        order = sorted([i for i, v in enumerate(vals) if v is not None], key=lambda i: (-vals[i], -(cities[i]["population"] or 0)))
-        for c in cities:
-            c.setdefault("ranks", {})[k] = None
-        for r, i in enumerate(order, 1):
-            cities[i]["ranks"][k] = r
-        # rank intervals where suppressed values make the order uncertain
-        lo = np.array([v if v is not None else np.nan for v in vals], dtype=float)
-        hi = np.array([(c.get("yields_hi") or {}).get(k, vals[i]) if vals[i] is not None else np.nan
-                       for i, c in enumerate(cities)], dtype=float)
-        if np.any(hi > lo):
-            for i in order:
-                best = 1 + int(np.sum(lo > hi[i]))
-                worst = 1 + int(np.sum((hi > lo[i]) & (np.arange(len(cities)) != i)))
-                if worst != best:
-                    cities[i].setdefault("rank_range", {})[k] = [best, worst]
+        vals = [c["yields"].get(k) if k in c["yields"] else c.get(k) for c in cities]
+        his = [(c.get("yields_hi") or {}).get(k, v) if v is not None else None for c, v in zip(cities, vals)]
+        n_of[k] = ranking.apply(cities, k, vals, his)
+    _peers(cities)
+    return n_of
+
+
+def _peers(cities):
     pops = np.array([c["population"] or 1 for c in cities], dtype=float)
     for i, c in enumerate(cities):
         d = np.abs(np.log(pops / pops[i]))
@@ -473,13 +475,12 @@ def _ranks(cities):
 
 
 def _rank_states(states):
+    n_of = {}
     for k in [y["key"] for y in YIELDS] + ["population"]:
         vals = [(s["yields"].get(k) if k != "population" else s["population"]) for s in states]
-        order = sorted([i for i, v in enumerate(vals) if v is not None], key=lambda i: -vals[i])
-        for s in states:
-            s.setdefault("ranks", {})[k] = None
-        for r, i in enumerate(order, 1):
-            states[i]["ranks"][k] = r
+        his = [(s.get("yields_hi") or {}).get(k, v) if v is not None else None for s, v in zip(states, vals)]
+        n_of[k] = ranking.apply(states, k, vals, his)
+    return n_of
 
 
 def _electricity():

@@ -51,12 +51,14 @@ export function yearStatus(c, y) {
   return { kind: "observed", note: "Observed on today's boundaries" };
 }
 
-/** Rank text: "#12 of 745", or "#10–14 of 745" when suppressed values make the order uncertain. */
+/** Rank text: "#12 of 745", "joint" ranks are plain competition ranks, and "#10–14 of 745" (possible ranks) when
+ *  suppressed values make the order uncertain. `of` is the comparison size: a number or {key: n}. */
 export function rankText(o, key, of) {
+  const n = typeof of === "object" && of ? of[key] : of;
   const rr = o?.rank_range?.[key];
-  if (rr) return rr[0] === 1 && rr[1] >= of - 1 ? `rank uncertain` : `#${rr[0]}–${rr[1]} of ${of}`;
+  if (rr) return rr[1] - rr[0] >= n / 2 ? `rank uncertain (suppressed)` : `#${rr[0]}–${rr[1]} of ${n}`;
   const r = o?.ranks?.[key];
-  return r ? `#${r} of ${of}` : "";
+  return r ? `#${r} of ${n}` : "";
 }
 
 export const isPartial = (o, key) => (o?.yields_partial || []).includes(key);
@@ -112,6 +114,49 @@ export function breakNotes(c) {
   if (!b.length && !r.length) return "";
   return `<ul class="breaks">${b.map((x) => `<li>${esc(x.note)} <a href="${esc(x.source)}" target="_blank" rel="noopener noreferrer" class="muted">source</a></li>`).join("")}
     ${r.map((x) => `<li class="muted">${x.years[0]}→${x.years[1]}: a one-year change of ${(x.change * 100).toFixed(1)}% with no boundary change recorded in SSB's classification. It may be demographic (for example a reception centre) or an unrecorded boundary adjustment; treat comparisons across it with care.</li>`).join("")}</ul>`;
+}
+
+/** Competition ranks (1 = largest, ties share a rank); null for unavailable values. Same convention as
+ *  pipeline/build/ranking.py, checked against tests/fixtures/ranking_cases.json. */
+export function competitionRanks(vals) {
+  const sorted = vals.filter(fin).sort((a, b) => b - a);
+  const first = new Map();
+  sorted.forEach((v, i) => { if (!first.has(v)) first.set(v, i + 1); });
+  return vals.map((v) => (fin(v) ? first.get(v) : null));
+}
+
+/** Possible-rank interval [best, worst] for each value given lower bounds lo and upper bounds hi (hi null/absent =
+ *  exact): best = 1 + #(lo_j > hi_i), worst = 1 + #(hi_j > lo_i, j ≠ i). */
+export function rankIntervals(lo, hi) {
+  const H = lo.map((v, i) => (fin(hi?.[i]) ? hi[i] : v));
+  const idx = lo.map((v, i) => i).filter((i) => fin(lo[i]));
+  return lo.map((v, i) => {
+    if (!fin(v)) return null;
+    let best = 1, worst = 1;
+    for (const j of idx) {
+      if (j === i) continue;
+      if (lo[j] > H[i]) best++;
+      if (H[j] > v) worst++;
+    }
+    return [best, worst];
+  });
+}
+
+/** Rank a (possibly filtered) list under the shared convention. Returns entries in deterministic display order
+ *  (value, then name, then id) with {x, v, rank, range}; range is set only when bounds make the order uncertain.
+ *  asc ranks the smallest first; hiOf gives an item's upper bound (lower-bound values only). */
+export function rankList(list, get, { asc = false, hiOf = null } = {}) {
+  const items = list.map((x) => ({ x, v: get(x) })).filter((e) => fin(e.v));
+  const s = asc ? -1 : 1;
+  const lo = items.map((e) => (asc ? -(hiOf ? hiOf(e.x) ?? e.v : e.v) : e.v));
+  const hi = items.map((e) => (asc ? -e.v : (hiOf ? hiOf(e.x) ?? e.v : e.v)));
+  const ranks = competitionRanks(items.map((e) => s * e.v));
+  const ivs = hiOf ? rankIntervals(lo, hi) : null;
+  items.forEach((e, i) => {
+    e.rank = ranks[i];
+    if (ivs && ivs[i][0] !== ivs[i][1]) e.range = ivs[i];
+  });
+  return items.sort((a, b) => s * (b.v - a.v) || String(a.x.name).localeCompare(String(b.x.name)) || String(a.x.id ?? a.x.ref).localeCompare(String(b.x.id ?? b.x.ref)));
 }
 
 /** Deterministic sort: by value (desc by default), ties by name then id; nulls never ranked. */

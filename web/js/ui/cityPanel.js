@@ -38,14 +38,15 @@ export function yieldTiles(nation, o, rankOf, ranks = o.ranks) {
     const prefix = v == null ? "" : partial ? "≥" : est ? "≈" : "";
     const val = v == null ? "–" : prefix + (y.unit === "eur" ? money(v) : compact(v));
     const hi = partial && fin(o.yields_hi?.[y.key]) ? ` (at most ${y.unit === "eur" ? money(o.yields_hi[y.key]) : compact(o.yields_hi[y.key])})` : "";
-    const rk = ranks === o.ranks ? rankText(o, y.key, rankOf) : (ranks?.[y.key] ? `#${ranks[y.key]} of ${rankOf}` : "");
+    const nOf = typeof rankOf === "object" ? rankOf[y.key] : rankOf;
+    const rk = ranks === o.ranks ? rankText(o, y.key, rankOf) : (ranks?.[y.key] ? `#${ranks[y.key]} of ${nOf}` : "");
     const tip = `${y.label} = ${y.measure || ""}. ${y.description}${partial ? ` Some components are suppressed by the agency for confidentiality: this is a lower bound${hi}.` : ""}`;
     return `<div class="yield-tile" title="${esc(tip)}">
       <div class="ico" style="color:${esc(y.color)}">${glyph(y, 20)}</div>
       <div class="val" style="color:${esc(y.color)}">${val}</div>
       <div class="lbl">${esc(y.key === "gold" ? "Gold" : y.label)}</div>
       <div class="meas">${esc(y.measure || "")}</div>
-      ${rk ? `<div class="rank" title="Rank among ${rankOf} (1 = largest)${o.rank_range?.[y.key] ? "; an interval because suppressed values make the exact order uncertain" : ""}">${rk}</div>` : ""}</div>`;
+      ${rk ? `<div class="rank" title="Rank among the ${nOf} areas with a value (1 = largest; equal values share a rank)${o.rank_range?.[y.key] ? ". Possible ranks: suppressed cells make the exact position uncertain" : ""}">${rk}</div>` : ""}</div>`;
   }).join("");
 }
 
@@ -197,7 +198,7 @@ export function openCityPanel(city, ctx) {
       <button class="chip" data-compare="${esc(city.id)}" title="Compare this municipality with others">Compare ⇄</button></div>`,
     headExtra: head,
     sections: [
-      { tab: "Overview", title: `Yields · what each measures · rank among ${count}`, html: `<div class="yield-grid">${yieldTiles(nation, city, count)}</div>
+      { tab: "Overview", title: `Yields · what each measures · rank among ${count}`, html: `<div class="yield-grid">${yieldTiles(nation, city, nation.rank_of?.municipalities || count)}</div>
         <p class="muted small">Yields are game names for real figures: five count jobs at the place of work (2024), Gold is economic output (estimate). They are not production, research output or welfare quality. <a href="#" data-pedia-yields>What each yield measures ›</a></p>` },
       { tab: "Overview", title: "Economic profile", html: specSummary },
       { tab: "Overview", title: "Explore from here", html: actions },
