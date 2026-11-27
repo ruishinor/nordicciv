@@ -21,6 +21,7 @@ export function initRelief(loadJSON, invalidate) {
     const l0 = idx.levels.find((l) => l.id === "L0");
     state.L0 = loadImage(`data/${l0.path}`, () => { state.ready = true; invalidate(); });
     if (idx.gray) state.gray = loadImage(`data/${idx.gray.path}`, invalidate);
+    if (idx.sea) state.sea = loadImage(`data/${idx.sea.path}`, invalidate);
   }).catch((e) => console.warn("relief unavailable", e));
   loadJSON("munis", true).then((m) => { if (m) { state.munis = decodeMunis(m); invalidate(); } });
   loadJSON("coast", true).then((c) => { if (c) { state.coast = decodeLines(c); invalidate(); } });
@@ -43,6 +44,19 @@ function loadImage(src, onload) {
 }
 
 export const reliefReady = () => !!(state && state.ready && state.L0?._ok);
+export const seaReady = () => !!(state?.sea?._ok);
+
+/** The continuous sea (Natural Earth depth bands), in world units; replaces the hex water tiles under the relief. */
+export function drawSea(ctx) {
+  if (!seaReady()) return false;
+  const m = state.index.sea;
+  ctx.save();
+  ctx.imageSmoothingEnabled = true;
+  ctx.imageSmoothingQuality = "high";
+  ctx.drawImage(state.sea, 0, 0, m.size[0] * m.km_per_px, m.size[1] * m.km_per_px);
+  ctx.restore();
+  return true;
+}
 export const reliefState = () => state;
 
 /** Draw the colour relief (explore) or the gray hillshade (analyze) into ctx, which is in world units (km). */
@@ -127,17 +141,21 @@ function grainCanvas() {
   return c;
 }
 
-let texLayer = null;
-/** Explore-mode relief with the close-zoom grain; falls back to the plain image when zoomed out. */
+let texLayer = null, grainLayer = null;
+const sized = (c, cv) => {
+  if (!c || c.width !== cv.width || c.height !== cv.height) { c = document.createElement("canvas"); c.width = cv.width; c.height = cv.height; }
+  return c;
+};
+/** Explore-mode relief with the close-zoom grain; falls back to the plain image when zoomed out.
+ *  Composition (each step one drawImage, because a destination-in per tile would erase the other tiles):
+ *  1. relief (L0 + L1 tiles) → texLayer;  2. grain pattern → grainLayer, clipped to texLayer's alpha;
+ *  3. grainLayer soft-light onto texLayer;  4. texLayer onto the map. */
 export function drawReliefTextured(ctx, vp) {
   const devPerKm = vp.s * vp.dpr;
   if (devPerKm < 3.5 || typeof DOMMatrix === "undefined") return drawRelief(ctx, vp);
   const cv = ctx.canvas;
-  if (!texLayer || texLayer.width !== cv.width || texLayer.height !== cv.height) {
-    texLayer = document.createElement("canvas");
-    texLayer.width = cv.width;
-    texLayer.height = cv.height;
-  }
+  texLayer = sized(texLayer, cv);
+  grainLayer = sized(grainLayer, cv);
   const L = texLayer.getContext("2d");
   L.setTransform(1, 0, 0, 1, 0, 0);
   L.globalCompositeOperation = "source-over";
@@ -145,17 +163,26 @@ export function drawReliefTextured(ctx, vp) {
   L.clearRect(0, 0, texLayer.width, texLayer.height);
   L.setTransform(ctx.getTransform());
   if (!drawRelief(L, vp)) return false;
+  const G = grainLayer.getContext("2d");
+  G.setTransform(1, 0, 0, 1, 0, 0);
+  G.globalCompositeOperation = "source-over";
+  G.clearRect(0, 0, grainLayer.width, grainLayer.height);
+  G.setTransform(ctx.getTransform());
   // pattern scale: one grain pixel ≈ 1.3 device px, quantised to powers of two (no swimming between renders)
   const kmPerPx = Math.pow(2, Math.round(Math.log2(1.3 / devPerKm)));
-  const pat = L.createPattern(grainCanvas(), "repeat");
+  const pat = G.createPattern(grainCanvas(), "repeat");
   pat.setTransform(new DOMMatrix([kmPerPx, 0, 0, kmPerPx, 0, 0]));
+  G.fillStyle = pat;
+  G.fillRect(vp.x0, vp.y0, vp.x1 - vp.x0, vp.y1 - vp.y0);
+  G.setTransform(1, 0, 0, 1, 0, 0);
+  G.globalCompositeOperation = "destination-in";
+  G.drawImage(texLayer, 0, 0);
+  L.setTransform(1, 0, 0, 1, 0, 0);
   L.globalCompositeOperation = "soft-light";
   L.globalAlpha = Math.min(0.9, (devPerKm - 3.5) / 6 + 0.35);
-  L.fillStyle = pat;
-  L.fillRect(vp.x0, vp.y0, vp.x1 - vp.x0, vp.y1 - vp.y0);
+  L.drawImage(grainLayer, 0, 0);
   L.globalAlpha = 1;
-  L.globalCompositeOperation = "destination-in";
-  drawRelief(L, vp);
+  L.globalCompositeOperation = "source-over";
   ctx.save();
   ctx.setTransform(1, 0, 0, 1, 0, 0);
   ctx.drawImage(texLayer, 0, 0);

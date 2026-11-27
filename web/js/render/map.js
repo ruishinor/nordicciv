@@ -17,7 +17,7 @@ import { drawTerrainGlyphs, GLYPHS_MIN_RPX } from "./art/terrain.js";
 import { drawCityTile, cityTileVisible, cityIsDot, metroSpill } from "./art/city.js";
 import { drawWater, drawRivers, strokeSegs } from "./art/water.js";
 import { lodFor } from "./art/lod.js";
-import { drawRelief, drawReliefTextured, reliefReady, fallbackHexes, drawBorderLines, bordersReady, drawCoast, munisReady, muniFeatures, muniFeature, muniPath, muniLevel } from "./art/relief.js";
+import { drawRelief, drawReliefTextured, drawSea, seaReady, reliefReady, fallbackHexes, drawBorderLines, bordersReady, drawCoast, munisReady, muniFeatures, muniFeature, muniPath, muniLevel } from "./art/relief.js";
 
 // Water under the relief image where a hex is land but the ground is sea (fjords, sounds, skerry belts).
 const SHORE_WATER = "rgb(38,92,138)";
@@ -179,13 +179,20 @@ export function drawStatic(ctx, vp, w, opts) {
   const fallback = relief ? fallbackHexes() : null;
 
   // 1. Water tiles, then the water art (texture, per-cell decoration, coast foam).
-  if (relief) {
+  if (relief && seaReady()) {
+    // one continuous sea image (depth bands from Natural Earth bathymetry): no hex steps in the water
+    drawSea(ctx);
+    worldT();
+  } else if (relief) {
     for (const i of cells) {
       if (w.water[i]) tile(i);
       else if (!fallback.has(i)) tileColor(i, shoreWater(w, i));
     }
-  } else for (const i of cells) if (w.water[i]) tile(i);
-  drawWater(ctx, vp, w, cells, { Rpx, s, lod, shore: !relief });
+    drawWater(ctx, vp, w, cells, { Rpx, s, lod, shore: false });
+  } else {
+    for (const i of cells) if (w.water[i]) tile(i);
+    drawWater(ctx, vp, w, cells, { Rpx, s, lod, shore: true });
+  }
   lap("water");
 
   // 2. Land: the relief image (Explore), lens colours clipped to the land and shaded by the relief (Analyze), or tiles.

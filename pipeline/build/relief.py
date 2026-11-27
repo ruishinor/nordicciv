@@ -44,8 +44,8 @@ PAL = {
     1: (150, 128, 112), 2: (166, 146, 124), 3: (150, 136, 124), 4: (146, 140, 130), 5: (138, 142, 150),
     6: (156, 150, 140), 7: (166, 150, 126), 8: (150, 144, 128), 9: (150, 152, 120), 10: (132, 160, 92),
     11: (140, 162, 98),
-    12: (202, 186, 104), 13: (198, 182, 100), 14: (184, 176, 96), 15: (170, 168, 96), 16: (176, 170, 100),
-    17: (160, 160, 88), 18: (128, 168, 76), 19: (160, 166, 90), 20: (170, 174, 94), 21: (128, 156, 76),
+    12: (184, 174, 108), 13: (180, 170, 104), 14: (172, 166, 100), 15: (170, 168, 96), 16: (176, 170, 100),
+    17: (160, 160, 88), 18: (128, 168, 76), 19: (160, 166, 90), 20: (160, 166, 96), 21: (128, 156, 76),
     22: (122, 148, 72),
     23: (80, 132, 52), 24: (44, 92, 46), 25: (60, 112, 50), 26: (150, 168, 92), 27: (150, 144, 92),
     28: (130, 132, 86), 29: (100, 138, 64), 30: (222, 208, 160), 31: (146, 142, 134), 32: (160, 154, 132),
@@ -175,8 +175,9 @@ def build():
     Z = samp(elev, fx, fy, 3)
     Z = np.maximum(Z, -20)
     rgb = np.stack([samp(rgb1[..., c], wx, wy, 1) for c in range(3)], axis=-1)
-    land_c = samp(land1, wx, wy, 1)
-    lake_c = samp(lake1, wx, wy, 1)
+    # a slight blur of the 1 km land/lake cells first, so shores traced from them are rounded, not stair-stepped
+    land_c = samp(ndimage.gaussian_filter(land1, 0.65), wx, wy, 1)
+    lake_c = samp(ndimage.gaussian_filter(lake1, 0.55), wx, wy, 1)
     nord = samp(nordic, fx, fy, 1)
     cc = samp(ccode, fx, fy, 0)
     valid = samp(present, fx, fy, 1)
@@ -198,7 +199,7 @@ def build():
     poly = np.asarray(img.resize((nx, ny), Image.BOX), np.float32) / 255
     del img, dr
     zone = ndimage.binary_dilation(poly > 0.5, iterations=int(3 / RES))
-    smooth_land = np.clip((land_c - 0.38) / 0.24, 0, 1)
+    smooth_land = np.clip((land_c - 0.40) / 0.16, 0, 1)
     near_sea = ndimage.binary_dilation((land_c < 0.5) & (lake_c < 0.5), iterations=int(2 / RES))
     use_poly = ((cc == 1) | (cc == 3) | (cc == 0)) & zone & near_sea
     alpha_land = np.where(use_poly, poly, np.maximum(poly, smooth_land))
@@ -252,7 +253,7 @@ def build():
     lake_rgb = LAKE_RGB * (1.04 - 0.18 * depth[..., None]) + (tex * 3)[..., None]
     rgb = rgb * (1 - lake_a[..., None]) + lake_rgb * lake_a[..., None]
     lum = rgb.mean(axis=-1, keepdims=True)
-    boost = 1 + 0.18 * np.clip(nord, 0, 1)[..., None] * (1 - lake_a[..., None])
+    boost = 1 + 0.10 * np.clip(nord, 0, 1)[..., None] * (1 - lake_a[..., None])
     rgb = lum + (rgb - lum) * boost
     rgb = np.clip(rgb, 0, 255).astype(np.uint8)
     alpha = np.clip(alpha_land * 255, 0, 255).astype(np.uint8)
@@ -284,6 +285,11 @@ def build():
     gray = np.dstack([gval, gval, gval, alpha_land * (1 - lake_a) * 255]).clip(0, 255).astype(np.uint8)
     Image.fromarray(gray, "RGBA").resize((nx // 2, ny // 2), Image.BOX).save(OUT / "gray.webp", "WEBP", quality=80, alpha_quality=90, method=6)
     manifest["gray"] = {"km_per_px": RES * 2, "size": [nx // 2, ny // 2], "path": "relief/gray.webp"}
+    # sea: Natural Earth depth bands (200/1000/2000/3000 m) as one continuous image, so the water shows no hex steps
+    _sea(frame, nx // 2, ny // 2, RES * 2, alpha_land[::2, ::2][: ny // 2, : nx // 2])
+    manifest["sea"] = {"km_per_px": RES * 2, "size": [nx // 2, ny // 2], "path": "relief/sea.webp",
+                       "note": "Natural Earth bathymetry depth bands, blurred; shallow tint within a few km of land is a "
+                               "cartographic convention, not measured depth"}
     # land hexes the image does not cover (no 1 km data, e.g. Russia): the map draws those as hex tiles
     gw = world["grid"]
     hx = geo.cell_at(mx.ravel() if False else ((np.arange(nx) + 0.5) * RES)[None, :].repeat(ny, 0).ravel(),
@@ -321,6 +327,44 @@ def build():
     write_json(WEB_DATA / "coast.json", {"scale": 0.02, "note": "shore lines (sea and lake) traced from the relief "
                                          "raster's land mask at 0.5 km; for drawing only", "lines": lines})
     print(f"    relief: {len(tiles)} L1 tiles, {manifest['bytes'] / 1e6:.1f} MB; {len(lines)} shore lines")
+
+
+def _sea(frame, nx, ny, res, land):
+    """Sea colour by depth band (Natural Earth 10 m bathymetry polygons), blurred across band edges, with a light
+    tint near land and a faint texture. Saved as relief/sea.webp (opaque)."""
+    from shapely.geometry import shape
+    depth = np.zeros((ny, nx), np.uint8)
+    for k, name in enumerate(("K_200", "J_1000", "I_2000", "H_3000"), 1):
+        fs = read_json(RAW / "natural_earth" / f"ne_10m_bathymetry_{name}.geojson")["features"]
+        img = Image.new("L", (nx, ny), 0)
+        dr = ImageDraw.Draw(img)
+        for f in fs:
+            g = shape(f["geometry"])
+            for poly_ in (g.geoms if hasattr(g, "geoms") else [g]):
+                def pts(ring):
+                    lo, la = np.asarray(ring.coords).T
+                    x_, y_ = frame.from_ll(lo, la)
+                    return list(zip((x_ / res).tolist(), (y_ / res).tolist()))
+                e = pts(poly_.exterior)
+                if len(e) >= 3:
+                    dr.polygon(e, fill=255)
+                for hole in poly_.interiors:
+                    h_ = pts(hole)
+                    if len(h_) >= 3:
+                        dr.polygon(h_, fill=0)
+        depth = np.where(np.asarray(img) > 127, k, depth)
+    cols = np.array([[48, 106, 148], [32, 82, 124], [24, 66, 104], [18, 52, 86], [14, 44, 74]], np.float32)
+    rgb = cols[depth]
+    rgb = np.stack([ndimage.gaussian_filter(rgb[..., c], 2.2) for c in range(3)], axis=-1)
+    dist = ndimage.distance_transform_edt(land < 0.5) * res
+    near = np.exp(-dist / 3.5)[..., None]
+    rgb = rgb * (1 - 0.35 * near) + np.array([96, 160, 186], np.float32) * 0.35 * near
+    rgb *= (1 + 0.035 * _noise((ny, nx), [10, 3], SEED + 7))[..., None]
+    # fade to transparent over the outer 60 km so the image meets the map's deep-ocean background without an edge
+    yy, xx = np.mgrid[0:ny, 0:nx]
+    edge = np.minimum(np.minimum(xx, nx - 1 - xx), np.minimum(yy, ny - 1 - yy)) * res
+    a = np.clip(edge / 60.0, 0, 1) * 255
+    Image.fromarray(np.dstack([np.clip(rgb, 0, 255), a]).astype(np.uint8), "RGBA").save(OUT / "sea.webp", "WEBP", quality=80, alpha_quality=60, method=6)
 
 
 def _lat_raster(frame, nx, ny):
