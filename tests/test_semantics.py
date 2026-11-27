@@ -84,6 +84,24 @@ class SectorAllocationTest(unittest.TestCase):
         self.assertAlmostEqual(k["m2"], 10 + 75)
         self.assertAlmostEqual(sum(k.values()), 200)
 
+    def test_business_services_exclude_real_estate_jobs_and_missing_denominator_falls_back(self):
+        # M-N value added follows M-N jobs only (LMN minus the published real-estate detail); agriculture value added
+        # with no agriculture job in the region is shared by total jobs instead of being dropped (NC-E01, NC-E02)
+        ms = [{"id": "m1", "jobs": {"LMN": 100, "A": 0}, "jobs_detail": {"L": 60}, "jobs_total": 100, "pop": 0},
+              {"id": "m2", "jobs": {"LMN": 40, "A": 0}, "jobs_detail": {"L": 0}, "jobs_total": 300, "pop": 0}]
+        info = {}
+        k = gva.keys(ms, {"total": 850, "M_N": 800, "A": 50}, info=info)
+        self.assertAlmostEqual(k["m1"], 400 + 12.5)
+        self.assertAlmostEqual(k["m2"], 400 + 37.5)
+        self.assertEqual(info["fallback"], {"A": 50})
+        old = gva.keys(ms, {"total": 850, "M_N": 800, "A": 50}, lmn_combined=True)
+        self.assertAlmostEqual(old["m1"], 800 * 100 / 140 + 12.5)
+        # Norway: M by NACE 68-75 jobs (approximation, includes real estate), N by 77-82 jobs
+        no = [{"id": "a", "jobs": {"LMN": 30}, "jobs_detail": {"68-75": 30, "77-82": 0}, "jobs_total": 30, "pop": 1},
+              {"id": "b", "jobs": {"LMN": 10}, "jobs_detail": {"68-75": 0, "77-82": 10}, "jobs_total": 10, "pop": 1}]
+        k = gva.keys(no, {"total": 300, "M": 200, "N": 100})
+        self.assertEqual((round(k["a"]), round(k["b"])), (200, 100))
+
 
 RANK_CASES = json.loads((ROOT / "tests" / "fixtures" / "ranking_cases.json").read_text())["cases"]
 

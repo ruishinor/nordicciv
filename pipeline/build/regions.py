@@ -153,14 +153,25 @@ def build():
 
     # sector-weighted allocation keys (NC-T07); falls back to the job share where industry data is missing
     sgva = gva.sector_gva()
-    alloc = {}
+    alloc, fallbacks, alts = {}, {}, {"v0.2 classification (M–N keyed by L–N jobs)": {}, "real estate by jobs": {}, "total jobs only": {}}
     for gid in gdp:
-        members = [{"id": m["id"], "jobs": m["jobs"], "jobs_total": m["jobs_total"], "pop": m["pop"].get(POP_YEAR)}
-                   for m in munis if m["gdp_region"] == gid]
-        k = gva.keys(members, sgva.get(gid))
+        members = [{"id": m["id"], "jobs": m["jobs"], "jobs_detail": m["jobs_detail"], "jobs_total": m["jobs_total"],
+                    "pop": m["pop"].get(POP_YEAR)} for m in munis if m["gdp_region"] == gid]
+        info = {}
+        k = gva.keys(members, sgva.get(gid), info=info)
         if k:
             tot = sum(k.values())
             alloc[gid] = {mid: v / tot for mid, v in k.items()} if tot else None
+            if info.get("fallback"):
+                fallbacks[gid] = {b: round(v, 3) for b, v in info["fallback"].items()}
+            # sensitivity comparison: the same published totals under alternative keys
+            for name, kw in (("v0.2 classification (M–N keyed by L–N jobs)", {"lmn_combined": True}),
+                             ("real estate by jobs", {"real_estate": "jobs"})):
+                ka = gva.keys(members, sgva.get(gid), **kw)
+                ta = sum(ka.values())
+                alts[name].update({mid: v / ta for mid, v in ka.items()})
+            jt = sum(m["jobs_total"] or 0 for m in members)
+            alts["total jobs only"].update({m["id"]: (m["jobs_total"] or 0) / jt for m in members} if jt else {})
     no_sector = sorted(set(gdp) - set(alloc))
     if no_sector:
         print("    NOTE: job-share GDP allocation (no industry GVA) for", no_sector)
@@ -250,6 +261,7 @@ def build():
             "pop_terr_notes": {str(k): v for k, v in h["terr_notes"].items()},
             "pop_breaks": h["breaks"],
             "pop_review": h.get("review") or None,
+            "pop_adjustments": h.get("adjustments") or None,
             "land_km2": m.get("land_km2"), "density": (pop / m["land_km2"]) if pop and m.get("land_km2") else None,
             "age": {"0_19": age.get("F0-19"), "20_64": age.get("F20-64"), "65_plus": age.get("F65+")},
             "share_65plus": (age.get("F65+") / age_tot) if age_tot and age.get("F65+") is not None else None,
@@ -369,7 +381,13 @@ def build():
                            "without the continental shelf, Sweden regional GDP at market prices (excl. extra-regio), "
                            "Denmark regional GDP; converted at Eurostat 2023 average exchange rates.")
     nation["gdp_allocation"] = ("Municipal values are estimates: each region's published total shared by industry value "
-                                f"added and local jobs per industry ({gva.SOURCES}); real estate by residents.")
+                                f"added and local jobs per industry ({gva.SOURCES}); real estate by residents; "
+                                "professional and business services by their own jobs (Norway: NACE 69–75 by 68–75 jobs, "
+                                "an approximation); value added with no matching job in the region by total jobs.")
+    nation["gdp_fallbacks"] = {gid: {"name": gdp[gid].get("name"), "unit": "NOK m (SSB 11713)" if gid.startswith("NO") else "EUR m (Eurostat nama_10r_3gva)",
+                                     "value_added": fb, "share_of_region": round(sum(fb.values()) / sgva[gid]["total"], 5)}
+                               for gid, fb in fallbacks.items()}
+    nation["gdp_sensitivity"] = _sensitivity(cities, gdp, alts)
     nation["income_definitions"] = {
         "NO": "median household income after tax, 2024 (SSB 06944)",
         "SE": "median net income, residents aged 20+, 2024 (SCB TAB4840)",
@@ -464,6 +482,29 @@ def _ranks(cities):
         n_of[k] = ranking.apply(cities, k, vals, his)
     _peers(cities)
     return n_of
+
+
+def _sensitivity(cities, gdp, alts):
+    """How much municipal output estimates move under alternative keys (same published regional totals)."""
+    out = []
+    for name, shares in alts.items():
+        for cc in ("NO", "SE", "DK", None):
+            d = []
+            for c in cities:
+                if (cc and c["country"] != cc) or c["gdp"] is None or c["id"] not in shares:
+                    continue
+                g = gdp[c["gdp_region"]]["eur"] * 1e6 * shares[c["id"]]
+                if c["gdp"] > 0:
+                    d.append((g / c["gdp"] - 1, c["name"]))
+            if not d:
+                continue
+            a = sorted(abs(x) for x, _ in d)
+            mx = max(d, key=lambda t: abs(t[0]))
+            out.append({"alternative": name, "country": cc or "all", "n": len(d), "over_1pct": sum(1 for x in a if x > 0.01),
+                        "over_5pct": sum(1 for x in a if x > 0.05), "median_abs": round(a[len(a) // 2], 4),
+                        "p95_abs": round(a[min(len(a) - 1, int(0.95 * len(a)))], 4),
+                        "max": round(mx[0], 4), "max_name": mx[1]})
+    return out
 
 
 def _peers(cities):

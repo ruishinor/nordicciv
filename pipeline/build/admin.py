@@ -38,17 +38,19 @@ GROUPS = [
 ]
 GROUP_KEYS = [g for g, _ in GROUPS]
 # Finer detail some countries publish (kept separately for specialisation where available).
-DETAIL = {"B": "Mining & quarrying incl. oil & gas extraction", "C": "Manufacturing", "M72": "Scientific R&D"}
+DETAIL = {"B": "Mining & quarrying incl. oil & gas extraction", "C": "Manufacturing", "M72": "Scientific R&D",
+          "L": "Real estate", "68-75": "Real estate, professional, scientific & technical (NACE 68–75)",
+          "77-82": "Administrative & support services (NACE 77–82)"}
 
 # national code -> harmonised group (and optional detail key)
 MAP_NO = {"01-03": "A", "05-09": ("BC", "B"), "10-33": ("BC", "C"), "35-39": "DE", "41-43": "F", "45-47": "G",
-          "49-53": "H", "55-56": "I", "58-63": "J", "64-66": "K", "68-75": "LMN", "77-82": "LMN", "84": "O",
+          "49-53": "H", "55-56": "I", "58-63": "J", "64-66": "K", "68-75": ("LMN", "68-75"), "77-82": ("LMN", "77-82"), "84": "O",
           "85": "P", "86-88": "Q", "90-99": "RS", "00": "X"}
-MAP_SE = {"A": "A", "B+C": "BC", "D+E": "DE", "F": "F", "G": "G", "H": "H", "I": "I", "J": "J", "K": "K", "L": "LMN",
+MAP_SE = {"A": "A", "B+C": "BC", "D+E": "DE", "F": "F", "G": "G", "H": "H", "I": "I", "J": "J", "K": "K", "L": ("LMN", "L"),
           "M+N": "LMN", "O": "O", "P": "P", "Q": "Q", "R+S+T+U": "RS", "US": "X"}
 # Denmark publishes DB25 (NACE Rev. 2.1); sections are re-lettered in 2.1, mapped back to Rev. 2 groups here.
 MAP_DK = {"A": "A", "B": ("BC", "B"), "D": "DE", "E": "DE", "F": "F", "G": "G", "H": "H", "I": "I", "J": "J",
-          "K61": "J", "K62-K63": "J", "L": "K", "M": "LMN", "N69-N71": "LMN", "N72": ("LMN", "M72"), "N73-N75": "LMN",
+          "K61": "J", "K62-K63": "J", "L": "K", "M": ("LMN", "L"), "N69-N71": "LMN", "N72": ("LMN", "M72"), "N73-N75": "LMN",
           "O": "LMN", "P": "O", "Q": "P", "R86": "Q", "R87-R88": "Q", "S": "RS", "TUV": "RS", "0000": "X"}
 
 

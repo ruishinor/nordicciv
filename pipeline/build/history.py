@@ -39,6 +39,15 @@ from ..core.paths import INTERIM, RAW
 YEARS = list(range(2008, 2027))
 SSB_HISTORY_URL = "https://www.ssb.no/statbank/hvordan-bruke-statistikkbanken/hvordan-ivareta-historikken"
 KLASS_URL = "https://data.ssb.no/api/klass/v1/classifications/131/changes"
+# documentation of recorded adjustments that are too small to treat as breaks (what moved, from the decisions)
+MINOR_ADJUSTMENTS = {
+    ("3118", "2026-01-01"): {
+        "what": "Two small areas moved from Indre Østfold on 1 January 2026: about 565 decares with eight property "
+                "units by Slemmestadveien to Nordre Follo (ministry decision), and the Loska cabin area (about 17 "
+                "cabins) to Vestby.",
+        "sources": ["https://cms12.regjeringen.no/contentassets/184b7148f75f48c0b62ef525af395005/vedtak-om-grensejustering-mellom-indre-ostfold-og-l412550.pdf",
+                    "https://www.vestby.kommune.no/politikk/styringsdokumenter/kommuneplan/rullering-av-kommuneplan-2023-2034"]},
+}
 EXCESS_PP = 0.015
 REVIEW_JUMP = 0.06
 
@@ -141,6 +150,32 @@ def classify(munis: list[dict], country_pop: dict[str, dict[int, float]]) -> dic
                                            f"(code {old}) was transferred; the {year} change ({ch:+.1%}) is mainly "
                                            "the transfer, not demographic growth.", "R3", "split",
                                   [f"NO-{c}" for c in receivers if f"NO-{c}" != mid], KLASS_URL)
+                else:
+                    # a recorded adjustment too small to separate from ordinary change: kept comparable, but noted
+                    others = sorted(by_id[f"NO-{c}"]["name"] for c in receivers if c != old and f"NO-{c}" in by_id)
+                    doc = MINOR_ADJUSTMENTS.get((old, date), {})
+                    h.setdefault("adjustments", []).append({
+                        "year": year, "change": round(ch, 4), "national": round(nat["NO"].get(year, 0), 4),
+                        "note": f"{year}: SSB's classification records a boundary adjustment between "
+                                f"{by_id.get('NO-' + old, {}).get('name', old)} and {', '.join(others)}. "
+                                + (doc.get("what", "") + " " if doc else "")
+                                + f"The {year - 1}→{year} change here ({ch:+.1%}; the year before "
+                                f"{(h['series'][year - 1] / h['series'][year - 2] - 1) if h['series'].get(year - 2) else float('nan'):+.1%}; "
+                                f"Norway {nat['NO'].get(year, 0):+.1%}) does not stand out, so the years are treated as "
+                                "comparable. SSB's table does not say how many residents moved.",
+                        "sources": [KLASS_URL] + doc.get("sources", [])})
+
+    # SSB's own notes on table 07459 document small transfers it does not harmonise (and series it does): shown as
+    # context on the municipality, never used to change a value
+    src = RAW / "ssb" / "07459_pop_age.json"
+    if src.exists():
+        notes = json.loads(src.read_text())["dimension"]["Region"]["category"].get("note", {})
+        for code, txt in notes.items():
+            h = out.get("NO-" + code[2:])
+            if h is None or h["breaks"]:
+                continue
+            h.setdefault("adjustments", []).append({"year": None, "note": "Statistics Norway's note: " + " ".join(t.strip() for t in txt),
+                                                    "sources": ["https://www.ssb.no/en/statbank/table/07459"]})
 
     review = []
     for mid, h in out.items():

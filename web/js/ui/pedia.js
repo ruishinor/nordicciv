@@ -64,6 +64,7 @@ export function initPedia(data) {
       municipality the value is an estimate (≈), never an official statistic. Output is counted where people work, so a
       municipality that draws commuters shows high output per resident.</p>
       <p>${esc(data.nation.extra_regio?.note || "")}</p>
+      ${sensitivityHtml(data.nation)}
       <h4>Specialisation (city types)</h4>
       <p>A municipality's type is its industry group with the highest <b>location quotient</b> — its share of local jobs ÷ the
       share in Norway, Sweden and Denmark combined — of at least ${data.nation.lq_rule?.min_lq} with at least ${data.nation.lq_rule?.min_jobs}
@@ -75,6 +76,10 @@ export function initPedia(data) {
       municipality's total jobs are published, the suppressed cells can add at most the unallocated remainder: the panel
       and CSV give that upper bound, and where it makes the order uncertain a rank is shown as an interval (#10–14).
       National figures for Norway come from SSB's national table, which has no suppression.</p>
+      <h4>Ranks</h4>
+      <p>${esc(data.nation.ranking || "")} The interval uses only each area's own published bounds; the bounds do not use the
+      agencies' disclosure thresholds or national totals, so the true range can be narrower. "Rank uncertain" means the
+      interval covers at least half of the areas (for example Oslo's agriculture jobs, which are suppressed).</p>
       <h4>Location quotients</h4>
       <p>A location quotient (×) compares an industry's share of local jobs with its share in the three countries combined;
       ×2 means twice as concentrated. It measures relative concentration only — not output, productivity, the largest
@@ -277,4 +282,17 @@ export function initPedia(data) {
       return !modal.hidden;
     },
   };
+}
+
+// How much municipal output estimates move under alternative allocation keys (computed in the build).
+function sensitivityHtml(n) {
+  const rows = (n.gdp_sensitivity || []).filter((r) => r.country === "all");
+  if (!rows.length) return "";
+  const p = (x) => `${(x * 100).toFixed(1)}%`;
+  return `<p><b>How sensitive are the estimates?</b> The regional totals are fixed; only the split between municipalities
+    depends on the method. Compared with the method used here, for the ${rows[0].n} municipalities:</p>
+    <table class="small"><tr><th>Alternative key</th><th>median change</th><th>95th percentile</th><th>&gt; 5%</th><th>largest</th></tr>
+    ${rows.map((r) => `<tr><td>${esc(r.alternative)}</td><td>${p(r.median_abs)}</td><td>${p(r.p95_abs)}</td><td>${r.over_5pct}</td><td>${p(r.max)} (${esc(r.max_name)})</td></tr>`).join("")}</table>
+    <p class="muted small">Large differences under "total jobs only" are expected: that key gives every job in a region the same output.
+    Real estate follows residents because its value added is mostly the rent of dwellings, owner-occupied ones included.</p>`;
 }

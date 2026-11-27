@@ -1,8 +1,8 @@
-NOTE  validation mode: built; data hash 0a19fe50f12bae11
+NOTE  validation mode: built; data hash 30aad91639999a52
 PASS  files: world.json parses as strict JSON numbers (no NaN/Infinity) [2.13 MB]
-PASS  files: cities.json parses as strict JSON numbers (no NaN/Infinity) [1.95 MB]
+PASS  files: cities.json parses as strict JSON numbers (no NaN/Infinity) [1.99 MB]
 PASS  files: states.json parses as strict JSON numbers (no NaN/Infinity) [0.07 MB]
-PASS  files: nation.json parses as strict JSON numbers (no NaN/Infinity) [0.01 MB]
+PASS  files: nation.json parses as strict JSON numbers (no NaN/Infinity) [0.02 MB]
 PASS  files: lenses.json parses as strict JSON numbers (no NaN/Infinity) [1.22 MB]
 PASS  files: sources.json parses as strict JSON numbers (no NaN/Infinity) [0.04 MB]
 PASS  files: resources.json parses as strict JSON numbers (no NaN/Infinity) [0.14 MB]

@@ -1,15 +1,15 @@
-NOTE  validation mode: source; data hash 974f12d21856c49e
+NOTE  validation mode: source; data hash 30aad91639999a52
 PASS  files: world.json parses as strict JSON numbers (no NaN/Infinity) [2.13 MB]
-PASS  files: cities.json parses as strict JSON numbers (no NaN/Infinity) [1.94 MB]
+PASS  files: cities.json parses as strict JSON numbers (no NaN/Infinity) [1.99 MB]
 PASS  files: states.json parses as strict JSON numbers (no NaN/Infinity) [0.07 MB]
-PASS  files: nation.json parses as strict JSON numbers (no NaN/Infinity) [0.01 MB]
-PASS  files: lenses.json parses as strict JSON numbers (no NaN/Infinity) [1.07 MB]
+PASS  files: nation.json parses as strict JSON numbers (no NaN/Infinity) [0.02 MB]
+PASS  files: lenses.json parses as strict JSON numbers (no NaN/Infinity) [1.22 MB]
 PASS  files: sources.json parses as strict JSON numbers (no NaN/Infinity) [0.04 MB]
 PASS  files: resources.json parses as strict JSON numbers (no NaN/Infinity) [0.14 MB]
 PASS  files: infrastructure.json parses as strict JSON numbers (no NaN/Infinity) [0.14 MB]
 PASS  files: wonders.json parses as strict JSON numbers (no NaN/Infinity) [0.03 MB]
 PASS  files: detail.json parses as strict JSON numbers (no NaN/Infinity) [0.77 MB]
-FAIL  files: web/data/munis.json missing
+PASS  files: munis.json parses as strict JSON numbers (no NaN/Infinity) [1.45 MB]
 PASS  world: 9,005 Scandinavian land hexes ≈ 842,244 km² (land of NO+SE+DK ≈ 774,000 km² + inland water)
 PASS  world: every Scandinavian land hex has a dominant municipality (0 without)
 PASS  dasymetric: hex population 22,258,516 vs municipal total 22,258,431 (Δ 0.00038%, rounding only)
@@ -34,6 +34,9 @@ PASS  history: Scandinavia 2026 = sum of the three published national totals (22
 PASS  history: national series name their published source (not a sum of municipalities)
 PASS  suppression: every partial yield has an upper bound ≥ its lower bound (0 missing)
 PASS  industry: groups (+ suppressed remainder) add up to total jobs in every municipality (0 off: [])
+PASS  suppression: remainders are non-negative, equal total − published groups, bound only yields that contain a suppressed group, and are absent where nothing is suppressed (0 off: [])
+PASS  ranking: 2969 published intervals; every rank is a competition rank (ties share), every interval is the possible-rank interval for the published bounds and contains the rank (0 off: [])
+PASS  ranking: region ranks and intervals follow the same convention (0 off: [])
 PASS  industry: no double counting — group sums never exceed total jobs (0)
 NOTE  suppression: 307 municipalities with a suppressed yield component; 745 carry at least one rank interval instead of an exact rank
 PASS  economy: every municipal output value is flagged as an estimate
@@ -52,7 +55,10 @@ PASS  places: Tromsø banner 0.2 km from its reference position
 PASS  places: Kiruna banner 1.0 km from its reference position
 PASS  places: Luleå banner 3.5 km from its reference position
 PASS  places: Stavanger banner 2.1 km from its reference position
-FAIL  geometry: munis.json missing
+PASS  geometry: every municipality has its own polygon (0 without: [])
+PASS  geometry: no empty polygons (0)
+PASS  geometry fixture: Frederiksberg, Solna, Sundbyberg, Haugesund, Utsira, Røst, Værøy, Rælingen, Randaberg are selectable polygons (9/9)
+NOTE  geometry: 745 polygons, 3643 rings, 113805 vertices at full detail
 PASS  lens density: source ['ssb', 'scb', 'dst', 'gisco_grids'], unit 'people / km²', resolution derived
 PASS  lens growth: source ['ssb', 'scb', 'dst'], unit '% change', resolution municipality
 PASS  lens ageing: source ['ssb', 'scb', 'dst'], unit 'share of residents', resolution municipality
@@ -93,7 +99,7 @@ PASS  source sodir: 3 files, licence: NLOD 2.0 (Norwegian Licence for Open Gover
 PASS  source sgu: 2 files, licence: CC0 1.0 (SGU open data)
 PASS  source links: 2 files, licence: CC0 1.0 (Wikidata); CC BY 4.0 (Eurostat)
 PASS  source: SSB 07459 has no duplicate observations (0)
-PASS  source join: every Norwegian municipality-year equals SSB 07459 or is explicitly unavailable (0 off: [])
+PASS  source join: every Norwegian municipality-year matches SSB 07459 according to its status (observed = equal and non-zero, boundary = source 0, missing = source empty) (0 off: [])
 PASS  source: Norway, every year 2008–2026: Σ municipalities + SSB's 'divided municipalities' bucket = national total (0 years off: [])
 PASS  source: Norway national series 2008–2026 identical to SSB 07459 country
 PASS  source: Sweden 2008 published total 9,182,927 = SCB TAB628 '00' 9,182,927
@@ -106,7 +112,7 @@ PASS  source: Denmark 2008 published total 5,475,791 = DST FOLK1A '000' 5,475,79
 PASS  source: Denmark 2016 published total 5,707,251 = DST FOLK1A '000' 5,707,251
 PASS  source: Denmark 2026 published total 6,025,603 = DST FOLK1A '000' 6,025,603
 PASS  source join: every Danish municipality's 2026 population equals DST FOLK1A (0 off)
-FAIL  economy: Σ municipal estimates reconcile with all 43 published regional totals (worst Δ 2.42e-05)
+PASS  economy: Σ municipal estimates reconcile with all 43 published regional totals (worst Δ €47,796; totals stored to €0.1 m)
 PASS  economy: continental shelf GVA €104.1 bn reported separately, not in any municipality
 PASS  source: NO jobs 2,854,623 vs national 2,863,316 (Δ 0.304%; Svalbard/continental shelf/unknown excluded)
 NOTE  history review: NO-1151 Utsira 2022→2023: +10.6% (no recorded boundary change)
@@ -125,4 +131,4 @@ NOTE  history review: NO-4649 Stad 2019→2020: +6.3% (no recorded boundary chan
 NOTE  history review: DK-187 Vallensbæk 2008→2009: +7.8% (no recorded boundary change)
 PASS  cache: 1003/1003 declared downloads match their manifest (SHA-256, size, request identity)
 
-105 pass, 18 note, 0 warn, 0 skipped, 3 fail → FAIL (mode: source)
+113 pass, 19 note, 0 warn, 0 skipped, 0 fail → PASS (mode: source)

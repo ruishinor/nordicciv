@@ -13,6 +13,17 @@ same output. Real estate (L, which includes the imputed rent of owner-occupied d
 the agency suppresses for a region-industry is shared by total jobs. The method still assumes equal output per job
 *within* an industry and region; the result is an estimate and is always labelled as such.
 
+Classification (v0.3, NC-E01): the value added of professional and business services (M–N) is keyed by M–N jobs only.
+Sweden (SCB "L" and "M+N") and Denmark (DB25 section M = real estate, sections N–O = Rev. 2 M–N) publish real-estate
+jobs separately, so they are removed from the key. Norway's municipal table joins real estate with professional
+services (NACE 68–75), so there M (69–75) is keyed by 68–75 jobs — a documented approximation, as real-estate jobs are
+a small part of that group — and N (77–82) by 77–82 jobs.
+
+Missing denominator (NC-E02): when a region has value added in an industry but none of its municipalities has a
+mapped job in it (for example Oslo: NOK 45 m in agriculture, forestry and fishing while its NACE A jobs are
+suppressed), that value added is shared by total jobs, like value added the agency does not break down. It is never
+dropped. The amounts are reported per region.
+
 Industry value added: SSB table 11713 (2023, 2020–2023 counties) and Eurostat nama_10r_3gva (2023, NUTS 3) for
 Sweden and Denmark.
 """
@@ -34,7 +45,7 @@ BUCKETS = {
 NO_CODES = {
     "A": ["pub2X01_02", "pub2X03"], "B-E": ["pub2X05", "nr2X06_09", "nr23ind", "pub2X35", "pub2X36_39"],
     "F": ["pub2X41_43"], "G-I": ["pub2X45_47", "pub2X49B", "pub2X50A", "pub2X49A_52", "pub2X53", "pub2X55_56"],
-    "J": ["pub2X58_63"], "K": ["pub2X64_66"], "L": ["pub2X68A", "pub2X68B"], "M_N": ["pub2X69_75", "pub2X77_82"],
+    "J": ["pub2X58_63"], "K": ["pub2X64_66"], "L": ["pub2X68A", "pub2X68B"], "M": ["pub2X69_75"], "N": ["pub2X77_82"],
     "O-Q": ["pub2X84", "pub2X85", "pub2X86_88"], "R-U": ["pub2X90_97"],
 }
 SE_NUTS3 = {"01": "SE110", "03": "SE121", "04": "SE122", "05": "SE123", "18": "SE124", "19": "SE125", "06": "SE211",
@@ -80,30 +91,56 @@ def sector_gva() -> dict:
     return out
 
 
-def keys(munis_in_region: list[dict], gva: dict) -> dict | None:
-    """{muni id: allocation key} for one region (None if no industry data)."""
+def bucket_jobs(m: dict, bucket: str, *, lmn_combined: bool = False) -> float:
+    """Jobs in a municipality that key one value-added bucket (classification rules in the module docstring).
+    A suppressed detail counts as 0 (its group is then a lower bound)."""
+    d = m.get("jobs_detail") or {}
+    if lmn_combined and bucket in ("M_N", "M", "N"):
+        return m["jobs"].get("LMN", 0) or 0
+    if bucket == "M_N":
+        return (m["jobs"].get("LMN", 0) or 0) - (d.get("L") or 0)
+    if bucket == "M":
+        return d.get("68-75") or 0
+    if bucket == "N":
+        return d.get("77-82") or 0
+    return sum(m["jobs"].get(g, 0) or 0 for g in BUCKETS[bucket])
+
+
+def keys(munis_in_region: list[dict], gva: dict, *, info: dict | None = None, real_estate: str = "residents",
+         lmn_combined: bool = False) -> dict | None:
+    """{muni id: allocation key} for one region (None if no industry data).
+
+    real_estate="jobs" and lmn_combined=True exist only for the sensitivity comparison. `info`, if given, receives
+    {"fallback": {bucket: value added shared by total jobs because no municipality has a job in it}}."""
     if not gva or not gva.get("total"):
         return None
-    jobs_r = defaultdict(float)
     pop_r = sum(m["pop"] or 0 for m in munis_in_region)
     jt_r = sum(m["jobs_total"] or 0 for m in munis_in_region)
-    for m in munis_in_region:
-        for g, v in m["jobs"].items():
-            jobs_r[g] += v or 0
+    buckets = [b for b in gva if b != "total"]
+    den = {b: sum(bucket_jobs(m, b, lmn_combined=lmn_combined) for m in munis_in_region) for b in buckets if b != "L"}
     allocated = sum(v for b, v in gva.items() if b != "total" and v is not None)
     unalloc = max(0.0, gva["total"] - allocated)
+    fallback = {}
+    for b in buckets:
+        v = gva.get(b)
+        if v and b != "L" and den[b] <= 0:
+            fallback[b] = v
+    if real_estate == "jobs" and gva.get("L"):
+        fallback["L"] = gva["L"]
+    by_total = unalloc + sum(fallback.values())
     out = {}
     for m in munis_in_region:
         k = 0.0
-        for b, groups in BUCKETS.items():
+        for b in buckets:
             v = gva.get(b)
-            if v is None:
+            if v is None or b in fallback:
                 continue
-            if groups is None:
+            if b == "L":
                 k += v * (m["pop"] or 0) / pop_r if pop_r else 0
             else:
-                den = sum(jobs_r[g] for g in groups)
-                k += v * sum(m["jobs"].get(g, 0) for g in groups) / den if den else 0
-        k += unalloc * (m["jobs_total"] or 0) / jt_r if jt_r else 0
+                k += v * bucket_jobs(m, b, lmn_combined=lmn_combined) / den[b]
+        k += by_total * (m["jobs_total"] or 0) / jt_r if jt_r else 0
         out[m["id"]] = k
+    if info is not None:
+        info["fallback"] = fallback
     return out

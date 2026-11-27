@@ -111,8 +111,10 @@ export function popChart(c, { w = 300, h = 74, color = "#c9a45c", alt = "#8aa0c8
 export function breakNotes(c) {
   const b = c?.pop_breaks || [];
   const r = c?.pop_review || [];
-  if (!b.length && !r.length) return "";
-  return `<ul class="breaks">${b.map((x) => `<li>${esc(x.note)} <a href="${esc(x.source)}" target="_blank" rel="noopener noreferrer" class="muted">source</a></li>`).join("")}
+  const a = c?.pop_adjustments || [];
+  if (!b.length && !r.length && !a.length) return "";
+  const adj = a.map((x) => `<li class="muted">${esc(x.note)} ${x.sources.map((u, i) => `<a href="${esc(u)}" target="_blank" rel="noopener noreferrer">source ${i + 1}</a>`).join(" ")}</li>`).join("");
+  return `<ul class="breaks">${adj}${b.map((x) => `<li>${esc(x.note)} <a href="${esc(x.source)}" target="_blank" rel="noopener noreferrer" class="muted">source</a></li>`).join("")}
     ${r.map((x) => `<li class="muted">${x.years[0]}→${x.years[1]}: a one-year change of ${(x.change * 100).toFixed(1)}% with no boundary change recorded in SSB's classification. It may be demographic (for example a reception centre) or an unrecorded boundary adjustment; treat comparisons across it with care.</li>`).join("")}</ul>`;
 }
 

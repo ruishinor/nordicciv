@@ -29,6 +29,9 @@ export function sparkline(series, { w = 280, h = 54, color = "#c9a45c" } = {}) {
     <text x="${w - 4}" y="${h - 2}" font-size="10" fill="#9aa4b0" text-anchor="end">${x1} · ${compact(pts.at(-1)[1])}</text></svg>`;
 }
 
+const DETAIL_LABEL = { B: "Mining & oil/gas extraction", C: "Manufacturing", M72: "Scientific R&D", L: "Real estate",
+  "68-75": "Real estate, professional & technical", "77-82": "Administrative & support" };
+
 /** Yield tiles: game name, value with its real unit, status (≈ estimate, ≥ lower bound), rank or rank interval. */
 export function yieldTiles(nation, o, rankOf, ranks = o.ranks) {
   return nation.yields.map((y) => {
@@ -155,7 +158,7 @@ export function openCityPanel(city, ctx) {
         <button class="chip sm" data-spec="${esc(s.group)}" title="Show where this industry concentrates">Map ›</button></span></div>`).join("")}</div>`
     : `<p class="muted">No industry group reaches ×${nation.lq_rule?.min_lq} with ${nation.lq_rule?.min_jobs}+ jobs: a diversified economy (or too small to tell).</p>`;
   const detail = city.jobs_detail || {};
-  const detailTxt = Object.entries(detail).filter(([, v]) => v != null).map(([k, v]) => `${k === "B" ? "Mining & oil/gas extraction" : k === "C" ? "Manufacturing" : "Scientific R&D"}: ${compact(v)}`).join(" · ");
+  const detailTxt = Object.entries(detail).filter(([, v]) => v != null).map(([k, v]) => `${DETAIL_LABEL[k] || k}: ${compact(v)}`).join(" · ");
 
   const sites = sitesIn(city);
   const siteHtml = sites.length
