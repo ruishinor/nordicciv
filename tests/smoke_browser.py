@@ -449,7 +449,7 @@ async def main():
         txt = card.get("text", "")
         ok("23 shelter selection: a click opens its card (places, municipality, source, date, not-availability note, emergency note); Escape closes it",
            bool(pt) and card.get("shown") and f"{pt['places']:,}".replace(",", ",") in txt.replace("\u202f", ",") and "Municipality" in txt and "DSB" in txt
-           and "extracted 2026" in txt and "does not say whether the shelter is open" in txt and "In an emergency" in txt and card.get("closed"),
+           and "extracted 2026" in txt and "current opening, readiness and access information" in txt and "In an emergency" in txt and card.get("closed"),
            {**(pt or {}), "card": txt[:160]})
         # 24. municipality panel, Society tab
         soc = await pg4.evaluate("""(async () => { const a = __app; const out = {};
@@ -464,10 +464,10 @@ async def main():
             out.listOpens = !document.getElementById('shelter-card').hidden; a.shelters.closeCard(); return out; })()""")
         hasNone = "NO-1856" not in await pg4.evaluate("Object.keys(__app.shelters.data.munis).join(',')")
         ok("24 Society tab: shelter count, registered places, source and date, private-shelter caveat; 'none' and 'not integrated' worded as such; 'show on map' turns the layer on",
-           soc["oslo"] and "33" in soc["oslo"] and "55,462" in soc["oslo"] and "not a measure" in soc["oslo"] and "extracted" in soc["oslo"]
+           soc["oslo"] and "33" in soc["oslo"] and "55,462" in soc["oslo"] and "Most of Norway's shelter places are in private shelters" in soc["oslo"] and "extracted" in soc["oslo"]
            and "All 33 as listed by DSB" in soc["oslo"] and soc.get("listOpens") is True
-           and hasNone and soc["none"] and "no public shelter" in soc["none"] and "does not mean there is no protection" in soc["none"]
-           and soc["se"] and "not integrated" in soc["se"] and "not zero" in soc["se"] and soc["layerOn"] is True,
+           and hasNone and soc["none"] and "no public shelter" in soc["none"] and "Private shelters in homes, schools and workplaces" in soc["none"]
+           and soc["se"] and "Shelter data unavailable for Sweden" in soc["se"] and soc["layerOn"] is True,
            {k: (v[:70] if isinstance(v, str) else v) for k, v in soc.items()})
         # 25. Council, Almanac, lens
         rest = await pg4.evaluate("""(async () => { const a = __app; a.clearSelection();
@@ -480,8 +480,8 @@ async def main():
             return { notes, oslo, page: page.slice(0, 4000), lens: !!lens, seNull: mv['SE-0180'] === null, osloBand: mv['NO-0301'],
                      noneZero: mv['NO-1856'] === 0, cats: (lens?.categories || []).length }; })()""")
         ok("25 Council and Almanac explain public vs private, capacity vs availability, SE/DK not integrated; lens: Norway banded, Sweden/Denmark no data, 'none' its own class",
-           "555 public shelters" in rest["notes"] and "not integrated" in rest["notes"] and "55,462" in rest["oslo"] and "private" in rest["oslo"]
-           and "Registered places" in rest["page"] and "Private shelters" in rest["page"] and "cannot tell you" in rest["page"] and "NLOD" in rest["page"]
+           "555 public shelters" in rest["notes"] and "unavailable for Sweden and Denmark" in rest["notes"] and "55,462" in rest["oslo"] and "private" in rest["oslo"]
+           and "Registered places" in rest["page"] and "Private shelters" in rest["page"] and "Current shelter information" in rest["page"] and "NLOD" in rest["page"]
            and rest["lens"] and rest["seNull"] and rest["noneZero"] and rest["osloBand"] == 4 and rest["cats"] == 5,
            {k: (v[:60] if isinstance(v, str) else v) for k, v in rest.items()})
         await pg4.close()
@@ -560,7 +560,7 @@ async def main():
         utxt = ucard.get("text", "")
         ok("28 uplink selection: hover names it; a click opens a compact card (name, location, provider, page-check date, no-live-claim note) with one 'Open camera uplink' link to the provider's https page in a new tab without opener or referrer, and no media",
            bool(upt) and ucard.get("shown") and upt["name"] in utxt and "Location" in utxt and "Provider" in utxt and "Open camera uplink" in utxt
-           and "does not know whether the camera is live" in utxt and "Page checked 2026" in utxt and upt["name"] in ucard.get("tip", "")
+           and "Check that page for the current camera feed" in utxt and "Page checked 2026" in utxt and upt["name"] in ucard.get("tip", "")
            and ucard.get("href") == upt["url"] and ucard.get("href", "").startswith("https://") and ucard.get("target") == "_blank"
            and "noopener" in ucard.get("rel", "") and "noreferrer" in ucard.get("rel", "") and ucard.get("ref") == "no-referrer"
            and ucard.get("links") == 1 and ucard.get("media") == 0 and ucard.get("selected") == upt["id"],
@@ -624,8 +624,8 @@ async def main():
             const page = document.getElementById('pedia-body').innerText; a.pedia.close();
             return { n: ds.length, disc, opened, page: page.slice(0, 9000) }; })()""")
         ok("31 Discover offers camera uplinks (opens the place, the layer and the card); the Almanac explains links-only, positions, no live claim, exclusions, providers and attribution",
-           da["n"] >= 8 and "public camera looks out over" in da["disc"] and da["opened"] and "never loads, copies or relays" in da["page"]
-           and "Listed is not live" in da["page"] and "traffic and road-monitoring cameras" in da["page"] and "CamStreamer" in da["page"]
+           da["n"] >= 8 and "public camera looks out over" in da["disc"] and da["opened"] and "Camera feeds load on the provider's site" in da["page"]
+           and "current camera status" in da["page"] and "traffic and road-monitoring cameras" in da["page"] and "CamStreamer" in da["page"]
            and "Wikidata" in da["page"] and "OSIRIS" in da["page"], {k: (v[:80] if isinstance(v, str) else v) for k, v in da.items()})
         await pg5.close()
         # 32. phone: tapping an uplink opens its card fully on screen with the link visible; it closes

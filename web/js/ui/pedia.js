@@ -24,9 +24,8 @@ export function initPedia(data) {
   const pages = {
     "About this map": () => `
       ${h2("pedia", "📖", "About this map")}
-      <p>This is the real Scandinavia — Norway, Sweden and Denmark — drawn like a strategy game. Nothing is invented:
-      every tile, municipality and number comes from public data, listed under <i>Sources</i>, and every value says what it
-      measures, where it comes from and at what resolution.</p>
+      <p>Explore Norway, Sweden and Denmark through a strategy-game map. Terrain, population, jobs and resources come
+      from public geographical and statistical datasets. See <i>Sources</i> for the datasets and dates.</p>
       <h4>How it's built</h4>
       <p>The three countries are projected with a Lambert azimuthal equal-area projection centred on 63°N 15°E (so every hex
       covers the same ground area and the north is not stretched) and cut into ${data.world.grid.cols}×${data.world.grid.rows}
@@ -35,13 +34,12 @@ export function initPedia(data) {
       CORINE Land Cover 2018, Copenhagen tree-cover density and the GEOSTAT population grid.</p>
       <p><b>Cities are municipalities</b> (kommune / kommun): the basic unit of local government and of official statistics in
       all three countries. Their banners sit on the main settlement. Clicking any land hex opens the municipality it belongs to.</p>
-      <h4>Reading it honestly</h4>
+      <h4>Map data and definitions</h4>
       <ul>
-        <li>Yields are names for real figures (see <i>Yields</i>). Job counts are where people <i>work</i>.</li>
-        <li>Statistics published for municipalities are never shown as if measured per hex: hex population is an estimate
-        that spreads each municipality's official total over its 1 km population grid.</li>
-        <li>Missing data stays missing (–, "no data"), never 0. Lower bounds are marked ≥, estimates ≈.</li>
-        <li>Wonders and resources are selected by published rules, never by taste.</li>
+        <li>Yields group employment by industry alongside economic output (see <i>Yields</i>). Jobs are counted where people <i>work</i>.</li>
+        <li>Hex population is estimated by distributing each municipality's published total using its 1 km population grid.</li>
+        <li>Unavailable figures appear as “–” or “no data”. ≥ means at least; ≈ indicates an estimate.</li>
+        <li>The Resources and Wonders pages list the criteria for sites shown on the map.</li>
       </ul>
       <h4>Controls</h4>
       <p>Drag or arrow keys / WASD to pan · scroll, +/– or double-click to zoom · click a hex or banner to open its municipality,
@@ -54,14 +52,12 @@ export function initPedia(data) {
       4th quarter 2024: SSB table 07984, SCB TAB3204, DST RAS501), grouped into ${Object.keys(data.nation.industries || {}).length}
       industry groups that all three agencies publish (NACE Rev. 2 sections, with Denmark's NACE Rev. 2.1 data mapped back).</p>
       <table>${data.nation.yields.map((y) => `<tr><td class="ic" style="color:${esc(y.color)}">${glyph(y, 26)}</td><td><b style="color:${esc(y.color)}">${esc(y.label)}</b> = <i>${esc(y.measure || "")}</i><br>${esc(y.description)}</td></tr>`).join("")}</table>
-      <p><b>What yields are not.</b> Five yields count employment. Agricultural jobs are not food production, industrial jobs
-      are not industrial output, knowledge-sector jobs are not research output, culture jobs are not cultural value, and
-      welfare jobs are not the quality or accessibility of welfare services. Workplace jobs are not the number of employed
-      residents: commuters count where they work.</p>
+      <p><b>Employment by industry.</b> Food, Production, Science, Culture and Welfare show the number of jobs in their respective
+      industries. Commuters are counted in the municipality where they work.</p>
       <h4>Gold: economic output</h4>
       <p>${esc(data.nation.gdp_label || "")}</p>
       <p>${esc(data.nation.gdp_allocation || "")} The method assumes equal output per job within an industry in a region; for a
-      municipality the value is an estimate (≈), never an official statistic. Output is counted where people work, so a
+      municipality the value is an estimate (≈) calculated from published regional statistics. Output is counted where people work, so a
       municipality that draws commuters shows high output per resident.</p>
       <p>${esc(data.nation.extra_regio?.note || "")}</p>
       ${sensitivityHtml(data.nation)}
@@ -172,8 +168,7 @@ export function initPedia(data) {
       ${h2("layers", "▤", "Lenses")}
       <p>Lenses recolour the map by one measure (${esc(data.lenses.vintage)}). Each lens states its resolution: <b>hex</b>
       lenses aggregate the 1 km cells inside the hex; <b>municipality</b> and <b>region</b> lenses repeat one published value
-      on every hex of the area; <b>derived</b> lenses are estimates (population spread over the 1 km grid). Grey means no data,
-      which is never the same as zero.</p>
+      on every hex of the area; <b>derived</b> lenses are estimates (population spread over the 1 km grid). Grey marks unavailable figures.</p>
       <p>The legend shows how many hexes fall at each value. Hover or drag on it to show only that range on the map.</p>
       ${(data.lenses.groups || [{ id: null, name: "" }]).map((g) => {
         const ls = data.lenses.lenses.filter((l) => !g.id || l.group === g.id);
@@ -194,8 +189,8 @@ export function initPedia(data) {
       return `
       ${h2("resources", "⛏️", "Resources")}
       <p>Resources mark Scandinavia's power plants, oil &amp; gas fields and mines on the tiles where they are. Power plants
-      show installed capacity (MW), never generation; fields show saleable production; mines show SGU's status.
-      Only meaningful sites are shown: each type's threshold is in its description. When zoomed out, a hex shows its
+      show installed capacity (MW); fields show saleable production; mines show their status in SGU's register.
+      Each resource type has a minimum inclusion threshold, listed below. When zoomed out, a hex shows its
       highest-ranked resource; zoom in to see more. Press <b>R</b> to show or hide them.</p>
       ${cats.map((c) => `<h4>${esc(CATEGORY[c] || c)}</h4><table class="res-table">
         <tr><th></th><th>Type</th><th>What counts</th><th>Sites</th></tr>
@@ -219,9 +214,9 @@ export function initPedia(data) {
         <li>Finland, Iceland, Åland, the Faroes, Greenland and Svalbard are not yet mapped (the pipeline is built to add them).</li>
         <li>Norwegian mines (NGU), Danish North Sea fields, fisheries and aquaculture, wind turbines below 50 MW, electricity
         <i>generation</i> by plant, freight flows, hazards and climate are not yet included: their open services were not
-        reachable from the build environment or need more work. Nothing is filled in their place.</li>
+        reachable from the build environment or are awaiting integration.</li>
         <li>Roads, railways and ferries are Natural Earth 1:10m map art (generalised and incomplete), not a network model.</li>
-        <li>GDP below the region level is an estimate (regional GDP × share of jobs). Norway's regional figures are value added
+        <li>Municipal economic output is estimated from regional industry output and local employment. Norway's regional figures are value added
         at basic prices and exclude the continental shelf.</li>
         <li>University wonders use Wikidata student counts; some large universities have none recorded (the rule includes
         old universities without counts, but Wikidata typing can still miss an institution, e.g. the University of Copenhagen).</li>

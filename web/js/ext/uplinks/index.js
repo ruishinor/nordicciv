@@ -23,7 +23,7 @@ const HOSTS = {
   camstreamer: /^camstreamer\.com$/, panomax: /^\d+\.panomax\.com$/,
   webcamcollections: /^webcamcollections\.com$/, skylinewebcams: /^www\.skylinewebcams\.com$/,
 };
-const NOTE = "Opens the provider's own page in a new tab. NordicCiv shows no camera pictures and does not know whether the camera is live; the provider's page does.";
+const NOTE = "Opens the provider's page in a new tab. Check that page for the current camera feed.";
 // a few uplinks for Discover: distinct landscapes across the three countries (ids from uplinks.json)
 const DISCOVER = ["ln-reinefjorden", "cs-425493061", "pm-1267069", "wcc-sweden-are-areskutan", "ln-abisko", "ln-gaustabanen",
   "pm-3058468", "wcc-sweden-ulvon", "cs-1943", "wcc-sweden-gotland-farosund-harbour", "cs-847741412", "wcc-sweden-bastad-hovs-hallar"];
@@ -266,7 +266,7 @@ export function install(app) {
     const names = list.slice(0, 4).map((c) => `<button class="link" data-uplink-open="${esc(c.id)}">${esc(c.name)}</button>`).join(", ");
     return [{ tab: "Overview", title: "Camera uplinks", html: `<p class="small">${list.length === 1 ? "One public webcam" : `${list.length} public webcams`} in ${esc(city.name)}: ${names}${list.length > 4 ? ", …" : ""}.</p>
       <div class="chips"><button class="chip" data-uplink-muni="${esc(city.id)}">Explore ${list.length === 1 ? "the camera uplink" : `${list.length} camera uplinks`} on the map</button></div>
-      <p class="muted tiny">Links to the providers' own pages; nothing is loaded here.</p>` }];
+      <p class="muted tiny">Open a webcam on its provider's website.</p>` }];
   });
 
   // one delegated handler for buttons in panels, cards, Discover and the Almanac
@@ -287,7 +287,7 @@ export function install(app) {
     const list = DISCOVER.map((id) => data.byId.get(id)).filter(Boolean).map((c) => ({
       id: `uplink:${c.id}`, city: c.muni, lens: null, key: "uplink",
       text: `A public camera looks out over ${c.name} in ${muniName(c.muni)}. Visit the provider to see the place as it is now.`,
-      def: `Camera uplink · ${categoryName(c)} · ${providerName(c)}. NordicCiv links to the provider's page and shows no pictures itself.`,
+      def: `Camera uplink · ${categoryName(c)} · ${providerName(c)}. Open the provider's website to view the camera.`,
       uplink: c.id,
     }));
     app.explore.addDiscoveries(list, (d) => open(d.uplink, { fly: false }));
@@ -301,11 +301,11 @@ export function install(app) {
     const t = data.totals, s = data.sources;
     const provs = Object.entries(t.by_provider).sort((a, b) => b[1] - a[1]).map(([k, n]) => `${esc(data.providers[k]?.name || k)} (${n})`).join(", ");
     return `<h2><span>${esc(PAGE)}</span></h2>
-      <p><b>What they are.</b> Webcams their operators publish for anyone to watch — over towns, mountains, fjords, coasts, islands, ski slopes and weather stations. NordicCiv shows where they are and links to the provider's own page. It never loads, copies or relays a camera's pictures, and nothing from a provider is fetched when the layer is on or a symbol is selected.</p>
+      <p><b>What they are.</b> Webcams their operators publish for anyone to watch — over towns, mountains, fjords, coasts, islands, ski slopes and weather stations. Select a viewpoint to open the provider's website. Camera feeds load on the provider's site.</p>
       <p><b>On the map.</b> ${t.cameras} uplinks (Norway ${t.by_country.NO}, Sweden ${t.by_country.SE}, Denmark ${t.by_country.DK}) in ${t.munis} municipalities, reviewed ${esc(data.reviewed)}. The layer is off until switched on in the Map menu and is hidden at the scale of the whole of Scandinavia. The spyglass on a stone lookout marks a public viewpoint, not the camera's installation.</p>
       <p><b>Positions.</b> ${esc(data.meaning.position)} ${t.place_positions} uplinks are at place positions (their pages publish no coordinates).</p>
       <p><b>Live?</b> ${esc(data.meaning.status)} ${esc(data.meaning.verified)}</p>
-      <p><b>What is left out.</b> ${esc(data.policy.exclude.join("; "))}. ${esc(data.meaning.absence)}</p>
+      <p><b>Camera coverage.</b> ${esc(data.policy.exclude.join("; "))}. ${esc(data.meaning.absence)}</p>
       <p><b>Providers.</b> ${provs}.</p>
       <h4>Sources and attribution</h4>
       <ul><li>${esc(s.attribution)}</li>

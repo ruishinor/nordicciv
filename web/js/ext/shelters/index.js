@@ -196,11 +196,11 @@ export function install(app) {
         <dt>Shelter room no.</dt><dd>${r.room ?? "–"}</dd>
         <dt>Identifier</dt><dd><code title="DSB lokalId">${esc(r.id.slice(0, 8))}…</code></dd>
       </dl>
-      <p class="muted small">Registered places are the capacity DSB records for the room. The register does not say whether the shelter is open, ready, inspected or accessible; public shelters are made ready when the authorities decide. The text above is the description as published.</p>
+      <p class="muted small">Registered places show the capacity listed by DSB. For current opening, readiness and access information, follow official instructions.</p>
       <p class="sc-note small">${esc(EMERGENCY)}</p>
       <div class="chips"><a class="chip" href="${esc(data.source.official_map_url)}" target="_blank" rel="noopener">DSB shelter map ↗</a>
         <a class="chip" href="${esc(data.source.guidance_url)}" target="_blank" rel="noopener">About shelters (DSB) ↗</a>
-        <button class="chip" data-sc="pedia">How to read this</button></div>
+        <button class="chip" data-sc="pedia">About public shelters</button></div>
       <p class="muted tiny">${srcLine()}</p>`;
     card.hidden = false;
     wireCard(c);
@@ -241,16 +241,16 @@ export function install(app) {
   function muniSection(city) {
     if (city.country !== "NO") {
       const cov = data?.coverage?.[city.country];
-      return [{ tab: "Society", title: "Civil preparedness · public shelters", html: `<p class="muted small"><b>Shelter data not integrated for ${COUNTRY[city.country]}</b> — this is missing coverage, not zero shelters. ${esc(cov?.reason || "")}</p>` }];
+      return [{ tab: "Society", title: "Civil preparedness · public shelters", html: `<p class="muted small"><b>Shelter data unavailable for ${COUNTRY[city.country]}</b>. ${esc(cov?.reason || "")}</p>` }];
     }
     if (!data) return [{ tab: "Society", title: "Civil preparedness · public shelters", html: `<p class="muted small">Loading the public shelter register…</p>` }];
     const list = data.byMuni.get(city.id) || [];
     const a = data.munis[city.id];
     const src = `<p class="muted tiny">${srcLine()}</p>`;
-    const guide = `<a class="chip" href="${esc(data.source.guidance_url)}" target="_blank" rel="noopener">About shelters (DSB) ↗</a><button class="chip" data-shelter-pedia>How to read this</button>`;
+    const guide = `<a class="chip" href="${esc(data.source.guidance_url)}" target="_blank" rel="noopener">About shelters (DSB) ↗</a><button class="chip" data-shelter-pedia>About public shelters</button>`;
     if (!list.length) {
       return [{ tab: "Society", title: "Civil preparedness · public shelters", html: `<p>DSB's register lists <b>no public shelter</b> in ${esc(city.name)}.</p>
-        <p class="muted small">That does not mean there is no protection: private shelters (in housing, schools and workplaces) and other protective spaces are not in this dataset.</p>
+        <p class="muted small">The register covers public shelters. Private shelters in homes, schools and workplaces are outside its coverage.</p>
         <div class="chips">${guide}</div>${src}` }];
     }
     const top = [...list].sort((p, q) => (q.places ?? -1) - (p.places ?? -1)).slice(0, 3);
@@ -260,7 +260,7 @@ export function install(app) {
       <p class="small">Largest: ${top.map((r) => `${esc(r.address || `room ${r.room}`)} (${r.places == null ? "–" : int(r.places)})`).join("; ")}.</p>
       <details class="sh-all"><summary>All ${int(a.n)} as listed by DSB</summary><ul>${[...list].sort((p, q) => (p.address || "").localeCompare(q.address || "", "nb"))
         .map((r) => `<li><button class="link" data-shelter-open="${esc(r.id)}">${esc(r.address || `room ${r.room}`)}</button> · ${r.places == null ? "places not stated" : `${int(r.places)} places`}</li>`).join("")}</ul></details>
-      <p class="muted small">Public shelters are for anyone in the area, so places are not compared with the number of residents. Registered places are capacity on record, not availability or readiness. Private shelters, which hold most of Norway's shelter places, are not published and not included: this is not a measure of the municipality's preparedness.</p>
+      <p class="muted small">Public shelters serve anyone nearby. The figures show registered capacity. For current availability, follow the authorities' instructions. Most of Norway's shelter places are in private shelters, outside this register.</p>
       <div class="chips"><button class="chip" data-shelter-show="${esc(city.id)}">Show public shelters on the map</button>${guide}</div>${src}` }];
   }
   app.addCitySections?.((city) => muniSection(city));
@@ -297,20 +297,20 @@ export function install(app) {
     const src = `DSB public shelter register, extracted ${data.source.extracted}`;
     const btn = (id) => `<button class="chip" data-shelter-show="${esc(id || "")}">Show public shelters</button>`;
     if (c) {
-      if (c.country !== "NO") return [obs(`Public shelter data is <b>not integrated</b> for ${COUNTRY[c.country]}: missing coverage, not zero shelters.`, { source: "coverage note" })];
+      if (c.country !== "NO") return [obs(`Public shelter data is <b>unavailable</b> for ${COUNTRY[c.country]}.`, { source: "coverage note" })];
       const a = data.munis[c.id];
-      if (!a) return [obs(`DSB's register lists no public shelter in ${esc(c.name)}. Private shelters and other protective spaces are not in the dataset, so this says nothing about whether people here have somewhere to shelter.`, { source: src })];
+      if (!a) return [obs(`DSB's register lists no public shelter in ${esc(c.name)}. The register covers public shelters; private shelters and other protective spaces are outside its coverage.`, { source: src })];
       return [obs(`DSB's register lists <b>${int(a.n)} public shelter${a.n === 1 ? "" : "s"}</b> in ${esc(c.name)} with <b>${int(a.places)}</b> registered places. Public shelters serve whoever is nearby; private shelters are not published, so this is part of the municipality's shelter provision, not all of it. ${btn(c.id)}`, { source: src })];
     }
     if (r) {
-      if (r.country !== "NO") return [obs(`Public shelter data is <b>not integrated</b> for ${COUNTRY[r.country]}: missing coverage, not zero shelters.`, { source: "coverage note" })];
+      if (r.country !== "NO") return [obs(`Public shelter data is <b>unavailable</b> for ${COUNTRY[r.country]}.`, { source: "coverage note" })];
       const a = data.regions[r.fips];
       const total = app.data.cities.filter((x) => x.states[0] === r.fips).length;
       if (!a) return [obs(`DSB's register lists no public shelter in ${esc(r.name)}.`, { source: src })];
       return [obs(`${esc(r.name)}: <b>${int(a.n)}</b> public shelters with <b>${int(a.places)}</b> registered places, in ${a.munis} of ${total} municipalities. The register holds public shelters only. ${btn("")}`, { source: src })];
     }
     const t = data.totals;
-    return [obs(`Norway: DSB's register lists <b>${int(t.shelters)} public shelters</b> with <b>${int(t.places)}</b> registered places, in ${t.munis_with} of ${t.munis_no} municipalities. DSB puts Norway's total at about 20,000 shelters with room for about 2.5 million people, most of them private and not published. Sweden and Denmark: not integrated (missing coverage, not zero). ${btn("")}`,
+    return [obs(`Norway: DSB's register lists <b>${int(t.shelters)} public shelters</b> with <b>${int(t.places)}</b> registered places, in ${t.munis_with} of ${t.munis_no} municipalities. DSB puts Norway's total at about 20,000 shelters with room for about 2.5 million people, most of them private and not published. Public shelter data is unavailable for Sweden and Denmark. ${btn("")}`,
       { source: `${src}; national total from DSB's guidance page` })];
   }
 
@@ -321,11 +321,11 @@ export function install(app) {
     const s = data.source, t = data.totals;
     return `<h2><span>${esc(PAGE)}</span></h2>
       <p><b>What public shelters are.</b> Permanent rooms built to protect the population from the effects of armed conflict. In Norway, public shelters (<i>offentlige tilfluktsrom</i>) are for anyone in the area; they are built and maintained by the municipality, mostly in towns and larger built-up areas, and may be used for other purposes in peacetime. DSB says they must be cleared and made ready within 72 hours when required. Private shelters are for the people connected to a building (housing, schools, workplaces) and hold most of Norway's roughly 2.5 million shelter places.</p>
-      <p><b>What the map shows.</b> Every record of DSB's public register (${int(t.shelters)} shelters, ${int(t.places)} registered places, extracted ${esc(s.extracted)}), at its published position, transformed from ETRS89 into this map's projection. Far out, shelters are summarised by county and municipality; closer in, records that would overlap share one symbol with a count. No record is moved. The shield-and-doorway symbol stands for the category, not the building.</p>
+      <p><b>Public shelter register.</b> Every record of DSB's public register (${int(t.shelters)} shelters, ${int(t.places)} registered places, extracted ${esc(s.extracted)}), at its published position, transformed from ETRS89 into this map's projection. Far out, shelters are summarised by county and municipality; closer in, records that would overlap share one symbol with a count. Symbols use the published coordinates. The shield and doorway represent public shelters.</p>
       <p><b>Registered places</b> are the capacity DSB records for a room. They are not current availability, readiness, accessibility or guaranteed protection, and they serve whoever is present, not only residents — so the app does not divide places by population, rank municipalities or compute any preparedness score.</p>
-      <p><b>What it cannot tell you.</b> Whether a shelter is open or ready; anything about private shelters; how many people in an area have a place. A municipality with no public shelter here may still have private shelters or other protection.</p>
+      <p><b>Current shelter information.</b> DSB and local authorities provide instructions about shelter use. This register covers public shelters only.</p>
       <p><b>Municipality.</b> ${esc(data.rules.municipality)} ${t.assigned_nearest} record(s) were assigned this way.</p>
-      <p><b>Sweden and Denmark.</b> Not integrated, which is missing coverage, not zero. Sweden: ${esc(data.coverage.SE.reason)} Denmark: ${esc(data.coverage.DK.reason)}</p>
+      <p><b>Sweden and Denmark.</b> Public shelter data is unavailable. Sweden: ${esc(data.coverage.SE.reason)} Denmark: ${esc(data.coverage.DK.reason)}</p>
       <p class="sc-note">${esc(EMERGENCY)}</p>
       <h4>Sources</h4>
       <ul><li><a href="${esc(s.dataset_url)}" target="_blank" rel="noopener">${esc(s.dataset)}</a> — ${esc(s.authority)}, ${esc(s.license)}. ${esc(s.attribution)}</li>
