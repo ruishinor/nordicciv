@@ -480,7 +480,7 @@ async def main():
             return { notes, oslo, page: page.slice(0, 4000), lens: !!lens, seNull: mv['SE-0180'] === null, osloBand: mv['NO-0301'],
                      noneZero: mv['NO-1856'] === 0, cats: (lens?.categories || []).length }; })()""")
         ok("25 Council and Almanac explain public vs private, capacity vs availability, SE/DK not integrated; lens: Norway banded, Sweden/Denmark no data, 'none' its own class",
-           "555 public shelters" in rest["notes"] and "unavailable for Sweden and Denmark" in rest["notes"] and "55,462" in rest["oslo"] and "private" in rest["oslo"]
+           "555 public shelters" in rest["notes"] and "unavailable for Sweden and Denmark" in rest["notes"] and "55,462" in rest["oslo"] and "private" in rest["oslo"].casefold()
            and "Registered places" in rest["page"] and "Private shelters" in rest["page"] and "Current shelter information" in rest["page"] and "NLOD" in rest["page"]
            and rest["lens"] and rest["seNull"] and rest["noneZero"] and rest["osloBand"] == 4 and rest["cats"] == 5,
            {k: (v[:60] if isinstance(v, str) else v) for k, v in rest.items()})
