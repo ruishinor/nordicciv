@@ -48,6 +48,14 @@ STATES = [
     ("12-stockholm-archipelago", DESKTOP, at_city("Värmdö", 3.5), 0),
     ("13-mobile-overview", MOBILE, "__app.home();", 1500),
     ("14-mobile-tromso", MOBILE, select("Tromsø", 3.0), 0),
+    # v0.3 world-identity states: ranges, forest, farmland and sharpness at close zoom
+    ("15-jotunheimen-range", DESKTOP, at_city("Lom", 2.2), 0),
+    ("16-skane-farmland-close", DESKTOP, at_city("Skurup", 9), 0),
+    ("17-smaland-forest-close", DESKTOP, at_city("Tingsryd", 9), 0),
+    ("18-northern-scandes", DESKTOP, at_city("Narvik", 1.4), 0),
+    ("19-jutland-mid", DESKTOP, at_city("Herning", 3.5), 0),
+    ("20-telemark-very-close", DESKTOP, at_city("Tinn", 18), 0),
+    ("21-mobile-lofoten", MOBILE, at_city("Vågan", 4), 0),
 ]
 
 

@@ -7,3 +7,4 @@ dist/
 tests/.node/
 tests/results/
 .venv*/
+data/.last-good/

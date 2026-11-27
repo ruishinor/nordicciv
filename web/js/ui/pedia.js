@@ -131,9 +131,12 @@ export function initPedia(data) {
       its own territory even where it owns no hex. Municipal lenses colour polygons; hex lenses colour hexes.</p>
       <p>The landscape is one continuous image painted from the 1 km grids: CORINE land cover for colour, EU-DEM for a
       multidirectional hillshade (vertical exaggeration ×3), Copernicus tree-cover density for forest tone, and the municipal
-      polygons for the Norwegian and Danish coast. Below 1 km it only interpolates; the fine grain that appears close in is
-      texture, not data. Mountain pieces stand only on summits: hexes whose highest 1 km cell is above 1,000 m and higher
-      than all six neighbours.</p>
+      polygons for the Norwegian and Danish coast. Ranges are drawn as connected masses (shading at the scale of ranges
+      plus the local detail) under one north-west light. Below 1 km it only interpolates.</p>
+      <p><b>Illustrations.</b> Closer in, the map paints trees, fields, scree, mire, heath and rooftops through the 1 km
+      CORINE class masks (forest weighted by tree-cover density). They show what covers the ground in that square kilometre
+      — forest, farmland, bare rock, built-up land — not where any real tree, field or house stands, and their colours (crop
+      tones, roof colours) are illustrative. The analysis view (any lens) drops them so the data colours stay legible.</p>
       <h4>Validation</h4>
       <p><code>python -m pipeline check --mode built|source|release</code>. <i>built</i> checks the shipped files on their own;
       <i>source</i> reconciles them with the original downloads read independently (for example: for every year 2008–2026,

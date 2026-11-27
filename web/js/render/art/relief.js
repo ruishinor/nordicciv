@@ -9,6 +9,8 @@
 //
 // Everything here is optional: before the files arrive (or if they are missing) the map draws as hex tiles.
 
+import { initIllustration, drawIllustration, ILLUSTRATE_MIN } from "./illustrate.js";
+
 let state = null; // {index, L0, gray, tiles: Map(key -> {img, ok}), munis, coast, invalidate}
 const tileKey = (x, y) => `${x}_${y}`;
 
@@ -18,6 +20,7 @@ export function initRelief(loadJSON, invalidate) {
   loadJSON("relief/index", true).then((idx) => {
     if (!idx) return;
     state.index = idx;
+    initIllustration(idx, invalidate);
     const l0 = idx.levels.find((l) => l.id === "L0");
     state.L0 = loadImage(`data/${l0.path}`, () => { state.ready = true; invalidate(); });
     if (idx.gray) state.gray = loadImage(`data/${idx.gray.path}`, invalidate);
@@ -152,10 +155,9 @@ const sized = (c, cv) => {
  *  3. grainLayer soft-light onto texLayer;  4. texLayer onto the map. */
 export function drawReliefTextured(ctx, vp) {
   const devPerKm = vp.s * vp.dpr;
-  if (devPerKm < 3.5 || typeof DOMMatrix === "undefined") return drawRelief(ctx, vp);
+  if (devPerKm < ILLUSTRATE_MIN || typeof DOMMatrix === "undefined") return drawRelief(ctx, vp);
   const cv = ctx.canvas;
   texLayer = sized(texLayer, cv);
-  grainLayer = sized(grainLayer, cv);
   const L = texLayer.getContext("2d");
   L.setTransform(1, 0, 0, 1, 0, 0);
   L.globalCompositeOperation = "source-over";
@@ -163,26 +165,32 @@ export function drawReliefTextured(ctx, vp) {
   L.clearRect(0, 0, texLayer.width, texLayer.height);
   L.setTransform(ctx.getTransform());
   if (!drawRelief(L, vp)) return false;
-  const G = grainLayer.getContext("2d");
-  G.setTransform(1, 0, 0, 1, 0, 0);
-  G.globalCompositeOperation = "source-over";
-  G.clearRect(0, 0, grainLayer.width, grainLayer.height);
-  G.setTransform(ctx.getTransform());
-  // pattern scale: one grain pixel ≈ 1.3 device px, quantised to powers of two (no swimming between renders)
-  const kmPerPx = Math.pow(2, Math.round(Math.log2(1.3 / devPerKm)));
-  const pat = G.createPattern(grainCanvas(), "repeat");
-  pat.setTransform(new DOMMatrix([kmPerPx, 0, 0, kmPerPx, 0, 0]));
-  G.fillStyle = pat;
-  G.fillRect(vp.x0, vp.y0, vp.x1 - vp.x0, vp.y1 - vp.y0);
-  G.setTransform(1, 0, 0, 1, 0, 0);
-  G.globalCompositeOperation = "destination-in";
-  G.drawImage(texLayer, 0, 0);
-  L.setTransform(1, 0, 0, 1, 0, 0);
-  L.globalCompositeOperation = "soft-light";
-  L.globalAlpha = Math.min(0.9, (devPerKm - 3.5) / 6 + 0.35);
-  L.drawImage(grainLayer, 0, 0);
-  L.globalAlpha = 1;
-  L.globalCompositeOperation = "source-over";
+  if (devPerKm >= 3.5) {
+    grainLayer = sized(grainLayer, cv);
+    const G = grainLayer.getContext("2d");
+    G.setTransform(1, 0, 0, 1, 0, 0);
+    G.globalCompositeOperation = "source-over";
+    G.clearRect(0, 0, grainLayer.width, grainLayer.height);
+    G.setTransform(ctx.getTransform());
+    // pattern scale: one grain pixel ≈ 1.3 device px, quantised to powers of two (no swimming between renders)
+    const kmPerPx = Math.pow(2, Math.round(Math.log2(1.3 / devPerKm)));
+    const pat = G.createPattern(grainCanvas(), "repeat");
+    pat.setTransform(new DOMMatrix([kmPerPx, 0, 0, kmPerPx, 0, 0]));
+    G.fillStyle = pat;
+    G.fillRect(vp.x0, vp.y0, vp.x1 - vp.x0, vp.y1 - vp.y0);
+    G.setTransform(1, 0, 0, 1, 0, 0);
+    G.globalCompositeOperation = "destination-in";
+    G.drawImage(texLayer, 0, 0);
+    L.setTransform(1, 0, 0, 1, 0, 0);
+    L.globalCompositeOperation = "soft-light";
+    L.globalAlpha = Math.min(0.6, (devPerKm - 3.5) / 8 + 0.25);
+    L.drawImage(grainLayer, 0, 0);
+    L.globalAlpha = 1;
+    L.globalCompositeOperation = "source-over";
+    L.setTransform(ctx.getTransform());
+  }
+  // illustrative ground cover (World style): trees, fields, scree, mires, heath through the 1 km cover masks
+  drawIllustration(L, vp, devPerKm);
   ctx.save();
   ctx.setTransform(1, 0, 0, 1, 0, 0);
   ctx.drawImage(texLayer, 0, 0);
@@ -320,15 +328,26 @@ export function drawBorderLines(ctx, vp, kind, { width, color, dash = null }) {
 /** Stroke the shore lines inside the viewport (world units). */
 export function drawCoast(ctx, vp, { width, color }) {
   if (!state?.coast) return;
-  strokeLines(ctx, vp, state.coast, width, color);
+  strokeLines(ctx, vp, state.coast, width, color, null, true);
 }
 
-function strokeLines(ctx, vp, lines, width, color, dash = null) {
+// smooth = curves through the midpoints of the traced segments (the shore traced from a 0.5 km raster would otherwise
+// show its vertices as corners at close zoom)
+function strokeLines(ctx, vp, lines, width, color, dash = null, smooth = false) {
   ctx.beginPath();
   for (const { r, b } of lines) {
     if (b[2] < vp.x0 || b[0] > vp.x1 || b[3] < vp.y0 || b[1] > vp.y1) continue;
-    ctx.moveTo(r[0], r[1]);
-    for (let k = 2; k < r.length; k += 2) ctx.lineTo(r[k], r[k + 1]);
+    const n = r.length;
+    if (!smooth || n < 6) {
+      ctx.moveTo(r[0], r[1]);
+      for (let k = 2; k < n; k += 2) ctx.lineTo(r[k], r[k + 1]);
+      continue;
+    }
+    const closed = r[0] === r[n - 2] && r[1] === r[n - 1];
+    if (closed) ctx.moveTo((r[n - 4] + r[0]) / 2, (r[n - 3] + r[1]) / 2);
+    else ctx.moveTo(r[0], r[1]);
+    for (let k = closed ? 0 : 2; k < n - 2; k += 2) ctx.quadraticCurveTo(r[k], r[k + 1], (r[k] + r[k + 2]) / 2, (r[k + 1] + r[k + 3]) / 2);
+    if (!closed) ctx.lineTo(r[n - 2], r[n - 1]);
   }
   ctx.strokeStyle = color;
   ctx.lineWidth = width;

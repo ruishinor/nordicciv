@@ -230,7 +230,9 @@ export function drawStatic(ctx, vp, w, opts) {
   // 4. Biome + relief glyphs (terrain view only, readable sizes only).
   lap("grid");
   upTo(Z.GLYPHS);
-  if (!opts.lens && Rpx > GLYPHS_MIN_RPX) drawTerrainGlyphs(ctx, cells, w, { Rpx, s, lod, relief });
+  // over the relief the illustration layer (art/illustrate.js) draws the ground cover; the per-hex glyphs are the
+  // hex-tile view's art only, so the World view has no rows of isolated sprites
+  if (!opts.lens && !relief && Rpx > GLYPHS_MIN_RPX) drawTerrainGlyphs(ctx, cells, w, { Rpx, s, lod, relief });
   lap("glyphs");
 
   // 5. Rivers and borders, clipped to the world rectangle.

@@ -1,0 +1,310 @@
+// Illustration layer for the World style (NC-V06).
+//
+// The relief image carries colour, light and form; close in, it can only interpolate its 0.5–1 km evidence and reads
+// soft. This layer paints illustrative ground cover over it: tree crowns where CORINE says forest, a patchwork of
+// fields on farmland, scree on bare rock, tufts and pools on mires, low scrub on heath. Each pattern is drawn through
+// that class's 1 km mask (relief/cover tiles from pipeline/build/relief.py), so it shows WHAT covers the ground, never
+// WHERE a real tree or field is. Patterns are anchored to the map (no swimming while panning) and regenerated per
+// zoom bucket so they stay crisp; one light source (north-west) as the relief and the buildings.
+//
+// Composition per class (one reusable screen-size layer): clear → draw the class's mask tiles (alpha = cover) →
+// source-in fill with the class pattern → draw the layer onto the relief. No per-tile destination-in (that would
+// erase the other tiles).
+
+const CLASSES = [
+  // order = painting order: flat ground first, trees last (they stand on everything)
+  { key: "farm", pack: "A", ch: 2, lo: 0.30, hi: 0.62 },
+  { key: "heath", pack: "B", ch: 2, lo: 0.35, hi: 0.75 },
+  { key: "wet", pack: "B", ch: 1, lo: 0.30, hi: 0.65 },
+  { key: "rock", pack: "B", ch: 0, lo: 0.25, hi: 0.60 },
+  { key: "broadleaf", pack: "A", ch: 1, lo: 0.22, hi: 0.50 },
+  { key: "conifer", pack: "A", ch: 0, lo: 0.22, hi: 0.50 },
+  { key: "urban", pack: "C", ch: 0, lo: 0.30, hi: 0.60 },
+];
+const PACKS = ["A", "B", "C"];
+const MAX_TILES = 8; // decoded tiles kept (6 class masks of 512² each)
+export const ILLUSTRATE_MIN = 2.2; // device px per km where the layer starts to fade in
+
+let S = null; // {index, tiles: Map(key -> {A, B, masks}), invalidate}
+
+export function initIllustration(index, invalidate) {
+  if (!index?.cover) return;
+  S = { cover: index.cover, have: new Set(index.cover.tiles.map(([x, y]) => `${x}_${y}`)), tiles: new Map(), invalidate };
+}
+
+function loadImg(src, cb) {
+  const im = new Image();
+  im.decoding = "async";
+  im.onload = () => { im._ok = true; cb(); };
+  im.onerror = () => { im._ok = false; };
+  im.src = src;
+  return im;
+}
+
+const smooth = (lo, hi, v) => { const t = Math.min(1, Math.max(0, (v - lo) / (hi - lo))); return t * t * (3 - 2 * t); };
+
+/** Split the two packed mask images of a tile into one alpha canvas per class (once per tile). */
+function split(t) {
+  const N = S.cover.tile_px;
+  const src = {};
+  for (const p of PACKS) {
+    const c = document.createElement("canvas");
+    c.width = c.height = N;
+    const g = c.getContext("2d", { willReadFrequently: true });
+    g.drawImage(t[p], 0, 0);
+    src[p] = g.getImageData(0, 0, N, N).data;
+  }
+  t.masks = {};
+  for (const cl of CLASSES) {
+    const c = document.createElement("canvas");
+    c.width = c.height = N;
+    const g = c.getContext("2d");
+    const id = g.createImageData(N, N);
+    const d = src[cl.pack], o = id.data;
+    const lut = new Uint8ClampedArray(256);
+    for (let v = 0; v < 256; v++) lut[v] = 255 * smooth(cl.lo, cl.hi, v / 255);
+    for (let i = 3, j = cl.ch; i < o.length; i += 4, j += 4) o[i] = lut[d[j]];
+    g.putImageData(id, 0, 0);
+    t.masks[cl.key] = c;
+  }
+  for (const p of PACKS) t[p] = null; // the decoded sources are no longer needed
+}
+
+function tile(tx, ty) {
+  const k = `${tx}_${ty}`;
+  if (!S.have.has(k)) return null;
+  let t = S.tiles.get(k);
+  if (t) { S.tiles.delete(k); S.tiles.set(k, t); return t.masks ? t : null; } // LRU: most recent last
+  t = { masks: null };
+  const done = () => { if (PACKS.every((p) => t[p]?._ok) && !t.masks) { split(t); S.invalidate(); } };
+  const path = (p) => `data/${S.cover.path.replace("{k}", p).replace("{x}", tx).replace("{y}", ty)}`;
+  for (const p of PACKS) t[p] = loadImg(path(p), done);
+  S.tiles.set(k, t);
+  while (S.tiles.size > MAX_TILES) S.tiles.delete(S.tiles.keys().next().value);
+  return null;
+}
+
+// ---- patterns ---------------------------------------------------------------------------------------------------
+// Deterministic, seamless 256-px tiles; one pattern pixel is mapped to a power-of-two number of km so a zoom bucket
+// keeps the same pattern (no shimmer) and the bitmap is never enlarged by more than ~1.4×.
+const PAT = 256;
+const cache = new Map();
+function rng(seed) { let s = seed >>> 0 || 1; return () => ((s = (s * 16807) % 2147483647) / 2147483647); }
+function canvas(N = PAT) { const c = document.createElement("canvas"); c.width = c.height = N; return c; }
+// draw fn at (x, y) and its wrapped copies so the tile is seamless
+function wrapDraw(N, x, y, r, fn) {
+  for (const dx of [-N, 0, N]) for (const dy of [-N, 0, N]) {
+    const X = x + dx, Y = y + dy;
+    if (X + r < 0 || X - r > N || Y + r < 0 || Y - r > N) continue;
+    fn(X, Y);
+  }
+}
+
+function conifer() {
+  const c = canvas(), g = c.getContext("2d"), r = rng(2401);
+  const pts = [];
+  for (let gy = 0; gy < 18; gy++) for (let gx = 0; gx < 18; gx++) pts.push([(gx + 0.15 + r() * 0.7) * PAT / 18, (gy + 0.1 + r() * 0.8) * PAT / 18, 0.75 + r() * 0.5, r()]);
+  pts.sort((a, b) => a[1] - b[1]);
+  for (const [x, y, s, v] of pts) wrapDraw(PAT, x, y, 14, (X, Y) => {
+    const h = 13 * s, w = 5.2 * s;
+    g.fillStyle = "rgba(10,22,18,0.30)"; // ground shadow to the south-east
+    g.beginPath(); g.ellipse(X + 2.2 * s, Y + 0.6, w * 0.9, 1.8 * s, 0, 0, 2 * Math.PI); g.fill();
+    const dark = `rgb(${24 + v * 10},${58 + v * 16},${40 + v * 10})`, lit = `rgb(${58 + v * 16},${104 + v * 20},${62 + v * 12})`;
+    for (let k = 0; k < 3; k++) { // three tiers, shadowed east half
+      const ty = Y - h * (0.18 + 0.27 * k), tw = w * (1 - 0.24 * k), th = h * 0.46;
+      g.fillStyle = dark;
+      g.beginPath(); g.moveTo(X, ty - th); g.lineTo(X + tw, ty); g.lineTo(X - tw, ty); g.closePath(); g.fill();
+      g.fillStyle = lit;
+      g.beginPath(); g.moveTo(X, ty - th); g.lineTo(X - tw * 0.15, ty); g.lineTo(X - tw, ty); g.closePath(); g.fill();
+    }
+  });
+  return c;
+}
+
+function broadleaf() {
+  const c = canvas(), g = c.getContext("2d"), r = rng(911);
+  const pts = [];
+  for (let gy = 0; gy < 15; gy++) for (let gx = 0; gx < 15; gx++) pts.push([(gx + 0.1 + r() * 0.8) * PAT / 15, (gy + 0.1 + r() * 0.8) * PAT / 15, 0.8 + r() * 0.45, r()]);
+  pts.sort((a, b) => a[1] - b[1]);
+  for (const [x, y, s, v] of pts) wrapDraw(PAT, x, y, 14, (X, Y) => {
+    const R = 7 * s;
+    g.fillStyle = "rgba(12,24,10,0.28)";
+    g.beginPath(); g.ellipse(X + 2.5 * s, Y + R * 0.55, R * 0.95, R * 0.38, 0, 0, 2 * Math.PI); g.fill();
+    const gr = g.createRadialGradient(X - R * 0.38, Y - R * 0.45, R * 0.1, X, Y - R * 0.1, R * 1.05);
+    gr.addColorStop(0, `rgb(${150 + v * 20},${178 + v * 14},${86 + v * 10})`);
+    gr.addColorStop(0.55, `rgb(${84 + v * 18},${128 + v * 16},${52 + v * 8})`);
+    gr.addColorStop(1, `rgb(${40 + v * 8},${76 + v * 10},${34 + v * 6})`);
+    g.fillStyle = gr;
+    g.beginPath();
+    for (let k = 0; k <= 7; k++) { // a lumpy crown
+      const a = (k / 7) * 2 * Math.PI, rr = R * (0.86 + 0.14 * Math.sin(k * 2.3 + v * 6));
+      const px = X + Math.cos(a) * rr, py = Y - R * 0.1 + Math.sin(a) * rr * 0.9;
+      k ? g.lineTo(px, py) : g.moveTo(px, py);
+    }
+    g.closePath(); g.fill();
+  });
+  return c;
+}
+
+function farm() {
+  const N = 512, c = canvas(N), g = c.getContext("2d"), r = rng(7177);
+  const crops = [[214, 190, 108], [176, 186, 92], [200, 164, 96], [226, 210, 150], [150, 172, 86], [188, 150, 104], [222, 196, 120]];
+  // rows of fields of varying depth, each row split into fields of varying width (seamless in both directions)
+  let y = 0;
+  while (y < N) {
+    const hgt = Math.min(N - y, 26 + Math.floor(r() * 46));
+    let x = 0;
+    const off = Math.floor(r() * 40);
+    while (x < N) {
+      const wd = Math.min(N - x, 30 + Math.floor(r() * 70));
+      const col = crops[Math.floor(r() * crops.length)];
+      for (const dx of [0, -N]) {
+        const X = x + off + dx;
+        g.fillStyle = `rgba(${col[0]},${col[1]},${col[2]},0.62)`;
+        g.fillRect(X, y, wd, hgt);
+        if (r() < 0.55) { // furrows
+          g.strokeStyle = "rgba(90,80,40,0.16)"; g.lineWidth = 1;
+          g.beginPath();
+          const vert = r() < 0.5;
+          for (let k = 3; k < (vert ? wd : hgt); k += 4) vert ? (g.moveTo(X + k, y + 2), g.lineTo(X + k, y + hgt - 2)) : (g.moveTo(X + 2, y + k), g.lineTo(X + wd - 2, y + k));
+          g.stroke();
+        }
+        g.strokeStyle = "rgba(62,74,34,0.55)"; g.lineWidth = 1.6; // hedgerow
+        g.strokeRect(X + 0.8, y + 0.8, wd - 1.6, hgt - 1.6);
+      }
+      x += wd;
+    }
+    y += hgt;
+  }
+  // scattered hedgerow trees
+  for (let k = 0; k < 90; k++) {
+    const x = r() * N, yy = r() * N, R = 2 + r() * 1.6;
+    wrapDraw(N, x, yy, 4, (X, Y) => { g.fillStyle = "rgba(48,84,36,0.85)"; g.beginPath(); g.arc(X, Y, R, 0, 2 * Math.PI); g.fill();
+      g.fillStyle = "rgba(120,160,70,0.8)"; g.beginPath(); g.arc(X - R * 0.35, Y - R * 0.35, R * 0.45, 0, 2 * Math.PI); g.fill(); });
+  }
+  return c;
+}
+
+function rock() {
+  const c = canvas(), g = c.getContext("2d"), r = rng(3301);
+  for (let k = 0; k < 120; k++) {
+    const x = r() * PAT, y = r() * PAT, s = 3.2 + r() * 5, v = r();
+    const off = [];
+    for (let j = 0; j < 5; j++) { const a = (j / 5) * 2 * Math.PI + r() * 0.5; off.push([Math.cos(a) * s * (0.7 + r() * 0.5), Math.sin(a) * s * (0.55 + r() * 0.4)]); }
+    wrapDraw(PAT, x, y, 14, (X, Y) => {
+      const pts = off.map(([dx, dy]) => [X + dx, Y + dy]);
+      g.fillStyle = `rgba(${96 + v * 40},${96 + v * 38},${98 + v * 36},0.75)`;
+      g.beginPath(); pts.forEach(([px, py], j) => (j ? g.lineTo(px, py) : g.moveTo(px, py))); g.closePath(); g.fill();
+      g.strokeStyle = "rgba(235,232,222,0.6)"; g.lineWidth = 1.2; // lit north-west edge
+      g.beginPath(); g.moveTo(pts[2][0], pts[2][1]); g.lineTo(pts[3][0], pts[3][1]); g.stroke();
+      g.strokeStyle = "rgba(30,32,44,0.45)"; // shadowed south-east edge
+      g.beginPath(); g.moveTo(pts[0][0], pts[0][1]); g.lineTo(pts[4][0], pts[4][1]); g.stroke();
+    });
+  }
+  g.strokeStyle = "rgba(40,40,52,0.28)"; g.lineWidth = 1; // cracks
+  for (let k = 0; k < 40; k++) {
+    let x = r() * PAT, y = r() * PAT;
+    g.beginPath(); g.moveTo(x, y);
+    for (let j = 0; j < 4; j++) { x += (r() - 0.3) * 9; y += (r() - 0.5) * 6; g.lineTo(x, y); }
+    g.stroke();
+  }
+  return c;
+}
+
+function wet() {
+  const c = canvas(), g = c.getContext("2d"), r = rng(5501);
+  for (let k = 0; k < 70; k++) { // small pools
+    const x = r() * PAT, y = r() * PAT, w = 3 + r() * 7;
+    wrapDraw(PAT, x, y, 12, (X, Y) => {
+      g.fillStyle = "rgba(70,118,140,0.75)"; g.beginPath(); g.ellipse(X, Y, w, w * 0.42, 0, 0, 2 * Math.PI); g.fill();
+      g.strokeStyle = "rgba(200,226,226,0.6)"; g.lineWidth = 0.8; g.beginPath(); g.moveTo(X - w * 0.5, Y - 0.6); g.lineTo(X + w * 0.1, Y - 0.6); g.stroke();
+    });
+  }
+  g.strokeStyle = "rgba(92,110,52,0.8)"; g.lineWidth = 1; // sedge tufts
+  g.lineWidth = 1.3;
+  for (let k = 0; k < 260; k++) {
+    const x = r() * PAT, y = r() * PAT;
+    wrapDraw(PAT, x, y, 6, (X, Y) => { g.beginPath(); g.moveTo(X - 3, Y - 4.5); g.lineTo(X, Y); g.lineTo(X + 0.7, Y - 6); g.moveTo(X, Y); g.lineTo(X + 3.6, Y - 3.8); g.stroke(); });
+  }
+  return c;
+}
+
+function heath() {
+  const c = canvas(), g = c.getContext("2d"), r = rng(6607);
+  for (let k = 0; k < 150; k++) {
+    const x = r() * PAT, y = r() * PAT, s = 2.6 + r() * 3, v = r();
+    wrapDraw(PAT, x, y, 10, (X, Y) => {
+      g.fillStyle = `rgba(${110 + v * 40},${100 + v * 30},${60 + v * 20},0.7)`;
+      g.beginPath(); g.ellipse(X, Y, s * 1.3, s * 0.8, 0, 0, 2 * Math.PI); g.fill();
+      g.fillStyle = "rgba(220,200,140,0.45)"; g.beginPath(); g.arc(X - s * 0.4, Y - s * 0.3, s * 0.45, 0, 2 * Math.PI); g.fill();
+    });
+  }
+  return c;
+}
+
+function urban() {
+  const c = canvas(), g = c.getContext("2d"), r = rng(8803);
+  g.strokeStyle = "rgba(226,220,204,0.55)"; g.lineWidth = 2.2; // streets
+  for (let k = 0; k < 6; k++) {
+    const y = (k + 0.5) * PAT / 6 + (r() - 0.5) * 8, x = (k + 0.3) * PAT / 6 + (r() - 0.5) * 8;
+    g.beginPath(); g.moveTo(0, y); g.lineTo(PAT, y); g.stroke();
+    g.beginPath(); g.moveTo(x, 0); g.lineTo(x, PAT); g.stroke();
+  }
+  const roofs = [[178, 86, 62], [150, 72, 58], [120, 116, 118], [92, 92, 104], [196, 112, 74], [168, 150, 128]];
+  for (let k = 0; k < 230; k++) {
+    const x = r() * PAT, y = r() * PAT, w = 5 + r() * 6, h = 4 + r() * 4, col = roofs[Math.floor(r() * roofs.length)];
+    wrapDraw(PAT, x, y, 14, (X, Y) => {
+      g.fillStyle = "rgba(20,20,30,0.35)"; g.fillRect(X + 1.4, Y + 1.4, w, h); // shadow south-east
+      g.fillStyle = `rgb(${col[0]},${col[1]},${col[2]})`; g.fillRect(X, Y, w, h);
+      g.fillStyle = "rgba(255,240,220,0.35)"; g.fillRect(X, Y, w, h * 0.45); // lit roof slope
+      g.strokeStyle = "rgba(40,30,30,0.45)"; g.lineWidth = 0.7; g.beginPath(); g.moveTo(X, Y + h * 0.45); g.lineTo(X + w, Y + h * 0.45); g.stroke();
+    });
+  }
+  return c;
+}
+
+const MAKERS = { conifer, broadleaf, farm, rock, wet, heath, urban };
+const pattern = (key) => cache.get(key) || (cache.set(key, MAKERS[key]()), cache.get(key));
+
+// ---- drawing ----------------------------------------------------------------------------------------------------
+let layer = null;
+
+/** Paint the illustration over the relief in L (a screen-size canvas context whose transform is world → device). */
+export function drawIllustration(L, vp, devPerKm) {
+  if (!S || devPerKm < ILLUSTRATE_MIN || typeof DOMMatrix === "undefined") return false;
+  const fade = Math.min(1, (devPerKm - ILLUSTRATE_MIN) / 1.6);
+  const span = S.cover.tile_px * S.cover.km_per_px;
+  const tx0 = Math.floor(vp.x0 / span), tx1 = Math.floor(vp.x1 / span), ty0 = Math.floor(vp.y0 / span), ty1 = Math.floor(vp.y1 / span);
+  const ready = [];
+  for (let ty = ty0; ty <= ty1; ty++) for (let tx = tx0; tx <= tx1; tx++) { const t = tile(tx, ty); if (t) ready.push([tx, ty, t]); }
+  if (!ready.length) return false;
+  const cv = L.canvas;
+  if (!layer || layer.width !== cv.width || layer.height !== cv.height) { layer = document.createElement("canvas"); layer.width = cv.width; layer.height = cv.height; }
+  const G = layer.getContext("2d");
+  const T = L.getTransform();
+  // one pattern pixel ≈ 0.75 device px, quantised to powers of two
+  const kmPerPx = Math.pow(2, Math.round(Math.log2(0.75 / devPerKm)));
+  for (const cl of CLASSES) {
+    G.setTransform(1, 0, 0, 1, 0, 0);
+    G.globalCompositeOperation = "source-over";
+    G.clearRect(0, 0, layer.width, layer.height);
+    G.setTransform(T);
+    G.imageSmoothingEnabled = true;
+    const e = 0.5 * S.cover.km_per_px / S.cover.tile_px;
+    for (const [tx, ty, t] of ready) G.drawImage(t.masks[cl.key], tx * span - e, ty * span - e, span + 2 * e, span + 2 * e);
+    G.globalCompositeOperation = "source-in";
+    const p = G.createPattern(pattern(cl.key), "repeat");
+    const k = cl.key === "farm" ? kmPerPx * 1.6 : kmPerPx; // fields a little larger than trees
+    p.setTransform(new DOMMatrix([k, 0, 0, k, 0, 0]));
+    G.fillStyle = p;
+    G.fillRect(vp.x0, vp.y0, vp.x1 - vp.x0, vp.y1 - vp.y0);
+    L.save();
+    L.setTransform(1, 0, 0, 1, 0, 0);
+    L.globalAlpha = fade * (cl.key === "farm" ? 0.85 : 1);
+    L.drawImage(layer, 0, 0);
+    L.restore();
+  }
+  return true;
+}
+
+export const illustrationState = () => S && { tiles: S.tiles.size, decoded: [...S.tiles.values()].filter((t) => t.masks).length };
