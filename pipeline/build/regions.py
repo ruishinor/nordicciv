@@ -21,7 +21,7 @@ from ..core import jsonstat
 from ..core.paths import INTERIM, RAW, WEB_DATA
 from ..core.store import read_json, write_json
 from ..sources.stats import estat_records
-from . import admin
+from . import admin, history
 from .yields import CITY_TYPES, LQ_MIN, LQ_MIN_JOBS, YIELDS
 
 GDP_YEAR = 2023
@@ -157,6 +157,11 @@ def build():
     share_bench = {g: group_tot[g] / tot_jobs for g in admin.GROUP_KEYS}
     country_income = admin.country_income()
 
+    country_pop = history.country_series()
+    hist_all = history.classify(munis, country_pop)
+    hist = hist_all["munis"]
+    write_json(INTERIM / "_population_review.json", {"review": hist_all["review"]})
+
     anchors = _anchors(munis)
     land_cells = np.array([i for i in range(n) if owner[i] >= 0])
     footprints = {}
@@ -171,10 +176,13 @@ def build():
         x, y = float(x), float(y)
         fp = footprints.get(mi, [])
         cell = _cell_for(x, y, fp, land_cells, cx, cy, R, cols, rows, owner)
-        pop = m["pop"].get(POP_YEAR)
-        series = {str(yr): m["pop"].get(yr) for yr in range(2008, POP_YEAR + 1)}
-        p0, p1 = m["pop"].get(GROWTH_YEARS[0]), m["pop"].get(GROWTH_YEARS[1])
-        growth = (p1 / p0 - 1) if p0 and p1 else None
+        h = hist[m["id"]]
+        pop = h["series"].get(POP_YEAR)
+        series = {str(yr): h["series"].get(yr) for yr in range(2008, POP_YEAR + 1)}
+        growth = history.growth(h, *GROWTH_YEARS)
+        growth_note = None
+        if growth is None:
+            growth_note = next((b["note"] for b in h["breaks"] if b["years"][0] <= GROWTH_YEARS[1]), "no comparable figures")
         age = m.get("age") or {}
         age_tot = sum(v for v in age.values() if v) or None
         jobs = m["jobs"]
@@ -213,6 +221,11 @@ def build():
             "place": place, "anchor": how,
             "x": round(x, 1), "y": round(y, 1), "lon": round(lon, 4), "lat": round(lat, 4), "cell": cell,
             "population": pop, "pop_series": series, "growth": growth, "growth_years": GROWTH_YEARS,
+            "growth_note": growth_note,
+            "pop_terr": {str(y): t for y, t in h["terr"].items()},
+            "pop_status": {str(y): st for y, st in h["status"].items() if st != "observed"},
+            "pop_terr_notes": {str(k): v for k, v in h["terr_notes"].items()},
+            "pop_breaks": h["breaks"],
             "land_km2": m.get("land_km2"), "density": (pop / m["land_km2"]) if pop and m.get("land_km2") else None,
             "age": {"0_19": age.get("F0-19"), "20_64": age.get("F20-64"), "65_plus": age.get("F65+")},
             "share_65plus": (age.get("F65+") / age_tot) if age_tot and age.get("F65+") is not None else None,
@@ -250,9 +263,16 @@ def build():
     # --- regions (states.json) ---------------------------------------------------------------------------------
     states = []
     pct = world["pct"]
+    published_regions = {**history.norway_counties(), **history.sweden_lan()}
     for ri, r in enumerate(regs):
         members = [c for c in cities if c["states"][0] == r["id"]]
         st = _aggregate(members)
+        rs, basis, cover = history.region_series([{"id": c["id"]} for c in members], hist, published_regions.get(r["id"]))
+        st["pop_series"] = {str(y): v for y, v in rs.items()}
+        st["pop_basis"] = {str(y): b for y, b in basis.items()}
+        st["pop_coverage"] = {str(y): v for y, v in cover.items()}
+        p0, p1 = rs.get(GROWTH_YEARS[0]), rs.get(GROWTH_YEARS[1])
+        st["growth"] = (p1 / p0 - 1) if p0 and p1 else None
         cells_r = [i for i in range(n) if owner[i] == ri]
         land = {}
         for k in ("forest", "crop", "pasture", "grass", "shrub", "wetland", "developed", "heath", "bare", "ice"):
@@ -270,6 +290,10 @@ def build():
     for cc in ("NO", "SE", "DK"):
         countries[cc] = _aggregate([c for c in cities if c["country"] == cc])
         countries[cc]["name"] = admin.COUNTRIES[cc]
+        _published(countries[cc], country_pop[cc], history.COUNTRY_SOURCE[cc])
+    scand = {y: sum(country_pop[cc].get(y) or 0 for cc in ("NO", "SE", "DK")) if all(country_pop[cc].get(y) for cc in ("NO", "SE", "DK")) else None
+             for y in history.YEARS}
+    _published(nat, scand, "sum of the three national totals (SSB 07459, SCB TAB628, DST FOLK1A)")
     shelf_eur = extra.get("NO_shelf", 0) / extra["fx"]["NOK"] * 1e6
     nation = {
         "name": "Scandinavia", "vintage": f"Population 1 January {POP_YEAR}; jobs November/Q4 2024; GDP {GDP_YEAR}",
@@ -292,6 +316,18 @@ def build():
     write_json(INTERIM / "_gdp_regions.json", {"regions": gdp_rows, "extra": extra})
     print(f"    {len(cities)} cities, {len(states)} regions; Scandinavia population {nat['population']:,}, "
           f"jobs {nat['jobs_total']:,}, GDP €{nat['gdp']/1e9:,.0f} bn (+ shelf €{shelf_eur/1e9:,.0f} bn)")
+
+
+def _published(agg, series, source):
+    """Replace a municipal-sum population series by the agency's own published totals (NC-T02): sums of today's
+    municipalities are incomplete in years where some could not be reconstructed."""
+    agg["pop_series_municipal_sum"] = agg["pop_series"]
+    agg["pop_series"] = {str(y): series.get(y) for y in history.YEARS}
+    agg["pop_series_source"] = source
+    agg["population_published"] = series.get(POP_YEAR)
+    p0, p1 = series.get(GROWTH_YEARS[0]), series.get(GROWTH_YEARS[1])
+    agg["growth"] = (p1 / p0 - 1) if p0 and p1 else None
+    agg["growth_basis"] = "published national totals"
 
 
 def _cell_for(x, y, fp, land_cells, cx, cy, R, cols, rows, owner):
