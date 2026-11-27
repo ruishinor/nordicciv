@@ -20,7 +20,7 @@ LENS_ICON = {"density": "l-density", "growth": "l-people", "ageing": "l-age", "y
              "hospital": "i-health", "school": "i-education", "road_reach": "t-road", "remoteness": "map", "elevation": "terrain",
              "forest": "l-forest", "farmland": "l-farmland", "cover": "layers", "urban_growth": "l-developed", "shelter_places": "c-shelter"}
 # (lower bound of registered places, legend label, colour); class 0 = no public shelter in the register
-SHELTER_BANDS = [(0, "No public shelter in DSB's register (private shelters not shown)", "#5d6670"),
+SHELTER_BANDS = [(0, "No public shelter listed", "#5d6670"),
                  (1, "Under 1,000 registered places", "#2f4f74"), (1000, "1,000–4,999", "#4f7fa0"),
                  (5000, "5,000–19,999", "#a9a06a"), (20000, "20,000 or more", "#e3c46a")]
 GROUPS = [
@@ -80,10 +80,10 @@ def build():
                 "source": source, "description": description, "resolution": resolution, "values": list(values)}
         if hasattr(values, "by_id"):
             lens["muni_values"] = values.by_id
-        res_note = {"hex": "Measured on the 1 km grid and aggregated to the hex.",
-                    "municipality": "One published value per municipality, repeated on each of its hexes.",
-                    "region": "One value per county/län/landsdel, repeated on each of its hexes.",
-                    "derived": "Derived estimate: municipal totals spread over the 1 km population grid."}[resolution]
+        res_note = {"hex": "Each hex combines figures from the 1 km grid.",
+                    "municipality": "Each municipality has one colour.",
+                    "region": "Each region has one colour.",
+                    "derived": "Estimated using the municipality's total and the 1 km population grid."}[resolution]
         lens["note"] = (note + " " if note else "") + res_note
         if categories:
             lens["categories"] = categories
@@ -253,12 +253,9 @@ def build():
             muni_lens(band, 0), resolution="municipality", source="dsb_shelters",
             ramp=[c for _l, _n, c in bands], domain=[0, len(bands) - 1],
             categories=[{"id": f"b{k}", "name": nm, "color": col} for k, (_lo, nm, col) in enumerate(bands)],
-            description="Registered places in the municipality's public shelters, summed from DSB's register "
-                        f"(extracted {sh['source']['extracted']}). Public shelters only: private shelters, which hold most "
-                        "of Norway's places, are not published. Capacity on record, not availability or readiness; "
-                        "not compared with population, because shelters serve whoever is present. Sweden and Denmark: "
-                        "data unavailable.",
-            note="Public shelter data is unavailable for Sweden and Denmark.")
+            description="Places in public shelters in each Norwegian municipality, from DSB "
+                        f"({sh['source']['extracted']}). Private shelters are not shown.",
+            note="Sweden and Denmark: no data. For current shelter access, follow official instructions.")
 
     owned = [i for i in range(n) if owner[i] >= 0]
     for l in lenses:  # pack: only Scandinavian land hexes carry values (the browser expands them)

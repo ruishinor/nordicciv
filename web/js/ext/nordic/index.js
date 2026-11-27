@@ -188,8 +188,7 @@ export function install(app) {
     try { items = OBS[advisor](subject, region); } catch (e) { console.error(e); items = [`<p class="muted">Could not compute (${esc(e.message)}).</p>`]; }
     return `<div class="adv-row">${ADVISORS.map((x) => `<button class="adv ${x.id === advisor ? "on" : ""}" data-adv="${x.id}" title="${esc(x.name)}" style="--c:${x.color}"><span>${x.emoji}</span><small>${esc(x.name.split(" ")[0])}</small></button>`).join("")}</div>
       <h3 class="adv-title" style="color:${a.color}">${a.emoji} ${esc(a.name)} advisor <span class="muted">· ${scope}</span></h3>
-      <p class="muted small">${subject || region ? "Observations about your selection. Close the panel to hear about Scandinavia as a whole." : "Select a municipality or region on the map for local observations."}
-      Every statement is computed from the data on this map; sources are named under each.</p>
+      <p class="muted small">${subject || region ? "Close the selection to explore Scandinavia as a whole." : "Select a municipality or region for local figures."}</p>
       ${items.join("")}`;
   }
 
@@ -368,7 +367,7 @@ export function install(app) {
         out.push(lines.length
           ? obs(`${scope} hosts ${lines.map(([t, v, its]) => `<b>${int(v)} MW</b> of ${esc(types.get(t).name.toLowerCase())}${its.length > 1 ? ` (${its.length} sites)` : ` (${esc(its[0].name)})`}`).join(", ")}.`,
             { source: "powerplantmatching; thresholds in the Almanac" })
-          : obs(`No power plants meeting the map's inclusion criteria are listed in ${scope}. Smaller plants are outside the dataset's coverage.`, { source: "powerplantmatching; thresholds in the Almanac" }));
+          : obs(`No power plants above the map's minimum sizes are listed in ${scope}. Smaller plants may be present.`, { source: "powerplantmatching; thresholds in the Almanac" }));
         if (c && !lines.length) {
           const reg = states.find((x) => x.fips === c.states[0]);
           const ri = res.items.filter((it) => it.state === c.states[0]);
@@ -631,7 +630,7 @@ export function install(app) {
       <text x="${W - 4}" y="${H - 8}" text-anchor="end" font-size="11" fill="#9aa4b0">${esc(X.label)}${logx ? " (log)" : ""} →</text>
       <text x="${P + 4}" y="14" font-size="11" fill="#9aa4b0">↑ ${esc(Y.label)}</text>
       <text x="${W - 4}" y="14" text-anchor="end" font-size="11" fill="#c9a45c">r = ${fin(r) ? r.toFixed(2) : "–"}</text></svg>
-      <p class="muted small">🇳🇴 orange · 🇸🇪 blue · 🇩🇰 yellow. Correlation is not causation; click a dot to open it.</p>`;
+      <p class="muted small">🇳🇴 orange · 🇸🇪 blue · 🇩🇰 yellow. Two figures can move together for many reasons. Click a dot to open the municipality.</p>`;
   }
   function wireExplorer(ex) {
     ex.querySelectorAll("[data-f]").forEach((el) => {

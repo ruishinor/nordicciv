@@ -165,7 +165,7 @@ export function openCityPanel(city, ctx) {
   const siteHtml = sites.length
     ? `<div class="site-list">${sites.slice(0, 14).map((s) => `<div class="site"><span>${s.t ? glyph(s.t, 13) : s.wonder ? "🏛️" : "•"} ${esc(s.name)}</span><span class="muted">${esc(s.kind)}${s.val ? " · " + esc(s.val) : ""}</span></div>`).join("")}${sites.length > 14 ? `<p class="muted">+${sites.length - 14} more</p>` : ""}</div>
        <p class="muted small">The Almanac lists the site types and minimum sizes included on the map.</p>`
-    : `<p class="muted">No sites in this municipality meet the map's current inclusion criteria (see the Almanac).</p>`;
+    : `<p class="muted">No sites of the types and sizes shown on this map are listed here.</p>`;
 
   const peers = (city.peers || []).map((id) => ctx.cities?.find((c) => c.id === id)).filter(Boolean);
   const peerHtml = peers.length ? `<div class="chips">${peers.map((p) => `<button class="chip" data-city="${esc(p.id)}" title="${esc(p.full)}">${FLAG[p.country] || ""} ${esc(p.name)} · ${popShort(p.population)}</button>`).join("")}</div>

@@ -211,15 +211,13 @@ export function initPedia(data) {
     Limitations: () => `
       ${h2("pedia", "📖", "Limitations")}
       <ul>
-        <li>Finland, Iceland, Åland, the Faroes, Greenland and Svalbard are not yet mapped (the pipeline is built to add them).</li>
+        <li>Finland, Iceland, Åland, the Faroes, Greenland and Svalbard are not on this map.</li>
         <li>Norwegian mines (NGU), Danish North Sea fields, fisheries and aquaculture, wind turbines below 50 MW, electricity
-        <i>generation</i> by plant, freight flows, hazards and climate are not yet included: their open services were not
-        reachable from the build environment or are awaiting integration.</li>
-        <li>Roads, railways and ferries are Natural Earth 1:10m map art (generalised and incomplete), not a network model.</li>
+        <i>generation</i> by plant, freight flows, hazards and climate are not yet on the map.</li>
+        <li>Roads, railways and ferries use simplified Natural Earth 1:10m maps, rather than a complete route network.</li>
         <li>Municipal economic output is estimated from regional industry output and local employment. Norway's regional figures are value added
         at basic prices and exclude the continental shelf.</li>
-        <li>University wonders use Wikidata student counts; some large universities have none recorded (the rule includes
-        old universities without counts, but Wikidata typing can still miss an institution, e.g. the University of Copenhagen).</li>
+        <li>University wonders use Wikidata student counts; some large universities have no student count. Older universities can still appear without a count; missing Wikidata categories can leave out universities such as the University of Copenhagen.</li>
         <li>CORINE assigns one class per 1 km cell, so small fields, towns and lakes can vanish into their surroundings; fjords
         narrower than a hex read as coast.</li>
       </ul>`,

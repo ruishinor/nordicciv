@@ -41,8 +41,8 @@ towns, Danish farmland or the Øresund.
   NLOD 1.0), as an optional layer in the Map menu: summarised by county and municipality far out, every record at its
   published position closer in, a card per shelter, a section in the municipality panel's Society tab, notes from the
   Council's Resilience advisor, an Almanac page and a lens. Public shelters only (private shelters are not published);
-  registered places are capacity on record, not availability; Sweden and Denmark are "not integrated", never zero.
-  Educational only — in an emergency, follow the authorities' instructions.
+  DSB lists the number of places in each shelter. Data for Sweden and Denmark is not available here.
+  In an emergency, follow the authorities' instructions.
 - **Camera uplinks (v0.5).** 196 public webcams their operators publish — towns, mountains, fjords, coasts, islands,
   ski resorts, weather stations — as an optional layer in the Map menu (off by default; hidden at the scale of the whole
   of Scandinavia). Selecting one opens a small card with one link, **Open camera uplink**, to the provider's own page in
@@ -54,7 +54,7 @@ towns, Danish farmland or the Øresund.
 - **23 lenses** in four groups (people, economy, welfare & access, land), each labelled hex / municipality / region /
   derived, with a histogram legend you can brush.
 - **The Council.** Eight advisors (geography, population, economy, industry, energy, infrastructure, environment,
-  resilience) whose observations are computed deterministically from the data on the map, each with its source and a
+  resilience) who highlight local and regional figures, with sources and a
   "show on map" action. Plus **Compare** (up to four municipalities), **Explorer** (filter, sort, scatter with
   correlation, CSV export) and a **Timeline** lens for population change between any two years 2008–2026.
 - **Almanac.** About, yields, regions, methodology, terrain, lenses, resources, wonders, limitations and every source with
