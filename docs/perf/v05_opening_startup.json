@@ -1,0 +1,47 @@
+{
+ "what": "time from navigation to the first static map frame (ms, median of 10 alternating cold-context loads, unthrottled, headless Chrome, software GPU); main = origin/main ea7e6f3 (no opening screen), branch = this change, branch-rm = branch with prefers-reduced-motion",
+ "when": "2026-11-27 19:04",
+ "median_first_frame_ms": {
+  "main": 1011,
+  "branch": 1043,
+  "branch-rm": 1039
+ },
+ "runs_ms": {
+  "main": [
+   1014,
+   1031,
+   1068,
+   961,
+   914,
+   1055,
+   998,
+   1008,
+   968,
+   1050
+  ],
+  "branch": [
+   1117,
+   997,
+   986,
+   1057,
+   1023,
+   947,
+   1035,
+   1246,
+   1050,
+   1080
+  ],
+  "branch-rm": [
+   1045,
+   1019,
+   1033,
+   997,
+   1136,
+   1109,
+   977,
+   1133,
+   1048,
+   1005
+  ]
+ }
+}

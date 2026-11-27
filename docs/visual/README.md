@@ -67,8 +67,28 @@ draws nothing at that scale.
 | 33 regional south | Small spyglass-on-lookout symbols and count tabs, under the resource medallions, sites and banners |
 | 34 western Norway | Region view: coastal and fjord uplinks among hydropower and wind symbols |
 | 35 Lofoten (local) | Individual uplinks at their positions; Reine/Hamnøy still share one symbol at this scale |
-| 36 Reinefjorden selected | The card: category, name, location, provider and host, kind of position, one outbound link, no-live note |
-| 37 Stranda panel | Overview section: 3 public webcams, names, "Explore 3 camera uplinks on the map" |
+| 36 Reinefjorden selected | The card: category, name, location, provider and host, kind of position, 'Open uplink' and 'Open in Maps', no-live note |
+| 37 Stranda panel | Overview: "The real place" (Open in Maps, Open the town in Maps) above the camera uplinks section |
 | 38 under a lens | Symbols fade under the population-density lens and stay above the choropleth, below the sites |
-| 39 phone card | Åreskutan: the card as a bottom sheet with the link visible |
+| 39 phone card | Åreskutan: the card as a bottom sheet with both actions visible |
 
+
+## v0.5: opening screen and Open in Maps (`v05/after`, states 40–46)
+
+States 01–35 and 38 were captured on `main` before this change (ea7e6f3) and after it: all 33 that do not show a
+camera card or a municipality's Overview are pixel-identical (0 pixels differ). 36, 37 and 39 differ only by the new
+links. States 40–42 are taken while the start-up is held on `world.json` (40, 41) or `world.json` answers 404 (42).
+
+| State | What it shows |
+|---|---|
+| 40 opening, desktop | Compass emblem, NORDICCIV, "Explore Scandinavia", progress line (indeterminate: the held file's size is not yet known), status line, version |
+| 41 opening, phone | The same on 390 × 844, everything on screen |
+| 42 opening failed | "The map data is missing", plain explanation, "Try again" (focused), details for developers |
+| 43 Bergen panel | Overview · The real place: "Open in Maps" (municipality) and "Open the city in Maps" |
+| 44 Bergen sites | Economy · resources, wonders & hubs: Bryggen, University of Bergen, Flesland, port — each with Open in Maps |
+| 45 Møre og Romsdal | Region panel: Open in Maps (landscape overview of the county) |
+| 46 phone, Stranda | The panel as a bottom sheet with both map links |
+
+The screen recording (opening on a slow network, then Open in Maps for Stranda, Copenhagen Airport and a camera uplink,
+with Google's actual landing pages captured in a real browser) is not kept in the repository because it contains Google
+Maps imagery; it was handed over with the pull request.

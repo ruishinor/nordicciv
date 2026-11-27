@@ -45,10 +45,14 @@ towns, Danish farmland or the Øresund.
   Educational only — in an emergency, follow the authorities' instructions.
 - **Camera uplinks (v0.5).** 196 public webcams their operators publish — towns, mountains, fjords, coasts, islands,
   ski resorts, weather stations — as an optional layer in the Map menu (off by default; hidden at the scale of the whole
-  of Scandinavia). Selecting one opens a small card with one link, **Open camera uplink**, to the provider's own page in
+  of Scandinavia). Selecting one opens a small card with **Open uplink**, to the provider's own page in
   a new tab. NordicCiv loads nothing from the providers — no pictures, players, scripts or cookies — and never claims a
   camera is live. Reviewed from CamStreamer, Panomax, WebcamCollections, SkylineWebcams and operators' pages; road and
   people-facing cameras excluded. Municipality panels list their uplinks; Discover visits some of them.
+- **Opening screen and Open in Maps (v0.5).** A NordicCiv title card (compass emblem, title, version, a progress line
+  and status that follow the real start-up) shows only until the first map is drawn. Municipalities, their main
+  settlements, regions, landmarks, national parks, airports, ports and camera uplinks offer "Open in Maps": the real
+  place in Google Maps, in a new tab, from each feature's own position (no key, embed or tracking; NordicCiv keeps its view).
 - **Wonders by rule.** All 32 UNESCO World Heritage Sites, national parks ≥ 1,000 km², large/old universities, bridges
   ≥ 6 km and tunnels ≥ 11 km.
 - **23 lenses** in four groups (people, economy, welfare & access, land), each labelled hex / municipality / region /
@@ -90,8 +94,8 @@ python -m pipeline process --strict # raw → data/interim/<source>.json (a miss
 python -m pipeline build            # interim → web/data/*.json; validated, and restored if anything fails
 python -m pipeline check --mode built|source|release   # gates; reports in docs/CHECK_REPORT*.txt
 python -m unittest discover -s tests
-python tests/smoke_browser.py       # 33 real-browser journeys (0–32) (site served on :8765); writes tests/results/browser.json
-python tests/visual_states.py URL OUT   # the 39 standard screenshots at fixed cameras (visual regression)
+python tests/smoke_browser.py       # 43 real-browser journeys (0–42) (site served on :8765); writes tests/results/browser.json
+python tests/visual_states.py URL OUT   # the 46 standard screenshots at fixed cameras (visual regression)
 python tests/perf.py OUT.json now=URL   # laboratory performance (frame times, LCP, CLS, lens switch)
 python -m pipeline release          # stage, gate (unit + browser + data evidence for this candidate), package, verify, promote
 python -m pipeline all              # fetch + process (strict) + build

@@ -36,4 +36,9 @@ does not say (for example, illustrated trees taken as real forest stands): those
    do they find the Map-menu switch; do they read the spyglass as a viewpoint (not a surveillance camera); do they
    expect pictures inside NordicCiv, and do they understand the card's note that the provider's page decides whether it
    is live; is the outbound link clearly a new site?
+10. *Opening and Open in Maps (v0.5).* Reload the page (once with the browser cache cleared). "What did you see while it
+   loaded, and did it feel long?" Then: "Find Geiranger's municipality and look at the real place." Observe: whether
+   the status lines and progress feel truthful, whether the map appears as soon as it can, whether "Open in Maps" is
+   found, whether it is clear that it leaves NordicCiv (new tab), and whether returning to NordicCiv finds everything as
+   it was.
 

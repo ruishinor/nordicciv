@@ -37,6 +37,17 @@
 - **The provider's page is a third-party site** with its own cookies, advertising and terms; NordicCiv sends no
   referrer and opens it in a separate tab, but cannot vouch for it.
 
+## Opening screen and Open in Maps (v0.5)
+
+- **Progress is only as fine as the server allows.** Byte progress needs `Content-Length` without compression; behind a
+  compressing server the line counts whole files (seven) and is indeterminate until every file has started.
+- **"Open in Maps" hands over to Google.** Google's pages have their own cookies, consent screens and terms (in Norway a
+  consent page comes first, then the requested view). NordicCiv sends a position and a zoom only, no referrer, and
+  cannot control what Google shows. Only Google Maps is offered so far.
+- **Positions are only as good as the data.** Ports are placed at their town, 21 camera uplinks at the place they show,
+  and settlement points are the EuroGeographics name positions; zoom levels are chosen so the place is in view, not to
+  frame any particular building.
+
 ## Known caveats
 
 - **Below 1 km the landscape only interpolates.** The relief image is painted from 1 km CORINE, EU-DEM and tree-cover
@@ -124,8 +135,14 @@
 19. **Public shelters (v0.4) as an optional infrastructure layer, not a workspace.** One Map-menu switch (off by default),
     a card, a Society-tab section, Council notes under Resilience, an Almanac page and one lens; no new top-bar button,
     no score. Grouping instead of displacement, so no symbol stands anywhere a record is not.
-20. **Camera uplinks (v0.5) as links, not a viewer.** One Map-menu switch (off by default), a card with one outbound link,
+20. **Camera uplinks (v0.5) as links, not a viewer.** One Map-menu switch (off by default), a card whose one link to the camera is "Open uplink" (plus "Open in Maps"),
     a short Overview section where a municipality has uplinks, Discover entries and an Almanac page; no media panel,
     monitoring workspace or new top-level navigation. Road and traffic cameras excluded on principle. Reviewed include
     lists instead of whole provider catalogues, so a provider's new cameras never appear unreviewed. OSIRIS studied,
     nothing imported (licence of its generated lists unclear, positions unreliable).
+21. **Opening screen and Open in Maps (v0.5) as small, honest additions.** The opening screen borrows OSIRIS's
+    structure (identity, emblem, version, progress line, changing status, automatic hand-over) in NordicCiv's own art,
+    bound to the real start-up with no minimum duration. "Open in Maps" is a link in the existing inspectors (municipality
+    and region panels, the site list, the camera card) rather than a navigation tool; Google Maps first because its
+    cross-platform URLs need no key and open the app on phones. Two behaviours (unmarked view / pin) chosen per kind of
+    place; no links for energy, military or shelter sites.
