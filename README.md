@@ -1,6 +1,6 @@
 # NordicCiv — Scandinavia as a strategy game, built from real data
 
-**Version 0.5.0** (see `VERSION`, `docs/VERIFICATION.md` for this release's evidence, `docs/LEDGER.md` for the
+**Version 0.5.0** (see `VERSION`, `docs/VERIFICATION.md` for release test results, `docs/LEDGER.md` for the
 requirement-by-requirement status).
 
 Norway, Sweden and Denmark drawn like a turn-based 4X strategy map. Every hex, municipality, yield, resource and
@@ -8,7 +8,7 @@ wonder comes from public data — EU-DEM and CORINE on a 1 km grid, the municipa
 Statistics Sweden and Statistics Denmark, Eurostat, the Norwegian Offshore Directorate, the Geological Survey of Sweden,
 Natural Earth and Wikidata — and every number says what it measures, where it came from and at what resolution.
 
-It is a visualiser, not a game: open your hometown and see what stands out about it, follow its neighbours in a ranking,
+Explore your hometown, see what stands out, compare it with nearby municipalities,
 press **Discover** for a surprising fact about a real place, or wander off into Norwegian hydropower, Swedish mining
 towns, Danish farmland or the Øresund.
 
@@ -41,8 +41,8 @@ towns, Danish farmland or the Øresund.
   NLOD 1.0), as an optional layer in the Map menu: summarised by county and municipality far out, every record at its
   published position closer in, a card per shelter, a section in the municipality panel's Society tab, notes from the
   Council's Resilience advisor, an Almanac page and a lens. Public shelters only (private shelters are not published);
-  registered places are capacity on record, not availability; Sweden and Denmark are "not integrated", never zero.
-  Educational only — in an emergency, follow the authorities' instructions.
+  DSB lists the number of places in each shelter. Data for Sweden and Denmark is not available here.
+  In an emergency, follow the authorities' instructions.
 - **Camera uplinks (v0.5).** 196 public webcams their operators publish — towns, mountains, fjords, coasts, islands,
   ski resorts, weather stations — as an optional layer in the Map menu (off by default; hidden at the scale of the whole
   of Scandinavia). Selecting one opens a small card with one link, **Open camera uplink**, to the provider's own page in
@@ -54,7 +54,7 @@ towns, Danish farmland or the Øresund.
 - **23 lenses** in four groups (people, economy, welfare & access, land), each labelled hex / municipality / region /
   derived, with a histogram legend you can brush.
 - **The Council.** Eight advisors (geography, population, economy, industry, energy, infrastructure, environment,
-  resilience) whose observations are computed deterministically from the data on the map, each with its source and a
+  resilience) who highlight local and regional figures, with sources and a
   "show on map" action. Plus **Compare** (up to four municipalities), **Explorer** (filter, sort, scatter with
   correlation, CSV export) and a **Timeline** lens for population change between any two years 2008–2026.
 - **Almanac.** About, yields, regions, methodology, terrain, lenses, resources, wonders, limitations and every source with
@@ -93,7 +93,7 @@ python -m unittest discover -s tests
 python tests/smoke_browser.py       # 33 real-browser journeys (0–32) (site served on :8765); writes tests/results/browser.json
 python tests/visual_states.py URL OUT   # the 39 standard screenshots at fixed cameras (visual regression)
 python tests/perf.py OUT.json now=URL   # laboratory performance (frame times, LCP, CLS, lens switch)
-python -m pipeline release          # stage, gate (unit + browser + data evidence for this candidate), package, verify, promote
+python -m pipeline release          # stage, gate (unit, browser and data checks for this candidate), package, verify, promote
 python -m pipeline all              # fetch + process (strict) + build
 ```
 
@@ -121,7 +121,7 @@ pipeline/
 web/          the static app (engine adapted from usaciv; ext/nordic adds the Council, Compare, Explorer, Timeline, ferries;
               ext/explore adds Discover and the first-run hint)
 docs/         METHODOLOGY, SOURCES, LIMITATIONS (with decision log), DATA_CONTRACTS, CHECK_REPORT
-tests/        unit tests (31, run_unit.py writes candidate-bound evidence), browser journeys (0–21), visual states (24),
+tests/        unit tests, browser walkthroughs, screenshots,
               performance script, ranking fixtures shared by Python and JavaScript
 scripts/      PowerShell (setup, serve, validate, release) and validate.sh
 .github/      CI: built-data gates, unit tests and browser journeys on every push
@@ -132,9 +132,9 @@ The data engine knows nothing about the game presentation: `web/data/*.json` is 
 export (see `docs/DATA_CONTRACTS.md`) that the Explore/Analyze modes consume, and that a future Simulate mode or another
 interface can consume too. A simulation would add its own files and must never overwrite observed values.
 
-## Reading the map honestly
+## Map data and definitions
 
-- Yields are names for real figures (see the Almanac). Jobs are counted where people work (Nov/Q4 2024).
+- Yields group employment by industry alongside economic output (see the Almanac). Jobs are counted where people work (Nov/Q4 2024).
 - Gold is economic output in each agency's own concept (Norway GVA at basic prices, Sweden and Denmark GDP); the
   Scandinavian sum is "combined regional output", not harmonised GDP. Below the region it is an estimate (sector-weighted
   share of the region's output), always shown with ≈. Norway's continental shelf (≈ €104 bn in 2023) is outside every
@@ -142,7 +142,7 @@ interface can consume too. A simulation would add its own files and must never o
 - Population changes are only compared on the same territory: years a municipality could not be reconstructed are "not
   available", and national and county totals are the agencies' own series.
 - Hex population is a dasymetric estimate; municipal totals are exact. Municipal and regional lenses say so in the legend.
-- Missing stays missing: null, "–" or "no data", never 0. Suppressed components make a value a lower bound (≥).
+- Unavailable figures appear as “–” or “no data”. A lower bound (≥) includes the published parts of a partly withheld total.
 - Resources and wonders are selected by published thresholds and rules, listed in the Almanac and in the data files.
 
 ## Credits and licences

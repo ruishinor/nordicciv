@@ -75,7 +75,7 @@ largest-industry share, isolation) — deliberately not a composite score.
 
 Municipal series are published on today's boundaries where the agency can sum former units (SSB codelist
 `agg_KommSummer`; Sweden and Denmark had no municipal reforms in 2008–2026). `pipeline/build/history.py` classifies every
-municipality-year from evidence:
+municipality-year using the following source rules:
 
 - **R1 source zero.** SSB publishes 0 persons for a code it cannot reconstruct (Narvik, Hábmer–Hamarøy, Orkland, Heim,
   Hitra 2008–2019; Haram 2020–2023 — 64 municipality-years). These become `null` with status "boundary".
@@ -209,9 +209,9 @@ The layer is off by default.
 
 **What is not computed.** No places-per-resident ratio, coverage share, ranking, vulnerability class or preparedness
 score: public shelters serve whoever is present, private shelters are unpublished, and registered places are capacity on
-record, not availability. The lens shows registered places in five bands, labelled "not a preparedness score".
+record, not availability. The lens shows registered places in five bands, labelled with the registered number of places.
 
-**Sweden and Denmark.** Investigated, not integrated (missing coverage, not zero): Sweden's register (Myndigheten för
+**Sweden and Denmark.** Investigated, data unavailable: Sweden's register (Myndigheten för
 civilt försvar, ~64,000 shelters, open to anyone nearby in war) is published as a map, but no openly licensed dataset
 was found, and Sweden has no separate "public" class, so it would not match the Norwegian one. Denmark has no published
 national dataset of shelter locations; its inspection of public shelters (*betondækningsgrave*) ran in 2025–26 without
@@ -300,7 +300,7 @@ landscapes with an uplink (fjords, capes, mountains, islands, coast) open the pl
 ## Validation (`python -m pipeline check --mode built|source|release`)
 
 Modes: **built** (shipped files only), **source** (independent reconciliation with the original downloads, values
-checked by status, and cache verification), **release** (also unit and browser evidence for this exact candidate — app,
+checked by status, and cache verification), **release** (also unit and browser test results for this exact candidate — app,
 data, assets, tests and pipeline by SHA-256 — with every mandatory journey passing, and accepted key totals). A skipped,
 missing or stale check is never a pass. See docs/VERIFICATION.md for the results of this release.
 

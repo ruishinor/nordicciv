@@ -200,7 +200,7 @@ def build():
     data = {
         "version": 1,
         "about": "Public camera uplinks: webcams their operators publish for anyone to watch. NordicCiv lists where "
-                 "they are and links to the provider's own page; it never loads, copies or relays their pictures.",
+                 "they are and links to the provider's public viewing page.",
         "policy": cat["policy"],
         "reviewed": cat["reviewed"],
         "categories": cat["categories"],
@@ -217,7 +217,7 @@ def build():
                          "data is used (see docs/SOURCES.md).",
         },
         "meaning": {
-            "status": "Listed is not live: whether a camera is working is only known on the provider's page.",
+            "status": "Check the provider's page for the current camera status.",
             "position": "Published positions are where the provider puts the camera; place positions mark the place a "
                         "page shows. The symbol marks a public viewpoint, not the camera's installation.",
             "verified": "Date the provider's public page last answered as a working page (not the camera stream).",

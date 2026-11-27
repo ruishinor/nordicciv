@@ -1,4 +1,4 @@
-// NordicCiv extension: the Council (advisors with evidence-based observations), Compare, Explorer (table, scatter,
+// NordicCiv extension: the Council (advisors with regional statistics), Compare, Explorer (table, scatter,
 // CSV export) and a Timeline lens built from the population series. Deterministic: no external API at runtime.
 // Every observation is computed from the loaded data and names its source; nothing is generated text from a model.
 import { esc, int, compact, money, pct, popShort } from "../../format.js";
@@ -188,8 +188,7 @@ export function install(app) {
     try { items = OBS[advisor](subject, region); } catch (e) { console.error(e); items = [`<p class="muted">Could not compute (${esc(e.message)}).</p>`]; }
     return `<div class="adv-row">${ADVISORS.map((x) => `<button class="adv ${x.id === advisor ? "on" : ""}" data-adv="${x.id}" title="${esc(x.name)}" style="--c:${x.color}"><span>${x.emoji}</span><small>${esc(x.name.split(" ")[0])}</small></button>`).join("")}</div>
       <h3 class="adv-title" style="color:${a.color}">${a.emoji} ${esc(a.name)} advisor <span class="muted">· ${scope}</span></h3>
-      <p class="muted small">${subject || region ? "Observations about your selection. Close the panel to hear about Scandinavia as a whole." : "Select a municipality or region on the map for local observations."}
-      Every statement is computed from the data on this map; sources are named under each.</p>
+      <p class="muted small">${subject || region ? "Close the selection to explore Scandinavia as a whole." : "Select a municipality or region for local figures."}</p>
       ${items.join("")}`;
   }
 
@@ -368,7 +367,7 @@ export function install(app) {
         out.push(lines.length
           ? obs(`${scope} hosts ${lines.map(([t, v, its]) => `<b>${int(v)} MW</b> of ${esc(types.get(t).name.toLowerCase())}${its.length > 1 ? ` (${its.length} sites)` : ` (${esc(its[0].name)})`}`).join(", ")}.`,
             { source: "powerplantmatching; thresholds in the Almanac" })
-          : obs(`No power plant above the map's per-type thresholds is recorded in ${scope}. Smaller plants are not mapped, so this is not evidence that no electricity is generated here.`, { source: "powerplantmatching; thresholds in the Almanac" }));
+          : obs(`No power plants above the map's minimum sizes are listed in ${scope}. Smaller plants may be present.`, { source: "powerplantmatching; thresholds in the Almanac" }));
         if (c && !lines.length) {
           const reg = states.find((x) => x.fips === c.states[0]);
           const ri = res.items.filter((it) => it.state === c.states[0]);
@@ -631,7 +630,7 @@ export function install(app) {
       <text x="${W - 4}" y="${H - 8}" text-anchor="end" font-size="11" fill="#9aa4b0">${esc(X.label)}${logx ? " (log)" : ""} →</text>
       <text x="${P + 4}" y="14" font-size="11" fill="#9aa4b0">↑ ${esc(Y.label)}</text>
       <text x="${W - 4}" y="14" text-anchor="end" font-size="11" fill="#c9a45c">r = ${fin(r) ? r.toFixed(2) : "–"}</text></svg>
-      <p class="muted small">🇳🇴 orange · 🇸🇪 blue · 🇩🇰 yellow. Correlation is not causation; click a dot to open it.</p>`;
+      <p class="muted small">🇳🇴 orange · 🇸🇪 blue · 🇩🇰 yellow. Two figures can move together for many reasons. Click a dot to open the municipality.</p>`;
   }
   function wireExplorer(ex) {
     ex.querySelectorAll("[data-f]").forEach((el) => {
@@ -686,7 +685,7 @@ export function install(app) {
       `# Jobs: place of work, Nov/Q4 2024 (SSB 07984, SCB TAB3204, DST RAS501). Yields count jobs, not output. lower_bound = the agency suppressed small cells; *_upper_bound = what they could add at most.`,
       `# Economic output: regional accounts 2023 (NO GVA basic prices, SE GRDP market prices, DK GDP) shared to municipalities by industry value added and jobs — estimate.`,
       `# Income: relative to each country's own figure (NO median household income after tax, SE median net income 20+, DK average disposable income); not comparable across countries.`,
-      `# Licences: NLOD/CC BY 4.0 (SSB), CC0 (SCB), CC BY 4.0 (DST, Eurostat). Empty value = not available (never zero).`,
+      `# Licences: NLOD/CC BY 4.0 (SSB), CC0 (SCB), CC BY 4.0 (DST, Eurostat). Empty value = unavailable.`,
       head.map(q).join(","),
       ...list.map((c) => {
         const row = [c.id, c.name, c.country, c.states[0], c.type.label];
@@ -777,7 +776,7 @@ export function install(app) {
         id: null, name: `Population change ${tl.a}–${tl.b}`, emoji: "📈", icon: "l-growth", group: "people", unit: "% change", format: "pct",
         scale: "linear", domain: [-span, span], ramp: ["#b2443a", "#e08a5a", "#f3e6b0", "#7fbf8f", "#2f8f6f"], higher_is: "neutral",
         resolution: "municipality", source: "ssb, scb, dst", description: `Change in residents between 1 January ${tl.a} and 1 January ${tl.b}, on the same territory.`,
-        note: "One value per municipality. Grey = no comparable figure (the territory changed between the two years, or no data) — never zero.", values: vals, muni_values: mv,
+        note: "One value per municipality. Grey = unavailable or different municipal boundaries between the two years.", values: vals, muni_values: mv,
       });
     };
   }
