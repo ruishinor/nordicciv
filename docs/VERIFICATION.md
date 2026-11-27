@@ -1,4 +1,63 @@
-# Verification record — NordicCiv 0.3.0
+# Verification record — NordicCiv 0.4.0 (public shelters)
+
+Executed on the build machine (Linux, 2 CPUs, Python 3.13, headless Chrome with a software GPU, SwiftShader). The
+0.3.0 record follows unchanged below this section.
+
+## Gates (run on the working tree, then again by `python -m pipeline release` on the staged copy)
+
+| Gate | Outcome |
+|---|---|
+| Unit tests | 37 run, 0 failed, 0 skipped (6 new: fixture parse with missing vs zero and lat/lon order; identity; positions; municipal association; aggregates and coverage; lens bands) |
+| Browser journeys | 27 mandatory (0–26) PASS; 22–26 are new: layer default/tiers/no overlaps/true positions, selection card and Escape, Society tab (incl. "none" and "not integrated" wording, keyboard list), Council/Almanac/lens, phone |
+| `check` (built / source) | built: 111 pass, 7 note, 0 fail; source adds an independent regular-expression re-read of the WFS answer (555 records, 0 differ, numberMatched 555) |
+| Release run | the staged run's own results are in `RELEASE_EVIDENCE/` and `RELEASE_MANIFEST.json` inside the package |
+
+Defect found on the way: the accessibility journey (21) failed on some Discover facts because the specialisation badge
+had dark text on mid-tone colours (contrast 3.7–4.0:1). Latent in v0.3 (the fact shown is random); fixed by lightening
+the badge background (≥ 7:1). The mutation-tested release gates of v0.3 are unchanged.
+
+## Data integrity (public shelters)
+
+- 555 of 555 features the WFS reports as matched; DSB lokalId unique and well-formed; room numbers unique.
+- 296,937 registered places; 1 record registered with 0 places (kept as 0); none unstated.
+- Positions: transformed back to the published ETRS89 coordinates within 0.7 m; 522 on Norwegian land hexes, 33 on
+  coastal hexes the 9.7 km grid counts as sea (inside or ≤ 1.5 km from their municipality's outline).
+- Municipalities: 551 inside an outline, 4 assigned to the nearest (19, 35, 36, 110 m); 135 of 357 municipalities have
+  at least one public shelter; county and national totals equal the sums of their records.
+- Reconciliation with Beredskap101's snapshot: identical except one removed room and one position 173 m apart.
+
+## Five review perspectives (developer reviews, not user evidence)
+
+1. **Data integrity.** No inferred facilities, no merged private data, missing ≠ zero, SE/DK "not integrated", every
+   number traceable to the cached answer. Found and fixed: a municipality whose shelters sum to 0 places would have
+   fallen into the "no public shelter" lens class; it now cannot.
+2. **Responsible information.** Card, section, Council and Almanac say that registered places are not availability or
+   readiness, that private shelters are missing, and to follow the authorities in an emergency; no ranking, ratio or
+   score exists to misread. Only the fields DSB publishes are shown (no layouts, access or condition).
+3. **Visual identity.** One symbol family with the sites (ink outline, gold rim, top-left light, shadow); restrained at
+   small scales; no pins, red or animation; grouping instead of displacement. Judged native in states 26–28 and 31 —
+   by the developer only.
+4. **Accessibility.** Card: labelled region, live, close button, Escape; Society tab lists every shelter as buttons, so
+   nothing is reachable only through the canvas; badge contrast defect fixed (above). axe journey 21 passes.
+5. **Performance.** Static layer drawn into the cached map; items cached per zoom bucket; no network requests at runtime
+   beyond one 122 kB JSON (≈ 25 kB compressed) after the first frame.
+
+## Performance (`docs/perf/v03_v04_desktop.json`; 3 alternating runs, unthrottled, software GPU)
+
+| Measure | v0.3.0 | v0.4.0, shelters off | v0.4.0, shelters on |
+|---|---|---|---|
+| Data ready, median / worst | 911 / 939 ms | 888 / 904 ms | 988 / 1,022 ms |
+| Pan frames, median / worst | 16.7 / 100 ms | 16.7 / 117 ms | 16.7 / 117 ms |
+| Zoom frames, p95 (worst run) / long frames | 50 ms / 26 | 50 ms / 23 | 50 ms / 23 |
+| Close pan, worst | 233 ms | 233 ms | 250 ms |
+| Lens switch, median / worst | 150 / 250 ms | 134 / 200 ms | 125 / 321 ms |
+| Settled redraw: overview / regional / close (median) | 43 / 50 / 191 ms | 44 / 45 / 183 ms | 51 / 44 / 184 ms |
+
+Read: with the layer off v0.4 matches v0.3 within run-to-run noise; with it on, the far overview redraw is ~7 ms slower
+and data readiness ~100 ms later (the extra file); everything else within noise. Not measured: a 4×-throttled CPU and
+a real phone for this release. The keyboard list in the Society tab was added after this benchmark (no rendering change).
+
+# Verification record — NordicCiv 0.3.0 (previous release)
 
 Executed for this release on the build machine (Linux, 2 CPUs, Python 3.13, headless Chrome with a software GPU,
 SwiftShader). "Reproduced" means recomputed here from the original downloads or the shipped data. The v0.2.0 record is
