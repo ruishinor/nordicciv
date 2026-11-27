@@ -23,6 +23,7 @@ import math
 import re
 import sys
 from collections import defaultdict
+from pathlib import Path
 
 from .build.yields import YIELDS
 from .core.paths import INTERIM, RAW, ROOT, WEB_DATA
@@ -475,22 +476,56 @@ def summary(cities, nation):
     }
 
 
-def check_release(r, cities, nation, accept=False):
+def check_release(r, cities, nation, accept=False, evidence=None, candidate_root=None):
+    """Release gates. Evidence must be for this exact candidate (pipeline/candidate.py: app files, data, assets, test
+    implementation and pipeline), from completed runs, with every mandatory browser journey PASS. A missing, stale,
+    partial or skipped piece of evidence is a FAIL, never a pass."""
+    from .candidate import manifest
     cur = summary(cities, nation)
-    if accept or not SUMMARY.exists():
+    if accept:
         SUMMARY.parent.mkdir(parents=True, exist_ok=True)
         SUMMARY.write_text(json.dumps(cur, indent=1, ensure_ascii=False))
-        r.add("NOTE", f"release: summary baseline {'accepted' if accept else 'created'} at {SUMMARY.relative_to(ROOT)}")
-    base = json.loads(SUMMARY.read_text())
-    diff = {k: (base.get(k), v) for k, v in cur.items() if base.get(k) != v}
-    r.ok(not diff, f"release: key totals unchanged against the accepted baseline {('— changed: ' + str(diff)[:300]) if diff else ''}")
-    if not BROWSER_RESULT.exists():
-        r.skip("release: no browser test result (run tests/smoke_browser.py)")
-        return
-    b = json.loads(BROWSER_RESULT.read_text())
-    same = b.get("data_hash") == data_hash()
-    r.ok(same, f"release: browser journeys ran against these data files ({b.get('data_hash', '')[:12]} vs {data_hash()[:12]})")
-    r.ok(b.get("failed") == 0 and b.get("passed", 0) > 0, f"release: browser journeys {b.get('passed')} passed, {b.get('failed')} failed ({b.get('browser')})")
+        r.add("NOTE", f"release: summary baseline accepted at {SUMMARY.relative_to(ROOT)} (explicit --accept)")
+    if not SUMMARY.exists():
+        r.add("FAIL", "release: no accepted summary baseline (tests/fixtures/release_summary.json); review the totals and accept with --accept")
+    else:
+        base = json.loads(SUMMARY.read_text())
+        diff = {k: (base.get(k), v) for k, v in cur.items() if base.get(k) != v}
+        r.ok(not diff, f"release: key totals unchanged against the accepted baseline {('— changed: ' + str(diff)[:300]) if diff else ''}")
+    cand = manifest(candidate_root or ROOT)
+    r.add("NOTE", f"release: candidate {cand['id'][:16]} (app {cand['counts']['app']}, data {cand['counts']['data']}, "
+                  f"tests {cand['counts']['tests']}, pipeline {cand['counts']['pipeline']} files)")
+    ev = Path(evidence) if evidence else BROWSER_RESULT.parent
+    for name in ("browser", "unit"):
+        f = ev / f"{name}.json"
+        if (ev / f"{name}.running.json").exists():
+            r.add("FAIL", f"release: an unfinished {name} run left {name}.running.json — rerun it")
+        if not f.exists():
+            r.add("FAIL", f"release: no {name} test evidence ({f.name}); run tests/{'smoke_browser' if name == 'browser' else 'run_unit'}.py on this candidate")
+            continue
+        e = json.loads(f.read_text())
+        eid = (e.get("candidate") or {}).get("id")
+        r.ok(e.get("completed") is True and e.get("candidate_unchanged") is True,
+             f"release: {name} evidence is from a completed run during which the candidate did not change")
+        r.ok(eid == cand["id"], f"release: {name} evidence is for this candidate ({str(eid)[:12]} vs {cand['id'][:12]})"
+             + ("" if eid == cand["id"] else "; differing parts: " + ", ".join(p for p, h in cand["parts"].items() if (e.get("candidate") or {}).get("parts", {}).get(p) != h)))
+        if name == "browser":
+            ids = {x.get("id"): x["status"] for x in e.get("results", [])}
+            need = e.get("mandatory") or []
+            from_tests = _mandatory_journeys()
+            r.ok(set(need) == set(from_tests), f"release: browser evidence lists the mandatory journeys of the test implementation ({len(from_tests)})")
+            notpass = {i: ids.get(i, "MISSING") for i in from_tests if ids.get(i) != "PASS"}
+            r.ok(not notpass and e.get("failed") == 0 and e.get("skipped") == 0,
+                 f"release: all {len(from_tests)} mandatory browser journeys PASS ({e.get('browser')}){' — not passing: ' + str(notpass) if notpass else ''}")
+        else:
+            r.ok(e.get("ran", 0) > 0 and e.get("failures") == 0 and e.get("errors") == 0 and e.get("skipped") == 0,
+                 f"release: unit tests {e.get('ran')} ran, {e.get('failures')} failed, {e.get('errors')} errors, {e.get('skipped')} skipped")
+
+
+def _mandatory_journeys():
+    txt = (ROOT / "tests" / "smoke_browser.py").read_text()
+    m = re.search(r"MANDATORY = \[str\(i\) for i in range\((\d+), (\d+)\)\]", txt)
+    return [str(i) for i in range(int(m.group(1)), int(m.group(2)))] if m else []
 
 
 def main(argv=None):
@@ -525,7 +560,9 @@ def main(argv=None):
     else:
         r.add("SKIP", "source reconciliation and cache verification not run in 'built' mode")
     if mode == "release":
-        check_release(r, cities, nation, accept="--accept" in argv)
+        ev = argv[argv.index("--evidence") + 1] if "--evidence" in argv else None
+        cr = argv[argv.index("--candidate") + 1] if "--candidate" in argv else None
+        check_release(r, cities, nation, accept="--accept" in argv, evidence=ev, candidate_root=cr)
     return _finish(r)
 
 

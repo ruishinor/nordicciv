@@ -1,8 +1,8 @@
 # Validation gates.  .\scripts\validate.ps1 [-Mode built|source|release] [-Browser]
 #   built   : the shipped web/data files on their own (works on any copy)
 #   source  : also reconciles with the original downloads in data\raw (needs the raw data)
-#   release : source + the browser journeys on these exact data files + accepted key totals
-# -Browser runs the 20 browser journeys first (starts and stops a local server).
+#   release : source + unit and browser evidence for this exact candidate (app, data, tests) + accepted key totals
+# -Browser runs the 21 browser journeys (0–20) first (starts and stops a local server).
 [CmdletBinding()]
 param([ValidateSet('built', 'source', 'release')][string]$Mode = 'built', [switch]$Browser, [int]$Port = 8765)
 $ErrorActionPreference = 'Stop'
@@ -12,7 +12,7 @@ $python = if (Test-Path $venvPy) { (Resolve-Path $venvPy).Path } else { (Get-Com
 $failed = $false
 
 Write-Host "== unit tests" -ForegroundColor Cyan
-& $python -m unittest discover -s tests
+& $python tests\run_unit.py
 if ($LASTEXITCODE -ne 0) { $failed = $true }
 
 if ($Browser -or $Mode -eq 'release') {

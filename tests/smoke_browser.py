@@ -1,15 +1,20 @@
 """Real-browser user journeys (Playwright). Assert user-visible results and application state, not just clicks.
 
     python -m pipeline serve --port 8765 &      # or any static server on web/
-    python tests/smoke_browser.py [URL]          # default http://127.0.0.1:8765/
+    python tests/smoke_browser.py [URL] [--candidate DIR] [--out DIR]
+
+URL defaults to http://127.0.0.1:8765/. --candidate is the source tree whose web/ the server is serving (default: this
+repository); journey 0 fetches every app and data file through the browser and compares its SHA-256 with that
+candidate, so the evidence proves which files were tested. --out is where the evidence goes (default tests/results).
 
 Browser: the Playwright-managed Chromium (`python -m playwright install chromium`), or any Chrome/Chromium given in
 $NORDICCIV_CHROME, or one found at the usual install paths (Linux, macOS, Windows). Accessibility: axe-core is used
 when available at tests/.node/node_modules/axe-core/axe.min.js (`npm install --prefix tests/.node axe-core@4`);
 otherwise that journey is reported as SKIP, never as PASS.
 
-Writes tests/results/browser.json (journeys, timings, data hash) for `python -m pipeline check --mode release`.
-Exit 1 on any failure.
+Evidence: browser.json is deleted when a run starts and written only when every journey has run (completed run,
+candidate id, every journey id and status), so an interrupted or crashed run leaves no evidence; `check --mode release`
+requires it for the exact candidate with every mandatory journey PASS (a SKIP does not count). Exit 1 on any failure.
 """
 import asyncio
 import json
@@ -24,7 +29,19 @@ from playwright.async_api import async_playwright
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
-URL = sys.argv[1] if len(sys.argv) > 1 else "http://127.0.0.1:8765/"
+
+
+def _arg(name, default):
+    a = sys.argv[1:]
+    return a[a.index(name) + 1] if name in a and a.index(name) + 1 < len(a) else default
+
+
+_pos = [x for i, x in enumerate(sys.argv[1:]) if not x.startswith("--") and (i == 0 or sys.argv[i] not in ("--candidate", "--out"))]
+URL = _pos[0] if _pos else "http://127.0.0.1:8765/"
+CANDIDATE = Path(_arg("--candidate", str(ROOT))).resolve()
+OUT = Path(_arg("--out", str(ROOT / "tests" / "results"))).resolve()
+# every journey must run and pass for a release (journey ids are the leading numbers of the names below)
+MANDATORY = [str(i) for i in range(0, 21)]
 AXE = ROOT / "tests" / ".node" / "node_modules" / "axe-core" / "axe.min.js"
 AXE_ALT = Path(os.environ.get("NORDICCIV_AXE", "/nonexistent"))
 
@@ -60,12 +77,19 @@ async def launch(p):
 
 
 async def main():
+    from pipeline.candidate import manifest, web_files
     results, errors = [], []
     timings = {}
+    OUT.mkdir(parents=True, exist_ok=True)
+    evidence, running = OUT / "browser.json", OUT / "browser.running.json"
+    if evidence.exists():
+        evidence.unlink()  # old evidence never survives a new run
+    cand = manifest(CANDIDATE)
+    running.write_text(json.dumps({"started": time.strftime("%Y-%m-%dT%H:%M:%S"), "candidate": cand["id"], "url": URL}))
 
     def ok(name, cond, detail="", skip=False):
         status = "SKIP" if skip else ("PASS" if cond else "FAIL")
-        results.append({"name": name, "status": status, "detail": str(detail)[:300]})
+        results.append({"id": name.split()[0], "name": name, "status": status, "detail": str(detail)[:300]})
         print(f"{status}  {name} {detail}")
 
     async with async_playwright() as p:
@@ -85,6 +109,26 @@ async def main():
         await pg.wait_for_timeout(800)
         timings["interactive_s"] = round(t_ready, 2)
         timings["relief_ready_s"] = round(time.time() - t0, 2)
+        # 0. the browser is running the intended candidate: every app and data file, fetched by the page from this
+        # server, has the candidate's SHA-256, and every resource the page loaded is one of those files
+        expected = web_files(cand)
+        served = await pg.evaluate("""async (files) => {
+            const hex = (b) => [...new Uint8Array(b)].map((x) => x.toString(16).padStart(2, '0')).join('');
+            const bad = [];
+            for (const [path, sha] of Object.entries(files)) {
+              const r = await fetch(new URL(path, location.href), { cache: 'no-store' });
+              const got = r.ok ? hex(await crypto.subtle.digest('SHA-256', await r.arrayBuffer())) : 'HTTP ' + r.status;
+              if (got !== sha) bad.push(path + ': ' + got.slice(0, 12));
+            }
+            const base = new URL('.', location.href).href;
+            const loaded = performance.getEntriesByType('resource').map((e) => e.name.split('#')[0].split('?')[0]);
+            const foreign = loaded.filter((u) => !u.startsWith(base) || !(decodeURIComponent(u.slice(base.length)) in files));
+            return { checked: Object.keys(files).length, bad, loaded: loaded.length, foreign };
+        }""", expected)
+        timings["candidate"] = {"id": cand["id"], **served}
+        ok("0 browser loads the intended candidate (every app and data file matches its SHA-256)",
+           served["checked"] == len(expected) > 50 and not served["bad"] and not served["foreign"] and served["loaded"] > 10,
+           f"{served['checked']} files checked, {len(served['bad'])} differ {served['bad'][:2]}, {served['loaded']} loaded, foreign {served['foreign'][:2]}")
         n = await pg.evaluate("__app.data.cities.length")
         ok("1 open: 745 municipalities, relief and polygons loaded", n == 745, f"{n} municipalities; interactive {t_ready:.1f}s, relief {timings['relief_ready_s']}s")
 
@@ -217,8 +261,13 @@ async def main():
         await pg.evaluate("document.querySelector('#yr-tab-metros')?.click()")
         await pg.wait_for_timeout(200)
         rows = await pg.evaluate("document.querySelectorAll('#yield-report .yr-row').length")
+        labels = await pg.evaluate("[...document.querySelectorAll('#yield-report .yr-row .yr-rk')].map(x => x.innerText.trim())")
         await pg.keyboard.press("Escape")
-        ok("13 top-bar report ranks municipalities", rows >= 8, f"{rows} rows")
+        import re as _re
+        firsts = [int(_re.match(r"(\d+)", x).group(1)) if _re.match(r"\d+", x) else None for x in labels]
+        sane = all(f is not None for f in firsts) and firsts == sorted(firsts) and firsts[:1] == [1] and all(
+            ("–" not in x) or (int(x.split("–")[0]) <= int(x.split("–")[1])) for x in labels)
+        ok("13 top-bar report ranks municipalities (competition ranks from 1, never decreasing; intervals ordered)", rows >= 8 and sane, f"{rows} rows; ranks {labels[:10]}")
 
         # 14. share link restores the selection
         await pg.evaluate("__app.selectCity('NO-4601', {fly: false})")
@@ -266,7 +315,8 @@ async def main():
         await pg.keyboard.press("Escape")
         await pg.wait_for_timeout(300)
         hidden = await pg.evaluate("document.getElementById('city-panel').hidden")
-        ok("16 keyboard: arrow keys switch tabs, / focuses search, Escape closes", sel_tab == "Economy" and focused == "search-input", f"tab={sel_tab} focus={focused} panelHidden={hidden}")
+        ok("16 keyboard: arrow keys switch tabs, / focuses search, Escape closes the panel", sel_tab == "Economy" and focused == "search-input" and hidden is True,
+           f"tab={sel_tab} focus={focused} panelHidden={hidden}")
 
         # 17. accessibility scan (axe-core), main view and an open panel
         axe = AXE if AXE.exists() else AXE_ALT if AXE_ALT.exists() else None
@@ -309,7 +359,10 @@ async def main():
         sheet = await mp.evaluate("(() => { const p = document.getElementById('city-panel'); const r = p.getBoundingClientRect(); return {hidden: p.hidden, top: Math.round(r.top), w: Math.round(r.width)}; })()")
         sx = await mp.evaluate("document.documentElement.scrollWidth <= innerWidth + 1")
         city_y = await mp.evaluate("(() => { const c = __app.state.selectedCity; return __app.cam.toScreen(c.x, c.y)[1]; })()")
-        ok("18 mobile: four labelled nav buttons, Council opens, Tromsø sheet leaves the town visible", nav == ["🗺️Explore", "🔍Lenses", "🏛️Council", "📖Almanac"] or (len(nav) == 4 and dock_hidden and council and not sheet["hidden"] and sx and city_y < sheet["top"]),
+        # innerText applies the CSS text-transform, so compare case-insensitively
+        labels_ok = [x.replace("🗺️", "").replace("🔍", "").replace("🏛️", "").replace("📖", "").strip().upper() for x in nav] == ["EXPLORE", "LENSES", "COUNCIL", "ALMANAC"]
+        ok("18 mobile: four labelled nav buttons, Council opens, Tromsø sheet leaves the town visible",
+           labels_ok and dock_hidden and council and not sheet["hidden"] and sx and city_y < sheet["top"],
            f"nav={nav} dockHidden={dock_hidden} council={council} sheet={sheet} townY={round(city_y)} noHScroll={sx}")
         await m.close()
 
@@ -325,19 +378,20 @@ async def main():
     passed = sum(r["status"] == "PASS" for r in results)
     failed = sum(r["status"] == "FAIL" for r in results)
     skipped = sum(r["status"] == "SKIP" for r in results)
-    print(f"\n{passed} passed, {failed} failed, {skipped} skipped")
-    try:
-        from pipeline.check import data_hash
-        dh = data_hash()
-    except Exception as e:  # noqa
-        dh = f"unavailable: {e}"
-    out = ROOT / "tests" / "results"
-    out.mkdir(parents=True, exist_ok=True)
-    (out / "browser.json").write_text(json.dumps({"url": URL, "browser": browser_name, "platform": platform.platform(),
-                                                  "when": time.strftime("%Y-%m-%dT%H:%M:%S"), "data_hash": dh,
-                                                  "passed": passed, "failed": failed, "skipped": skipped,
-                                                  "results": results, "timings": timings}, indent=1, ensure_ascii=False))
-    sys.exit(1 if failed else 0)
+    ids = [r["id"] for r in results]
+    missing = [i for i in MANDATORY if i not in ids]
+    print(f"\n{passed} passed, {failed} failed, {skipped} skipped" + (f"; MISSING journeys {missing}" if missing else ""))
+    # the candidate must not have changed while the journeys ran
+    after = manifest(CANDIDATE)["id"]
+    doc = {"completed": True, "url": URL, "browser": browser_name, "platform": platform.platform(),
+           "when": time.strftime("%Y-%m-%dT%H:%M:%S"), "candidate": {"id": cand["id"], "parts": cand["parts"], "root": str(CANDIDATE)},
+           "candidate_unchanged": after == cand["id"], "mandatory": MANDATORY, "missing": missing,
+           "passed": passed, "failed": failed, "skipped": skipped, "results": results, "timings": timings}
+    tmp = OUT / "browser.json.tmp"
+    tmp.write_text(json.dumps(doc, indent=1, ensure_ascii=False))
+    tmp.replace(evidence)
+    running.unlink(missing_ok=True)
+    sys.exit(1 if failed or skipped or missing or after != cand["id"] else 0)
 
 
 asyncio.run(main())
