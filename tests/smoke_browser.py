@@ -41,7 +41,7 @@ URL = _pos[0] if _pos else "http://127.0.0.1:8765/"
 CANDIDATE = Path(_arg("--candidate", str(ROOT))).resolve()
 OUT = Path(_arg("--out", str(ROOT / "tests" / "results"))).resolve()
 # every journey must run and pass for a release (journey ids are the leading numbers of the names below)
-MANDATORY = [str(i) for i in range(0, 33)]  # 22–26: public shelters (v0.4); 27–32: camera uplinks (v0.5)
+MANDATORY = [str(i) for i in range(0, 43)]  # 22–26: public shelters (v0.4); 27–32: camera uplinks; 33–39: opening; 40–42: Open in Maps (v0.5)
 AXE = ROOT / "tests" / ".node" / "node_modules" / "axe-core" / "axe.min.js"
 AXE_ALT = Path(os.environ.get("NORDICCIV_AXE", "/nonexistent"))
 
@@ -555,15 +555,16 @@ async def main():
             await pg5.wait_for_timeout(700)
             ucard.update(await pg5.evaluate("""(() => { const c = document.getElementById('uplink-card'), a = c.querySelector('a.uplink-open');
                 return { shown: !c.hidden, text: c.innerText, href: a?.href, target: a?.target, rel: a?.rel, ref: a?.referrerPolicy,
-                         links: c.querySelectorAll('a[href]').length, media: c.querySelectorAll('img,iframe,video,object,embed,source').length,
+                         links: c.querySelectorAll('a[href]').length, maps: [...c.querySelectorAll('a.maps-open')].map((m) => m.href.startsWith('https://www.google.com/maps/') && m.target === '_blank' && m.rel.includes('noopener') && m.rel.includes('noreferrer')),
+                         media: c.querySelectorAll('img,iframe,video,object,embed,source').length,
                          selected: __app.uplinks.selected }; })()"""))
         utxt = ucard.get("text", "")
-        ok("28 uplink selection: hover names it; a click opens a compact card (name, location, provider, page-check date, no-live-claim note) with one 'Open camera uplink' link to the provider's https page in a new tab without opener or referrer, and no media",
-           bool(upt) and ucard.get("shown") and upt["name"] in utxt and "Location" in utxt and "Provider" in utxt and "Open camera uplink" in utxt
+        ok("28 uplink selection: hover names it; a click opens a compact card (name, location, provider, page-check date, no-live-claim note) with two distinct actions — 'Open uplink' to the provider's https page and 'Open in Maps' to the place — both in a new tab without opener or referrer, and no media",
+           bool(upt) and ucard.get("shown") and upt["name"] in utxt and "Location" in utxt and "Provider" in utxt and "Open uplink" in utxt and "Open in Maps" in utxt
            and "does not know whether the camera is live" in utxt and "Page checked 2026" in utxt and upt["name"] in ucard.get("tip", "")
            and ucard.get("href") == upt["url"] and ucard.get("href", "").startswith("https://") and ucard.get("target") == "_blank"
            and "noopener" in ucard.get("rel", "") and "noreferrer" in ucard.get("rel", "") and ucard.get("ref") == "no-referrer"
-           and ucard.get("links") == 1 and ucard.get("media") == 0 and ucard.get("selected") == upt["id"],
+           and ucard.get("links") == 2 and ucard.get("maps") == [True] and ucard.get("media") == 0 and ucard.get("selected") == upt["id"],
            {**(upt or {}), **{k: (v[:120] if isinstance(v, str) else v) for k, v in ucard.items()}})
         # 29. nothing third-party was requested while the layer was on, hovered and selected; following the link is the
         # only outbound request, and it goes to the provider's page (blocked here, so the test touches no provider)
@@ -653,6 +654,17 @@ async def main():
         await mctx2.close()
         ok("32 phone: tapping a camera uplink opens its card fully on screen with the link visible; it closes",
            bool(mqt) and mqc.get("shown") and mqc.get("inView") and mqc.get("linkVisible") and mqc.get("closed"), {**(mqt or {}), **mqc})
+
+        # 33–42. opening screen and Open in Maps (tests/journeys_opening_maps.py)
+        from pyproj import Transformer
+        from pipeline.core import geo as _geo
+        _proj = json.loads((CANDIDATE / "web" / "data" / "world.json").read_text())["projection"]
+        _to = Transformer.from_crs(_geo.NORDIC_LAEA, "EPSG:4326", always_xy=True)
+
+        def geo_of(x, y):  # map km (y down) → (lon, lat), independently of the app's own code
+            return _to.transform(x + _proj["x0_km"], _proj["y1_km"] - y)
+        from journeys_opening_maps import run as run_v05
+        await run_v05(b, URL, ok, errors, timings, geo_of)
 
         ok("20 no console errors", not errors, errors[:3])
         await b.close()
