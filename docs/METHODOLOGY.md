@@ -71,7 +71,66 @@ Observations are deterministic templates filled from the loaded data (ranks, sha
 source. Resilience is shown as separate indicators (growth, ageing, jobs ratio, employment concentration HHI,
 largest-industry share, isolation) — deliberately not a composite score.
 
-## Validation (`python -m pipeline check`)
+## Population history and territorial comparability (v0.2)
+
+Municipal series are published on today's boundaries where the agency can sum former units (SSB codelist
+`agg_KommSummer`; Sweden and Denmark had no municipal reforms in 2008–2026). `pipeline/build/history.py` classifies every
+municipality-year from evidence:
+
+- **R1 source zero.** SSB publishes 0 persons for a code it cannot reconstruct (Narvik, Hábmer–Hamarøy, Orkland, Heim,
+  Hitra 2008–2019; Haram 2020–2023 — 64 municipality-years). These become `null` with status "boundary".
+- **R2 absorbed unit.** Where a municipality's R1 block is matched (±10 %) by jumps of another municipality's series at
+  both ends, that municipality describes a larger territory in those years (Ålesund 2020–23 includes Haram).
+- **R3 divided municipality.** SSB's classification 131 records old units split between new ones; a receiving
+  municipality whose change in that year departs from the national change by more than 1.5 points gets a break
+  (Tønsberg and Sandefjord, 2017, part of Stokke).
+
+Two years are comparable only when both are observed on the same territory code. Growth, rankings, the Timeline, the
+map's change lens and exports all use that rule (`web/js/stats.js`). Remaining one-year changes above 6 % are shown as
+cautions, not altered. Independent check: for every year 2008–2026, Norway's municipalities plus SSB's "divided
+municipalities and unknown" bucket equal SSB's national total exactly.
+
+**Totals.** Scandinavia and each country use the agencies' national series (SSB 07459 country, SCB TAB628 "00", DST
+FOLK1A "000"): 19,395,889 (2008), 20,772,253 (2016), 22,258,532 (2026); +7.16 % 2016–26 (Norway +7.93 %). Norwegian
+counties use SSB 07459 on the 2024 counties where the county existed; otherwise the sum of member municipalities if all
+are comparable (transfers wholly inside the county do not break the sum); otherwise "not available" with coverage.
+
+## Suppression (v0.2)
+
+A Norwegian industry group with suppressed components is a lower bound. Because each municipality's total jobs is
+published unsuppressed, the suppressed cells together add at most the unallocated remainder, which gives an upper bound
+(`yields_hi`). Ranks become intervals `[best, worst]`: best = 1 + number of municipalities whose lower bound exceeds this
+upper bound; worst = 1 + number whose upper bound exceeds this lower bound. National Norwegian yields come from SSB's
+national table (no suppression), so the overview bar is exact.
+
+## Economic output (v0.2)
+
+Regional totals are kept as published (Norway GVA at basic prices by 2020–23 county, excluding the continental shelf;
+Sweden GRDP at market prices by län; Denmark GDP by landsdel; euro at Eurostat 2023 average rates). Municipal estimates
+share each total by a sector-weighted key: Σ industry value added × the municipality's share of the region's jobs in
+that industry (SSB 11713; Eurostat nama_10r_3gva A*10), real estate (incl. imputed rents) by residents, value added the
+agency suppresses by total jobs. Σ municipal estimates = published regional totals (to €0.1 m). The Scandinavian sum is
+labelled "combined regional output (mixed concepts, not harmonised GDP)".
+
+## Geography layers (v0.2)
+
+- **Hexes** (6 km radius) remain the unit of terrain statistics and hex lenses.
+- **Municipal polygons** (`munis.json`, three simplification levels) carry selection, hit-testing (even–odd, so enclaves
+  such as Frederiksberg work), the selected outline, municipal borders and municipal choropleths (`lenses[].muni_values`).
+- **Borders** (`borders.json`) are polygon boundaries minus the coastline (land union incl. Natural Earth Finland,
+  Russia, Germany), so only real land borders are stroked.
+- **Relief** (`relief/`): a continuous image in the map frame — CORINE colour, Copernicus tree-cover tone,
+  multidirectional EU-DEM hillshade (×3), high-alpine tint above an elevation falling from ~1,500 m at 60° N to ~800 m at
+  70° N, lakes painted in; coast from municipal polygons in Norway and Denmark and smoothed 1 km cells elsewhere; sea from
+  Natural Earth bathymetry bands. Mountain pieces stand only on summit hexes (highest 1 km cell ≥ 1,000 m and above all
+  six neighbours). Analyze mode multiplies lens colours by a gray hillshade, clipped to land.
+
+## Validation (`python -m pipeline check --mode built|source|release`)
+
+Modes: **built** (shipped files only), **source** (independent reconciliation with the original downloads and cache
+verification), **release** (also browser journeys on the same data hash and accepted key totals). A skipped check is
+never a pass. See docs/VERIFICATION.md for the results of this release.
+
 
 Hex population vs municipal totals (rounding only); municipal sums vs national tables (≤ 0.05%; Christiansø and SCB noise
 explain the residuals); jobs vs national totals (≤ 1%); 745 municipalities on 2024 boundaries; banners on land and within

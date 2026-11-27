@@ -1,5 +1,8 @@
 # NordicCiv — Scandinavia as a strategy game, built from real data
 
+**Version 0.2.0** (see `VERSION`, `docs/VERIFICATION.md` for this release's evidence, `docs/LEDGER.md` for the
+requirement-by-requirement status).
+
 Norway, Sweden and Denmark drawn like a turn-based 4X strategy map. Every hex, municipality, yield, resource and
 wonder comes from public data — EU-DEM and CORINE on a 1 km grid, the municipal statistics of Statistics Norway,
 Statistics Sweden and Statistics Denmark, Eurostat, the Norwegian Offshore Directorate, the Geological Survey of Sweden,
@@ -10,18 +13,22 @@ Danish farmland or the Øresund.
 
 ## What's in it
 
-- **The map.** 40,828 equal-area hexes (9,005 of them Scandinavian land) (10.4 km across, 93.5 km² each) in a Lambert equal-area projection centred on
-  63°N 15°E. Each hex summarises ~94 one-kilometre cells: relief from EU-DEM, land cover from CORINE 2018 (conifer taiga,
-  fjell heath, bare rock, glaciers, mires, farmland, towns), tree cover from Copernicus, water and sea depth classes.
-  Rivers, lakes and region borders; Finland, Russia and Germany under fog for context.
+- **The map.** A continuous painted landscape — CORINE land cover, Copernicus tree cover and a multidirectional EU-DEM
+  hillshade on a 0.5 km image, coasts from the municipal polygons, a sea from Natural Earth depth bands — with 40,828
+  equal-area hexes (93.5 km² each; 9,005 Scandinavian land) as the unit of terrain statistics, in a Lambert equal-area
+  projection centred on 63°N 15°E. Mountain pieces mark real summits; forests, farmland, fjords and glaciers come from
+  the 1 km data. Every municipality also has its own polygon for selection, borders and municipal lenses, so small ones
+  (Frederiksberg, Solna, Utsira, Røst …) are fully represented. Finland, Russia and Germany under fog for context.
 - **Cities = municipalities.** All 745 municipalities (357 NO, 290 SE, 98 DK; 2024 boundaries) are cities, with banners
   on their main settlement and six yields:
   Food (agriculture/forestry/fishing jobs), Production (mining, manufacturing, construction), Gold (GDP), Science (ICT and
   professional services), Culture (arts, recreation, other services) and — distinctly Nordic — **Welfare** (education,
   health and social work). City types come from location quotients against the three countries combined.
-- **Municipality panel.** Population and growth 2008–2026, age structure, density, jobs per resident, income relative to
-  the national level, specialisations, jobs by 14 harmonised industries, resources/wonders/ports/airports in the
-  municipality, similar-sized peers, sources.
+- **Municipality panel** in four tabs — Overview (yields with what each measures, rank or rank interval, largest
+  industry vs strongest specialisation, actions: compare with neighbours, similar municipalities, where else this
+  industry concentrates, ask the Council), Economy (output estimate and method, specialisations, jobs by 14 industries,
+  sites), Society (population chart with boundary breaks, age, density, income relative to the national reference) and
+  Sources (data status per value, tables).
 - **Regions.** 15 fylker, 21 län, 5 Danish regions, with yields, ranks, land-cover mix and largest municipalities.
 - **Resources.** 687 sites: hydropower, pumped storage, nuclear, wind (onshore/offshore), solar, thermal plants
   (installed MW — never presented as generation), 101 producing oil and gas fields with production, Swedish metal and
@@ -47,20 +54,33 @@ The built data is included, so serving `web/` is all it takes:
 python -m pipeline serve            # http://127.0.0.1:8765  (or any static server on web/)
 ```
 
+Windows (PowerShell 5.1 or 7):
+
+```powershell
+.\scripts\setup.ps1                 # .venv + requirements   (-Locked: exact release versions; -Browser: test browser + axe)
+.\scripts\serve.ps1                 # http://127.0.0.1:8765
+.\scripts\validate.ps1 -Mode built  # unit tests + built-data gates   (-Mode source / release, -Browser)
+.\scripts\release.ps1               # release gates, then dist\nordicciv-<version>.zip with its SHA-256
+```
+
 `web/` is a self-contained static site (plain ES modules + Canvas 2D, no framework, no build step, no runtime APIs).
 
 ## Rebuilding the data
 
-Python 3.11+ with `numpy pyproj shapely pyarrow scipy` (`pip install -r requirements.txt`).
+Python 3.11+ (`pip install -r requirements.txt`; release data were built with `requirements-lock.txt`).
 
 ```bash
 python -m pipeline fetch            # download every source into data/raw/<source>/ with a provenance manifest
-python -m pipeline process          # raw → data/interim/<source>.json
-python -m pipeline build            # interim → web/data/*.json
-python -m pipeline check            # validation report (exit 1 on FAIL); writes docs/CHECK_REPORT.txt
+python -m pipeline verify-cache     # every cached download vs its manifest (SHA-256, size, request identity)
+python -m pipeline process --strict # raw → data/interim/<source>.json (a missing source is an error)
+python -m pipeline build            # interim → web/data/*.json; validated, and restored if anything fails
+python -m pipeline check --mode built|source|release   # gates; reports in docs/CHECK_REPORT*.txt
 python -m unittest discover -s tests
-python tests/smoke_browser.py       # real-browser user journeys (Playwright, site served on :8765)
-python -m pipeline all              # fetch + process + build + check
+python tests/smoke_browser.py       # 20 real-browser journeys (site served on :8765); writes tests/results/browser.json
+python tests/visual_states.py URL OUT   # the 14 standard screenshots at fixed cameras (visual regression)
+python tests/perf.py OUT.json now=URL   # laboratory performance (frame times, LCP, CLS, lens switch)
+python -m pipeline release          # release gates + dist/nordicciv-<version>.zip + RELEASE_MANIFEST.json, verified
+python -m pipeline all              # fetch + process (strict) + build
 ```
 
 **Blocked networks and the relay.** On a normal internet connection `fetch` downloads everything directly. In sandboxes
@@ -79,10 +99,14 @@ pipeline/
   sources/   one class per publisher: files() to download, process() to tidy JSON (no hexes, no UI)
   build/     world (hexes, terrain, water, municipalities, dasymetric population), regions (cities, regions, nation,
              yields, GDP), resources, infrastructure, wonders, lenses, catalog (Almanac bibliography)
-  check.py   acceptance checks: reconciliation with national totals, placement, null≠0, provenance
+  build/     … also history (observation status, boundary breaks), gva (sector-weighted output keys), munis (polygons,
+             borders), relief (landscape and sea images, shore lines)
+  check.py   validation gates in three modes; release.py packages and verifies a release
 web/          the static app (engine adapted from usaciv; ext/nordic adds the Council, Compare, Explorer, Timeline, ferries)
 docs/         METHODOLOGY, SOURCES, LIMITATIONS (with decision log), DATA_CONTRACTS, CHECK_REPORT
-tests/        unit tests (geometry, projection, JSON-stat, harmonisation, built data) and browser journeys
+tests/        unit tests (28), browser journeys (20), visual states (14), performance script
+scripts/      PowerShell (setup, serve, validate, release) and validate.sh
+.github/      CI: built-data gates, unit tests and browser journeys on every push
 tools/        relay.js and bridge.py (browser relay), preview.py, shot.py
 ```
 
@@ -93,8 +117,12 @@ interface can consume too. A simulation would add its own files and must never o
 ## Reading the map honestly
 
 - Yields are names for real figures (see the Almanac). Jobs are counted where people work (Nov/Q4 2024).
-- Gold below the region level is an estimate (regional GDP × share of jobs), always shown with ≈. Norway's regional
-  GDP is value added at basic prices and excludes the continental shelf (≈ €104 bn in 2023).
+- Gold is economic output in each agency's own concept (Norway GVA at basic prices, Sweden and Denmark GDP); the
+  Scandinavian sum is "combined regional output", not harmonised GDP. Below the region it is an estimate (sector-weighted
+  share of the region's output), always shown with ≈. Norway's continental shelf (≈ €104 bn in 2023) is outside every
+  region.
+- Population changes are only compared on the same territory: years a municipality could not be reconstructed are "not
+  available", and national and county totals are the agencies' own series.
 - Hex population is a dasymetric estimate; municipal totals are exact. Municipal and regional lenses say so in the legend.
 - Missing stays missing: null, "–" or "no data", never 0. Suppressed components make a value a lower bound (≥).
 - Resources and wonders are selected by published thresholds and rules, listed in the Almanac and in the data files.

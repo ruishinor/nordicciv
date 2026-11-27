@@ -14,3 +14,25 @@ km in the Nordic LAEA frame described in `world.json.projection` (x right, y dow
 | `infrastructure.json` | `roads [[a, b, class, name]]`, `rail [[a, b, tier]]` (hex links), `ferries [{name, pts, seasonal}]`, `ports [...]`, `airports [...]`, `rules`, `vintage`. |
 | `wonders.json` | `rules [{id, kind, text}]`, `wonders [{id, name, kind, category, rule, rank, motif, metrics, x, y, cell, county, state}]`. |
 | `sources.json` | the source registry with licence, publisher, description and every downloaded file (URL, SHA-256, bytes, retrieval time, via). |
+
+## Added in v0.2
+
+| File / field | Meaning |
+|---|---|
+| `cities[].pop_series` | population by year; `null` = not available (never 0) |
+| `cities[].pop_terr` | territory code per year: `0` = today's boundaries, `k > 0` = another territory described in `pop_terr_notes[k]`, `null` = no value. Two years are comparable only with equal, non-null codes. |
+| `cities[].pop_status` | years that are not plain observations: `"boundary"` (agency could not reconstruct), `"missing"` |
+| `cities[].pop_breaks` | `[{rule R1/R2/R3, kind, years, related, terr, note, source}]` — the evidence for each break |
+| `cities[].pop_review` | unexplained one-year changes above 6 % (`[{years, change}]`), shown as a caution |
+| `cities[].growth`, `growth_note` | 2016–26 change on one territory, else `null` with the reason |
+| `cities[].yields_hi`, `jobs_unallocated` | upper bounds for lower-bound yields; jobs in suppressed cells |
+| `cities[].rank_range` | `{yield: [best, worst]}` where suppression makes the exact rank uncertain |
+| `cities[].gdp_method`, `gdp_concept`, `gdp_jobshare` | `"sector"` or `"jobs"`; the regional accounting concept; the plain job-share alternative |
+| `states[].pop_basis`, `pop_coverage` | per year `"published"` / `"sum"` / `null`, and the share of today's population that could be summed where not available |
+| `nation.{nation,countries}.pop_series_source`, `population_published`, `yields_published` | agency national series and exact national yields |
+| `nation.gdp_label`, `gdp_components`, `gdp_allocation`, `income_definitions` | what the economic figures are |
+| `lenses[].muni_values` | one value per municipality id for municipal/regional lenses (polygon colouring) |
+| `munis.json` | municipal polygons: `scale` (km per unit), `levels` (simplification, km), `features [{id, bbox, area_km2, label, rings, r1, r2}]`, rings delta-encoded |
+| `borders.json` | internal borders without coastline: `country`, `region`, `municipality` line lists (delta-encoded) |
+| `coast.json` | shore lines traced from the relief land mask |
+| `relief/index.json` | relief image levels (`L0` 1 km whole image, `L1` 0.5 km tiles), `gray` (Analyze), `sea`, `hex_fallback` (land hexes with no 1 km data), `sha256` |
