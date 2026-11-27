@@ -209,7 +209,7 @@ async def main():
         await pg.click("#pedia-nav [data-page='Methodology']")
         meth = await pg.inner_text("#pedia-body")
         await pg.keyboard.press("Escape")
-        ok("13 Almanac opens; methodology explains boundary changes and validation", len(pages) >= 8 and "divided" in meth and "same territory" in meth, f"{len(pages)} pages")
+        ok("12 Almanac opens; methodology explains boundary changes and validation", len(pages) >= 8 and "divided" in meth and "same territory" in meth, f"{len(pages)} pages")
 
         # 13. leaderboards list municipalities (inherited metro filter repaired)
         await pg.click("#yields [data-report='food']")
@@ -218,7 +218,7 @@ async def main():
         await pg.wait_for_timeout(200)
         rows = await pg.evaluate("document.querySelectorAll('#yield-report .yr-row').length")
         await pg.keyboard.press("Escape")
-        ok("12 top-bar report ranks municipalities", rows >= 8, f"{rows} rows")
+        ok("13 top-bar report ranks municipalities", rows >= 8, f"{rows} rows")
 
         # 14. share link restores the selection
         await pg.evaluate("__app.selectCity('NO-4601', {fly: false})")

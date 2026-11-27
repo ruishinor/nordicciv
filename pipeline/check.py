@@ -222,7 +222,7 @@ def check_munis(r, munis, cities):
     r.ok(not empty, f"geometry: no empty polygons ({len(empty)})")
     small = [c["name"] for c in cities if c["id"] in have and c["id"] in {"DK-147", "SE-0184", "SE-0183", "NO-1106", "NO-1151", "NO-1856", "NO-1857", "NO-3232", "NO-1127"}]
     r.ok(len(small) == 9, f"geometry fixture: Frederiksberg, Solna, Sundbyberg, Haugesund, Utsira, Røst, Værøy, Rælingen, Randaberg are selectable polygons ({len(small)}/9)")
-    r.add("NOTE", f"geometry: {len(have)} polygons, {sum(len(x) for m in munis['features'] for x in m['rings'])} rings, "
+    r.add("NOTE", f"geometry: {len(have)} polygons, {sum(len(m['rings']) for m in munis['features'])} rings, "
                   f"{munis.get('vertices', '?')} vertices at full detail")
 
 
