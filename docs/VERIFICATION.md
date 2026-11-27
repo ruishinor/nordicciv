@@ -2,7 +2,7 @@
 
 ## Opening screen and Open in Maps (branch `feature/opening-maps`)
 
-Same build machine. Gates on the working tree (candidate `4e56daad195b…`):
+Same build machine. Gates on the working tree (candidate `4e56daad195b…`; copy-only changes since):
 
 | Gate | Outcome |
 |---|---|
@@ -10,6 +10,7 @@ Same build machine. Gates on the working tree (candidate `4e56daad195b…`):
 | Browser journeys | 43 mandatory (0–42) PASS; 33–42 new (opening cold/slow with 4× CPU, not waiting for optional layers, cached, reduced motion, failures and retry, optional failures and the slow note, shared link and phone; Open in Maps across NO/SE/DK checked with pyproj, privacy and state, phone); 28 updated for the card's two actions |
 | `check --mode built` | 126 pass, 8 note, 0 warn, 0 fail (new: `version:`) |
 | Visual regression | 39 earlier states captured on `main` (ea7e6f3) and on the branch: 33 pixel-identical; 36, 37, 39 differ only by the new links (uplink card, municipality Overview). New states 40–46 |
+| Release run | `python -m pipeline release` on commit c9332d8: staged candidate `541649ad7f5b…`; on the staged copy unit tests 57/0/0 and browser journeys 43/43 PASS (bound to that candidate); then `check --mode release` stopped because the original downloads (data/raw) are not in this build environment, so nothing was **promoted** and 0.4.0 stays the last known-good release |
 | Start-up time | first map frame 1,043 ms vs 1,011 ms on `main` (median of 10 alternating cold loads; `docs/perf/v05_opening_startup.json`). An animated contour layer cost ~0.1 s and was made still |
 
 Real behaviour at Google (the build machine cannot reach Google; checked in a desktop browser on 2026-11-27). After
