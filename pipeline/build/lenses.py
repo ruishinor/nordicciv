@@ -92,8 +92,10 @@ def build():
         muni_lens(lambda c: c["growth"]), ramp=RAMP_DIV, higher="neutral", resolution="municipality",
         source="ssb, scb, dst", domain=[-0.15, 0.15],
         description="Change in resident population between 1 January 2016 and 1 January 2026 on today's municipal "
-                    "borders (Norway: SSB's aggregated series for the 2024 municipalities).",
-        note="Five Norwegian municipalities formed by splitting old ones have no 2016 figure and show no value.")
+                    "borders (Norway: SSB's aggregated series for the 2024 municipalities). A municipality whose territory "
+                    "changed between the two years (split predecessors, transfers recorded in SSB's classification) has "
+                    "no comparable figure and is shown as 'no data', never as zero; the municipality panel explains why.",
+        note=f"{sum(1 for c in cities if c['growth'] is None)} municipalities have no comparable 2016 figure (boundary changes) and show no value.")
     add("ageing", "people", "Aged 65+", "👴", "share of residents", "pct", muni_lens(lambda c: c["share_65plus"]),
         ramp=RAMP_WARM, resolution="municipality", source="ssb, scb, dst",
         description="Share of residents aged 65 or older, 1 January 2026 (Sweden: 31 December 2025).")
@@ -110,7 +112,7 @@ def build():
         reg_pop[c["gdp_region"]] = reg_pop.get(c["gdp_region"], 0) + avg
     gdp_pc = {k: v["pps"] * 1e6 / reg_pop[k] for k, v in gdp.items() if reg_pop.get(k)}
     add("gdp_pc", "economy", "GDP per person (PPS)", "🪙", "PPS per resident", "int",
-        muni_lens(lambda c: gdp_pc.get(c["gdp_region"]), 0), ramp=RAMP_SEQ, higher="good", resolution="region",
+        muni_lens(lambda c: gdp_pc.get(c["gdp_region"]), 0), ramp=RAMP_SEQ, higher="neutral", resolution="region",
         source="regional_accounts", domain=[25000, 70000],
         description="Regional GDP 2023 divided by the region's average population, converted to purchasing power "
                     "standards (Eurostat PPP, EU27 = 1). Norway: gross value added at basic prices, on the 2020–2023 "
@@ -142,12 +144,12 @@ def build():
         ramp=[c["color"] for c in cats], domain=[0, len(cats) - 1], categories=cats,
         description="The industry group with the highest location quotient (share of local jobs ÷ share in Norway, "
                     "Sweden and Denmark combined) of at least 1.5 with at least 250 jobs; 'Diversified' when none qualifies.")
-    add("income", "economy", "Income vs national median", "💶", "% of national level", "pct",
-        muni_lens(lambda c: c["income_index"]), ramp=RAMP_DIV, higher="good", resolution="municipality",
+    add("income", "economy", "Income relative to national reference", "💶", "% of the country's own figure", "pct",
+        muni_lens(lambda c: c["income_index"]), ramp=RAMP_DIV, higher="neutral", resolution="municipality",
         source="ssb, scb, dst, regional_accounts", domain=[0.8, 1.25],
         description="Experimental. Municipal income relative to the national figure of the same statistic: Norway median "
                     "household income after tax (2024), Sweden median net income of residents 20+ (2024), Denmark average "
-                    "disposable income per person (2024). Compare within a country only.",
+                    "disposable income of persons with income (2024). 100% = the country's own national figure. The three statistics measure different things (household vs person, median vs mean), so a colour says where a municipality stands within its own country, not how incomes compare across borders; values are nominal and not adjusted for prices or purchasing power.",
         note="Definitions differ between countries: read colours within one country.")
 
     # --- welfare & access ------------------------------------------------------------------------------------------

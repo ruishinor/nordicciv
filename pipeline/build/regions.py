@@ -21,7 +21,7 @@ from ..core import jsonstat
 from ..core.paths import INTERIM, RAW, WEB_DATA
 from ..core.store import read_json, write_json
 from ..sources.stats import estat_records
-from . import admin, history
+from . import admin, gva, history
 from .yields import CITY_TYPES, LQ_MIN, LQ_MIN_JOBS, YIELDS
 
 GDP_YEAR = 2023
@@ -151,6 +151,20 @@ def build():
     if missing:
         print("    WARN: no GDP for regions", missing)
 
+    # sector-weighted allocation keys (NC-T07); falls back to the job share where industry data is missing
+    sgva = gva.sector_gva()
+    alloc = {}
+    for gid in gdp:
+        members = [{"id": m["id"], "jobs": m["jobs"], "jobs_total": m["jobs_total"], "pop": m["pop"].get(POP_YEAR)}
+                   for m in munis if m["gdp_region"] == gid]
+        k = gva.keys(members, sgva.get(gid))
+        if k:
+            tot = sum(k.values())
+            alloc[gid] = {mid: v / tot for mid, v in k.items()} if tot else None
+    no_sector = sorted(set(gdp) - set(alloc))
+    if no_sector:
+        print("    NOTE: job-share GDP allocation (no industry GVA) for", no_sector)
+
     # --- benchmark structure (three countries combined) for location quotients -------------------------------
     tot_jobs = sum(m["jobs_total"] or 0 for m in munis)
     group_tot = {g: sum(m["jobs"][g] for m in munis) for g in admin.GROUP_KEYS}
@@ -192,11 +206,20 @@ def build():
         for y_ in YIELDS:
             if y_["key"] == "gold":
                 g = gdp.get(m["gdp_region"])
-                yields["gold"] = (g["eur"] * 1e6 * (jt or 0) / g["jobs"]) if g and g.get("jobs") and jt is not None else None
+                jobshare = (g["eur"] * 1e6 * (jt or 0) / g["jobs"]) if g and g.get("jobs") and jt is not None else None
+                a = alloc.get(m["gdp_region"])
+                yields["gold"] = g["eur"] * 1e6 * a[m["id"]] if (g and a and m["id"] in a) else jobshare
             else:
                 yields[y_["key"]] = sum(jobs[k] for k in y_["groups"])
                 if any(k in m["jobs_partial"] for k in y_["groups"]):
                     partial.append(y_["key"])
+        # suppressed components: each partial group is a lower bound; the unallocated remainder of the (unsuppressed)
+        # total is an upper bound on what the suppressed cells can add (NC-T06)
+        residual = max(0, (jt or 0) - sum(jobs.values())) if m["jobs_partial"] else 0
+        yields_hi = {}
+        for y_ in YIELDS:
+            if y_["key"] in partial:
+                yields_hi[y_["key"]] = yields[y_["key"]] + residual
         lqs = {}
         if jt:
             for gk in admin.GROUP_KEYS:
@@ -233,9 +256,13 @@ def build():
             "employed": jt, "jobs_total": jt, "employed_residents": m.get("employed_res"),
             "jobs": {k: int(v) for k, v in jobs.items()}, "jobs_detail": m["jobs_detail"], "jobs_partial": m["jobs_partial"],
             "jobs_per_100": (100 * jt / pop) if jt and pop else None,
-            "yields": yields, "yields_partial": partial, "yields_estimated": ["gold"],
+            "yields": yields, "yields_partial": partial, "yields_hi": yields_hi, "jobs_unallocated": residual or None,
+            "yields_estimated": ["gold"],
             "gdp": yields.get("gold"), "gdp_year": GDP_YEAR, "gdp_region": m["gdp_region"],
             "gdp_region_name": gdp.get(m["gdp_region"], {}).get("name"),
+            "gdp_concept": gdp.get(m["gdp_region"], {}).get("concept"),
+            "gdp_method": "sector" if alloc.get(m["gdp_region"]) else "jobs",
+            "gdp_jobshare": jobshare,
             "income": inc, "income_currency": admin.CURRENCY[m["country"]],
             "income_index": (inc / cinc) if inc and cinc else None,
             "lq": {k: round(v, 3) for k, v in lqs.items()},
@@ -394,6 +421,16 @@ def _ranks(cities):
             c.setdefault("ranks", {})[k] = None
         for r, i in enumerate(order, 1):
             cities[i]["ranks"][k] = r
+        # rank intervals where suppressed values make the order uncertain
+        lo = np.array([v if v is not None else np.nan for v in vals], dtype=float)
+        hi = np.array([(c.get("yields_hi") or {}).get(k, vals[i]) if vals[i] is not None else np.nan
+                       for i, c in enumerate(cities)], dtype=float)
+        if np.any(hi > lo):
+            for i in order:
+                best = 1 + int(np.sum(lo > hi[i]))
+                worst = 1 + int(np.sum((hi > lo[i]) & (np.arange(len(cities)) != i)))
+                if worst != best:
+                    cities[i].setdefault("rank_range", {})[k] = [best, worst]
     pops = np.array([c["population"] or 1 for c in cities], dtype=float)
     for i, c in enumerate(cities):
         d = np.abs(np.log(pops / pops[i]))
