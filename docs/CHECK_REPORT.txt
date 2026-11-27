@@ -131,13 +131,13 @@ NOTE  history review: NO-4649 Stad 2019→2020: +6.3% (no recorded boundary chan
 NOTE  history review: DK-187 Vallensbæk 2008→2009: +7.8% (no recorded boundary change)
 PASS  cache: 1003/1003 declared downloads match their manifest (SHA-256, size, request identity)
 PASS  release: key totals unchanged against the accepted baseline 
-NOTE  release: candidate 36d873dabf5ce395 (app 49, data 112, tests 9, pipeline 32 files)
+NOTE  release: candidate 210b9a84d85f717c (app 49, data 112, tests 9, pipeline 32 files)
 PASS  release: browser evidence is from a completed run during which the candidate did not change
-PASS  release: browser evidence is for this candidate (36d873dabf5c vs 36d873dabf5c)
+PASS  release: browser evidence is for this candidate (210b9a84d85f vs 210b9a84d85f)
 PASS  release: browser evidence lists the mandatory journeys of the test implementation (22)
 PASS  release: all 22 mandatory browser journeys PASS (/usr/bin/google-chrome)
 PASS  release: unit evidence is from a completed run during which the candidate did not change
-PASS  release: unit evidence is for this candidate (36d873dabf5c vs 36d873dabf5c)
+PASS  release: unit evidence is for this candidate (210b9a84d85f vs 210b9a84d85f)
 PASS  release: unit tests 31 ran, 0 failed, 0 errors, 0 skipped
 
 121 pass, 20 note, 0 warn, 0 skipped, 0 fail → PASS (mode: release)
