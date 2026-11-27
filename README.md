@@ -1,6 +1,6 @@
 # NordicCiv — Scandinavia as a strategy game, built from real data
 
-**Version 0.3.0** (see `VERSION`, `docs/VERIFICATION.md` for this release's evidence, `docs/LEDGER.md` for the
+**Version 0.4.0** (see `VERSION`, `docs/VERIFICATION.md` for this release's evidence, `docs/LEDGER.md` for the
 requirement-by-requirement status).
 
 Norway, Sweden and Denmark drawn like a turn-based 4X strategy map. Every hex, municipality, yield, resource and
@@ -37,9 +37,15 @@ towns, Danish farmland or the Øresund.
   industrial-mineral mines.
 - **Infrastructure.** Motorways, major roads, railways and ferry routes (Natural Earth, as map art), 145 ports by goods
   handled and 59 airports by passengers (Eurostat 2024).
+- **Public shelters (v0.4, Norway).** All 555 public civil-defence shelters in DSB's register (296,937 registered places;
+  NLOD 1.0), as an optional layer in the Map menu: summarised by county and municipality far out, every record at its
+  published position closer in, a card per shelter, a section in the municipality panel's Society tab, notes from the
+  Council's Resilience advisor, an Almanac page and a lens. Public shelters only (private shelters are not published);
+  registered places are capacity on record, not availability; Sweden and Denmark are "not integrated", never zero.
+  Educational only — in an emergency, follow the authorities' instructions.
 - **Wonders by rule.** All 32 UNESCO World Heritage Sites, national parks ≥ 1,000 km², large/old universities, bridges
   ≥ 6 km and tunnels ≥ 11 km.
-- **22 lenses** in four groups (people, economy, welfare & access, land), each labelled hex / municipality / region /
+- **23 lenses** in four groups (people, economy, welfare & access, land), each labelled hex / municipality / region /
   derived, with a histogram legend you can brush.
 - **The Council.** Eight advisors (geography, population, economy, industry, energy, infrastructure, environment,
   resilience) whose observations are computed deterministically from the data on the map, each with its source and a

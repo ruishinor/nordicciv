@@ -20,6 +20,11 @@ Say: "We are testing the map, not you. Think aloud. There are no wrong answers."
 6. *Analyse.* "Which part of Scandinavia has the oldest population? How do you know?" (Lens + legend or report.)
 7. *History.* "Did Ålesund's population really fall in 2024?" (Society tab: boundary change, Haram.)
 
+8. *Public shelters (v0.4).* "Show Norway's public shelters on the map and find one near Bergen's centre. How many people
+   could it hold, and is it open right now?" Probe: do they read registered places as availability, or the
+   absence of a public shelter in a municipality as "no protection"? Do they notice Sweden and Denmark are not covered
+   (rather than empty)? Does the symbol look like part of the map or like something pasted on?
+
 **Questions (5 min).** 1–5 scales, then "why?": the map looks like a game world · I understood what the numbers mean ·
 I trusted the numbers · I would come back to explore more · something was confusing (what?). Last: "What would you
 change first?"

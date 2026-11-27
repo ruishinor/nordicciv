@@ -33,3 +33,23 @@ No baseline was approved automatically: these frames are evidence for review, no
 
 Timings for the same states are in `before/timings.json` and `after/timings.json`; the scripted performance comparison
 is in `docs/perf/`.
+
+## v0.4: public shelters (`v04/`)
+
+`v04/before` is v0.3.0 and `v04/after` v0.4.0 at the same cameras (`tests/visual_states.py`, states 25–31; v0.3 cannot
+show the shelter states, so its frames show the same view without them). States 01–24 were captured again on v0.4 and
+compared pixel by pixel with `after/` (v0.3): every frame within JPEG noise (≤ 0.08% of pixels), except 14 (and the other
+frames that show a specialisation badge), where the badge background is lighter for contrast (WCAG AA; a latent v0.3
+defect the accessibility journey hit on some Discover facts). No baseline was approved automatically.
+
+| State | What it shows |
+|---|---|
+| 25 overview, layer off | Default: unchanged map, no shelter symbols |
+| 26 regional, layer on | One symbol per municipality, counts on tabs; restrained next to banners and sites |
+| 27 local Oslo | Records at their own positions; overlapping ones share a group symbol |
+| 28 selected | Card: address as published, registered places, municipality, room, identifier, meaning, emergency note, DSB links, source |
+| 29 Society tab | Count, registered places, largest, full list, caveats, "show on map" |
+| 30 lens | Registered places in bands; "none" its own class; Sweden and Denmark no data |
+| 31 mobile | Card as a bottom sheet |
+| 14 mobile Tromsø | Type badge with higher contrast |
+

@@ -700,3 +700,6 @@ button.link { background:none; border:0; padding:0; color:#f0d48a; cursor:pointe
 @media (max-width: 720px) {
   .shelter-card { top: auto; bottom: 64px; left: 8px; right: 8px; width: auto; max-height: 55vh; overflow: auto; z-index: 45; }
 }
+.sh-all { margin: 4px 0 6px; font-size: 12px; }
+.sh-all summary { cursor: pointer; color: var(--gold-bright); }
+.sh-all ul { margin: 4px 0 0; padding-left: 18px; max-height: 220px; overflow: auto; line-height: 1.5; }

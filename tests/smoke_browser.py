@@ -459,10 +459,13 @@ async def main():
             out.oslo = await sec('NO-0301'); out.none = await sec('NO-1856'); out.se = await sec('SE-0180');
             a.ui.setMapToggle('shelters', false); await sec('NO-0301');
             document.querySelector('[data-shelter-show="NO-0301"]')?.click(); await new Promise((r) => setTimeout(r, 300));
-            out.layerOn = a.shelters.on; return out; })()""")
+            out.layerOn = a.shelters.on;
+            document.querySelector('[data-shelter-open]')?.click(); await new Promise((r) => setTimeout(r, 300));
+            out.listOpens = !document.getElementById('shelter-card').hidden; a.shelters.closeCard(); return out; })()""")
         hasNone = "NO-1856" not in await pg4.evaluate("Object.keys(__app.shelters.data.munis).join(',')")
         ok("24 Society tab: shelter count, registered places, source and date, private-shelter caveat; 'none' and 'not integrated' worded as such; 'show on map' turns the layer on",
            soc["oslo"] and "33" in soc["oslo"] and "55,462" in soc["oslo"] and "not a measure" in soc["oslo"] and "extracted" in soc["oslo"]
+           and "All 33 as listed by DSB" in soc["oslo"] and soc.get("listOpens") is True
            and hasNone and soc["none"] and "no public shelter" in soc["none"] and "does not mean there is no protection" in soc["none"]
            and soc["se"] and "not integrated" in soc["se"] and "not zero" in soc["se"] and soc["layerOn"] is True,
            {k: (v[:70] if isinstance(v, str) else v) for k, v in soc.items()})

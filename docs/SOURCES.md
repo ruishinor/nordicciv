@@ -19,6 +19,7 @@ Generated from `web/data/sources.json` (the same list the Almanac shows). Each s
 | `sodir` | Norwegian Offshore Directorate FactPages and FactMaps: oil and gas fields and production | Sokkeldirektoratet (Norwegian Offshore Directorate) | NLOD 2.0 (Norwegian Licence for Open Government Data) | oil and gas resources, petroleum production | 3 |
 | `sgu` | SGU Mineral resources database (mines, quarries and deposits) | Sveriges geologiska undersökning (Geological Survey of Sweden) | CC0 1.0 (SGU open data) | mines and mineral deposits | 2 |
 | `links` | Fixed links (Wikidata) and main-port freight (Eurostat) | Wikidata contributors; Eurostat | CC0 1.0 (Wikidata); CC BY 4.0 (Eurostat) | engineering wonders, port size | 2 |
+| `dsb_shelters` | Tilfluktsrom – Offentlige (public shelters) | Direktoratet for samfunnssikkerhet og beredskap (DSB); WFS hosted by Kartverket (Geonorge) | NLOD 1.0 (Norwegian Licence for Open Government Data) | public shelters layer, municipal shelter summary, Council: civil preparedness notes | 4 |
 
 ### Added in v0.2
 - `ssb/07459_pop_county2024.json` — SSB 07459 on the 2024 counties (county population series).
@@ -30,3 +31,14 @@ Generated from `web/data/sources.json` (the same list the Almanac shows). Each s
 - Development-only (not distributed): axe-core (MPL-2.0) for the accessibility journey, Playwright (Apache-2.0).
 
 Attribution: contains data from Statistics Norway, Statistics Sweden, Statistics Denmark, Eurostat (© European Union), Copernicus Land Monitoring Service (EEA), © EuroGeographics for the administrative boundaries, Kartverket, the Norwegian Offshore Directorate, the Geological Survey of Sweden, Natural Earth, OurAirports, Wikidata and powerplantmatching (PyPSA).
+
+### Added in v0.4
+- `dsb_shelters/tilfluktsrom_4258.gml` — WFS GetFeature `app:Tilfluktsrom`, EPSG:4258, all 555 features (SHA-256 `97ea06cc…`),
+  with `capabilities.xml`, `describe_feature_type.xsd` and `hits.xml` (numberMatched). Retrieved 2026-11-27 through the
+  browser relay (same URLs, fetched same-origin from wfs.geonorge.no because the build sandbox refuses the host).
+  Attribution: "Contains data under the Norwegian licence for Open Government data (NLOD) made available by DSB."
+- Reference only (not redistributed): DSB guidance <https://www.dsb.no/sikkerhverdag/egenberedskap/verdt-a-vite-om-tilfluktsrom/>,
+  DSB's official shelter map, data.norge.no dataset page, product specification (Geonorge objektkatalog).
+- Investigated, not used: Sweden (Myndigheten för civilt försvar skyddsrumskarta — no openly licensed dataset found),
+  Denmark (no published national dataset), Beredskap101's static snapshot (superseded by the official register; see METHODOLOGY).
+

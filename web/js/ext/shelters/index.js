@@ -258,6 +258,8 @@ export function install(app) {
         <div><b>${int(a.n)}</b><span>public shelter${a.n === 1 ? "" : "s"} mapped</span></div>
         <div><b>${int(a.places)}</b><span>registered places in total${a.missing ? ` (${a.missing} not stated)` : ""}</span></div></div>
       <p class="small">Largest: ${top.map((r) => `${esc(r.address || `room ${r.room}`)} (${r.places == null ? "–" : int(r.places)})`).join("; ")}.</p>
+      <details class="sh-all"><summary>All ${int(a.n)} as listed by DSB</summary><ul>${[...list].sort((p, q) => (p.address || "").localeCompare(q.address || "", "nb"))
+        .map((r) => `<li><button class="link" data-shelter-open="${esc(r.id)}">${esc(r.address || `room ${r.room}`)}</button> · ${r.places == null ? "places not stated" : `${int(r.places)} places`}</li>`).join("")}</ul></details>
       <p class="muted small">Public shelters are for anyone in the area, so places are not compared with the number of residents. Registered places are capacity on record, not availability or readiness. Private shelters, which hold most of Norway's shelter places, are not published and not included: this is not a measure of the municipality's preparedness.</p>
       <div class="chips"><button class="chip" data-shelter-show="${esc(city.id)}">Show public shelters on the map</button>${guide}</div>${src}` }];
   }
@@ -265,6 +267,15 @@ export function install(app) {
 
   // one delegated handler for buttons in panels, the Council and cards
   document.addEventListener("click", (e) => {
+    const o = e.target.closest("[data-shelter-open]");
+    if (o && data) {
+      const r = data.byId.get(o.dataset.shelterOpen);
+      if (!r) return;
+      show(true);
+      app.flyTo(r.x, r.y, Math.max(app.cam.scale, 60 / app.w.grid.R));
+      openCard(r);
+      return;
+    }
     const b = e.target.closest("[data-shelter-show],[data-shelter-pedia]");
     if (!b) return;
     if (b.hasAttribute("data-shelter-pedia")) { app.pedia?.open(PAGE); return; }

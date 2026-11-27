@@ -1,7 +1,26 @@
 # NordicCiv — requirements and evidence ledger
 
 Status: ✅ done and verified · 🟡 done, verification pending or partial · ⏳ open · ➖ out of scope. "Evidence" names the
-check, test or file that verifies the item. v0.3 items first; the v0.2 table follows unchanged.
+check, test or file that verifies the item. v0.4 items first; the v0.3 and v0.2 tables follow unchanged.
+
+## v0.4 — civil preparedness: public shelters
+
+| ID | Requirement | Status | Implementation | Evidence |
+|---|---|---|---|---|
+| NC-S01 | Investigate references: DSB map, Beredskap101, dataset, WFS, guidance (schema, CRS, updates, licence) | ✅ | WFS 2.0 `app:Tilfluktsrom` (lokalId, romnr, plasser, adresse, posisjon; EPSG:4258 default), NLOD 1.0, updated "as needed" (data.norge.no modified 2026-11-25; extraction 2026-11-27); Beredskap101 repo read (static snapshot, no acquisition code) | METHODOLOGY "Civil preparedness"; SOURCES v0.4 |
+| NC-S02 | Official public shelters in the pipeline and source registry, with provenance | ✅ | `pipeline/sources/shelters.py` (`dsb_shelters`), `pipeline/build/shelters.py` → `web/data/shelters.json`; manifest with URL, SHA-256, retrieval | checks `shelters:*`, `source: every shelter record … equals the cached WFS answer`; unit `ParseTest` |
+| NC-S03 | Public only; nothing inferred; missing ≠ zero | ✅ | only the public dataset; null for an unstated capacity, 0 kept as 0; SE/DK `not_integrated` | unit `ParseTest`, `test_lens_bands`; check coverage |
+| NC-S04 | Coordinate transformation validated; records never moved | ✅ | PROJ EPSG:4258 → map LAEA; grouping instead of displacement | check round-trip (worst 0.7 m); unit `test_positions_are_the_published_ones`; journey 22 (singles exactly at their position, no overlaps) |
+| NC-S05 | Municipal association from the existing polygons | ✅ | point in polygon; 4 shore records to the nearest outline (19–110 m, kept); > 1.5 km fails the build | unit `test_municipality_contains_record_or_is_nearest_within_limit`; check |
+| NC-S06 | Original, native symbol | 🟡 (visual judgement; no user test) | shield with arched doorway in the site style (ink outline, gold rim, top-left light, ground shadow); group = stacked shield + count tab; Map-menu icon `c-shelter` | `docs/visual/v04/` (states 25–31) |
+| NC-S07 | Scale-dependent rendering | ✅ | county → municipality → record tiers; greedy grouping + merge pass; off by default | journey 22 |
+| NC-S08 | Card, Society tab, Council, Almanac | ✅ | card (places, municipality, room, id, meaning, emergency note, DSB links, source); Society section (count, places, largest, full keyboard list, show on map, caveats); Resilience advisor notes; Almanac page | journeys 23–25 |
+| NC-S09 | Analytical view without scores or coverage ratios | ✅ | lens `shelter_places` (5 bands, "not a preparedness score", SE/DK no data, "none" its own class) | journey 25; check lens |
+| NC-S10 | Sweden and Denmark investigated | ✅ (not integrated) | coverage reasons in data, card, panel, Council, Almanac | METHODOLOGY |
+| NC-S11 | Responsible information | ✅ | emergency note on card, section, Almanac; no availability, readiness or vulnerability claims | journeys 23–25 |
+| NC-S12 | Performance with layer on/off | 🟡 | static layer in the cached map; per-zoom item cache | `docs/perf/v03_v04_desktop.json`, VERIFICATION |
+| NC-S13 | Mobile | ✅ | card as a bottom sheet above the nav | journey 26; state 31 |
+| NC-S14 | Existing behaviour preserved | ✅ | journeys 0–21 unchanged and passing; states 01–24 pixel-compared with v0.3 (≤ 0.08% JPEG noise, except the type badge contrast fix) | VERIFICATION |
 
 ## v0.3
 
