@@ -1,0 +1,10 @@
+# Exact versions with which the v0.2 release data were generated and validated
+# (Python 3.13.18; PROJ 9.8.1; GEOS 3.14.1). Install with: pip install -r requirements-lock.txt
+numpy==2.5.3
+pyproj==3.8.0
+shapely==2.2.0
+pyarrow==26.0.1
+scipy==1.18.1
+pillow==12.3.0
+scikit-image==0.26.0
+playwright==1.63.0

@@ -1,0 +1,28 @@
+# Runs on every push and pull request. The original statistical downloads (data/raw) are not in the repository, so CI
+# runs the 'built' gates (shipped data, unit tests, browser journeys); 'source' and 'release' gates need the raw
+# evidence and run locally (scripts/validate.ps1 -Mode release). A CI pass is therefore not a full certification.
+name: validate
+on: [push, pull_request]
+permissions:
+  contents: read
+jobs:
+  built:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.12" }
+      - run: pip install -r requirements.txt
+      - run: python -m unittest discover -s tests
+      - run: python -m pipeline check --mode built
+      - run: python -m playwright install --with-deps chromium
+      - run: npm install --prefix tests/.node axe-core@4
+      - name: browser journeys
+        run: |
+          python -m pipeline serve --port 8765 &
+          sleep 3
+          python tests/smoke_browser.py http://127.0.0.1:8765/
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with: { name: browser-results, path: tests/results/ }

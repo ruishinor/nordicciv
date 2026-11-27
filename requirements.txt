@@ -1,6 +1,9 @@
+# Development: compatible ranges. Release data builds use requirements-lock.txt (exact versions tested).
 numpy>=1.26
 pyproj>=3.6
 shapely>=2.0
-pyarrow>=15
+pyarrow>=15          # GISCO tiled grids (parquet)
 scipy>=1.11
-playwright>=1.40  # tests/smoke_browser.py only
+pillow>=10.0         # relief raster (WebP)
+scikit-image>=0.22   # shore lines traced from the relief land mask
+playwright>=1.40     # tests/smoke_browser.py and tests/visual_states.py only
