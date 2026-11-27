@@ -1,0 +1,387 @@
+{
+ "conditions": {
+  "viewport": {
+   "width": 1440,
+   "height": 900
+  },
+  "cpu_throttle": 1,
+  "runs": 1,
+  "machine": "Windows-11-10.0.26300-SP0",
+  "cpus": 16,
+  "note": "headless Chromium with SwiftShader (software GPU) unless a real GPU is available; laboratory data",
+  "browser": "159.0.8154.6"
+ },
+ "baseline": {
+  "runs": 1,
+  "data_ready_ms": {
+   "n": 1,
+   "median_ms": 290,
+   "p95_ms": 290,
+   "worst_ms": 290
+  },
+  "relief_ready_ms": {
+   "n": 1,
+   "median_ms": 539,
+   "p95_ms": 539,
+   "worst_ms": 539
+  },
+  "lcp_ms": {
+   "n": 1,
+   "median_ms": 544,
+   "p95_ms": 544,
+   "worst_ms": 544
+  },
+  "heap_mb": {
+   "n": 1,
+   "median_ms": 42.1,
+   "p95_ms": 42.1,
+   "worst_ms": 42.1
+  },
+  "pan": {
+   "median_of_medians_ms": 16.7,
+   "p95_ms_worst_run": 16.8,
+   "worst_ms": 66.7,
+   "long_frames_over_50ms": 1
+  },
+  "zoom": {
+   "median_of_medians_ms": 16.7,
+   "p95_ms_worst_run": 33.3,
+   "worst_ms": 83.4,
+   "long_frames_over_50ms": 3
+  },
+  "close_pan": {
+   "median_of_medians_ms": 16.7,
+   "p95_ms_worst_run": 16.8,
+   "worst_ms": 200,
+   "long_frames_over_50ms": 6
+  },
+  "lens_switch": {
+   "n": 6,
+   "median_ms": 103.4,
+   "p95_ms": 150.5,
+   "worst_ms": 150.5
+  },
+  "redraw_cold": {
+   "close": {
+    "n": 3,
+    "median_ms": 182.3,
+    "p95_ms": 206.8,
+    "worst_ms": 206.8
+   },
+   "mid": {
+    "n": 3,
+    "median_ms": 69.9,
+    "p95_ms": 174.6,
+    "worst_ms": 174.6
+   },
+   "overview": {
+    "n": 1,
+    "median_ms": 42.9,
+    "p95_ms": 42.9,
+    "worst_ms": 42.9
+   },
+   "regional": {
+    "n": 2,
+    "median_ms": 57.2,
+    "p95_ms": 59.4,
+    "worst_ms": 59.4
+   },
+   "very_close": {
+    "n": 3,
+    "median_ms": 120.5,
+    "p95_ms": 300.3,
+    "worst_ms": 300.3
+   }
+  },
+  "redraw_warm": {
+   "close": {
+    "n": 9,
+    "median_ms": 132.4,
+    "p95_ms": 147.2,
+    "worst_ms": 147.2
+   },
+   "mid": {
+    "n": 9,
+    "median_ms": 135.1,
+    "p95_ms": 158.1,
+    "worst_ms": 158.1
+   },
+   "overview": {
+    "n": 3,
+    "median_ms": 33,
+    "p95_ms": 34.3,
+    "worst_ms": 34.3
+   },
+   "regional": {
+    "n": 6,
+    "median_ms": 34.9,
+    "p95_ms": 43.3,
+    "worst_ms": 43.3
+   },
+   "very_close": {
+    "n": 9,
+    "median_ms": 117.6,
+    "p95_ms": 216.4,
+    "worst_ms": 216.4
+   }
+  },
+  "illustration_tiles": {
+   "tiles": 8,
+   "decoded": 8,
+   "last": {
+    "ms": 100,
+    "classes": 3,
+    "tier": 1,
+    "at": 65090
+   }
+  },
+  "select_event_ms_max": [
+   16
+  ]
+ },
+ "raw": {
+  "baseline": [
+   {
+    "data_ready_ms": 290,
+    "relief_ready_ms": 539,
+    "lcp_ms": 544,
+    "cls": 0.0036,
+    "pan": {
+     "frames": 216,
+     "median_ms": 16.7,
+     "p95_ms": 16.8,
+     "worst_ms": 66.7,
+     "fps_median": 59.9,
+     "long_frames_over_50ms": 1
+    },
+    "zoom": {
+     "frames": 190,
+     "median_ms": 16.7,
+     "p95_ms": 33.3,
+     "worst_ms": 83.4,
+     "fps_median": 59.9,
+     "long_frames_over_50ms": 3
+    },
+    "select_event_ms_max": 16,
+    "lens_switch_ms": [
+     150.5,
+     103.6,
+     91.5,
+     103.3,
+     76.8,
+     110.7
+    ],
+    "lens_switch_cached_ms": 110.7,
+    "tour_cold": {
+     "overview": [
+      42.9
+     ],
+     "regional": [
+      59.4,
+      55.1
+     ],
+     "mid": [
+      69.3,
+      174.6,
+      69.9
+     ],
+     "close": [
+      147,
+      182.3,
+      206.8
+     ],
+     "very_close": [
+      120.5,
+      107.5,
+      300.3
+     ]
+    },
+    "tour_warm": {
+     "overview": [
+      33,
+      34.3,
+      32.4
+     ],
+     "regional": [
+      33.1,
+      30.7,
+      29.6,
+      43.3,
+      38.3,
+      36.7
+     ],
+     "mid": [
+      158.1,
+      86.7,
+      97.2,
+      137,
+      127.2,
+      130,
+      135.1,
+      144.5,
+      139
+     ],
+     "close": [
+      106.8,
+      111.2,
+      112,
+      135.4,
+      132.4,
+      147.2,
+      138.5,
+      132.9,
+      132
+     ],
+     "very_close": [
+      104.6,
+      102.7,
+      99.3,
+      104.3,
+      117.6,
+      157,
+      216.4,
+      191.3,
+      192.4
+     ]
+    },
+    "tour_illustration": [
+     [
+      "overview",
+      null,
+      null
+     ],
+     [
+      "regional",
+      "Oslo",
+      null
+     ],
+     [
+      "regional",
+      "Ume\u00e5",
+      null
+     ],
+     [
+      "mid",
+      "Bergen",
+      {
+       "ms": 57,
+       "classes": 3,
+       "tier": 1,
+       "at": 30164
+      }
+     ],
+     [
+      "mid",
+      "J\u00f6nk\u00f6ping",
+      {
+       "ms": 77,
+       "classes": 3,
+       "tier": 1,
+       "at": 33719
+      }
+     ],
+     [
+      "close",
+      "Bergen",
+      {
+       "ms": 53,
+       "classes": 3,
+       "tier": 1,
+       "at": 37205
+      }
+     ],
+     [
+      "close",
+      "Tingsryd",
+      {
+       "ms": 78,
+       "classes": 3,
+       "tier": 1,
+       "at": 40798
+      }
+     ],
+     [
+      "close",
+      "Skurup",
+      {
+       "ms": 61,
+       "classes": 3,
+       "tier": 1,
+       "at": 44411
+      }
+     ],
+     [
+      "very_close",
+      "Tinn",
+      {
+       "ms": 47,
+       "classes": 3,
+       "tier": 1,
+       "at": 47850
+      }
+     ],
+     [
+      "very_close",
+      "Lom",
+      {
+       "ms": 76,
+       "classes": 3,
+       "tier": 1,
+       "at": 51304
+      }
+     ],
+     [
+      "very_close",
+      "Frederiksberg",
+      {
+       "ms": 80,
+       "classes": 3,
+       "tier": 1,
+       "at": 55170
+      }
+     ],
+     [
+      "mid",
+      "Narvik",
+      {
+       "ms": 108,
+       "classes": 3,
+       "tier": 1,
+       "at": 58719
+      }
+     ]
+    ],
+    "close_pan": {
+     "frames": 216,
+     "median_ms": 16.7,
+     "p95_ms": 16.8,
+     "worst_ms": 200,
+     "fps_median": 59.9,
+     "long_frames_over_50ms": 6
+    },
+    "heap_mb": 42.1,
+    "illustration_tiles": {
+     "tiles": 8,
+     "decoded": 8,
+     "last": {
+      "ms": 100,
+      "classes": 3,
+      "tier": 1,
+      "at": 65090
+     }
+    },
+    "app_perf": {
+     "static_ms": 91.9,
+     "static_p95_ms": 153.2,
+     "static_max_ms": 216.2,
+     "frame_ms": 1.8,
+     "frame_p95_ms": 4.1,
+     "frame_max_ms": 191.5,
+     "warm_ms": 0.8,
+     "static_n": 60,
+     "frame_n": 60
+    }
+   }
+  ]
+ }
+}
