@@ -7,7 +7,7 @@ ALL = [GiscoGrids(), NaturalEarth(), Boundaries(), Euronym(), OurAirports(), Pow
 
 
 def _extra_sources():
-    """Sources defined in other modules (resources, wonders); imported lazily to keep import errors local."""
+    """Sources defined in other modules (resources, wonders, shelters, camera uplinks); imported lazily to keep import errors local."""
     out = []
     try:
         from .extra import RESOURCE_SOURCES
@@ -17,6 +17,11 @@ def _extra_sources():
     try:
         from .shelters import Shelters
         out.append(Shelters())
+    except ImportError:
+        pass
+    try:
+        from .uplinks import CameraUplinks
+        out.append(CameraUplinks())
     except ImportError:
         pass
     return out

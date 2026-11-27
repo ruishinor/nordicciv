@@ -32,3 +32,8 @@ change first?"
 **Analysis.** Per task: completed (yes / with help / no), time, the main obstacle. Count recurring confusions (≥ 2
 participants) as findings; quote, do not paraphrase. Record separately anything participants believed that the data
 does not say (for example, illustrated trees taken as real forest stands): those are integrity findings, fixed first.
+9. *Camera uplinks (v0.5).* "Find a public webcam that looks over a fjord in western Norway and visit it." Observe:
+   do they find the Map-menu switch; do they read the spyglass as a viewpoint (not a surveillance camera); do they
+   expect pictures inside NordicCiv, and do they understand the card's note that the provider's page decides whether it
+   is live; is the outbound link clearly a new site?
+

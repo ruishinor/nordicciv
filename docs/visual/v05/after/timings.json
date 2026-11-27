@@ -1,0 +1,122 @@
+{
+ "32-uplinks-overview-on": {
+  "wall_s": 8.97,
+  "perf": {
+   "static_ms": 35.3,
+   "static_p95_ms": 277,
+   "static_max_ms": 277,
+   "frame_ms": 0.3,
+   "frame_p95_ms": 242.9,
+   "frame_max_ms": 503.1,
+   "warm_ms": 0.2,
+   "static_n": 5,
+   "frame_n": 47
+  },
+  "errors": []
+ },
+ "33-uplinks-regional": {
+  "wall_s": 7.52,
+  "perf": {
+   "static_ms": 28.5,
+   "static_p95_ms": 233.7,
+   "static_max_ms": 233.7,
+   "frame_ms": 200,
+   "frame_p95_ms": 482.5,
+   "frame_max_ms": 482.5,
+   "warm_ms": 0.3,
+   "static_n": 5,
+   "frame_n": 5
+  },
+  "errors": []
+ },
+ "34-uplinks-region-west": {
+  "wall_s": 7.29,
+  "perf": {
+   "static_ms": 64.6,
+   "static_p95_ms": 240.1,
+   "static_max_ms": 240.1,
+   "frame_ms": 186.6,
+   "frame_p95_ms": 460.1,
+   "frame_max_ms": 460.1,
+   "warm_ms": 1,
+   "static_n": 10,
+   "frame_n": 10
+  },
+  "errors": []
+ },
+ "35-uplinks-local-lofoten": {
+  "wall_s": 7.44,
+  "perf": {
+   "static_ms": 118.4,
+   "static_p95_ms": 252.7,
+   "static_max_ms": 252.7,
+   "frame_ms": 183.9,
+   "frame_p95_ms": 504,
+   "frame_max_ms": 504,
+   "warm_ms": 0.4,
+   "static_n": 8,
+   "frame_n": 8
+  },
+  "errors": []
+ },
+ "36-uplinks-selected": {
+  "wall_s": 7.35,
+  "perf": {
+   "static_ms": 84.4,
+   "static_p95_ms": 241.2,
+   "static_max_ms": 241.2,
+   "frame_ms": 143.7,
+   "frame_p95_ms": 466.5,
+   "frame_max_ms": 466.5,
+   "warm_ms": 0.3,
+   "static_n": 9,
+   "frame_n": 9
+  },
+  "errors": []
+ },
+ "37-uplinks-municipality": {
+  "wall_s": 7.46,
+  "perf": {
+   "static_ms": 157.7,
+   "static_p95_ms": 308.9,
+   "static_max_ms": 308.9,
+   "frame_ms": 215.9,
+   "frame_p95_ms": 538.7,
+   "frame_max_ms": 538.7,
+   "warm_ms": 0.8,
+   "static_n": 8,
+   "frame_n": 8
+  },
+  "errors": []
+ },
+ "38-uplinks-under-lens": {
+  "wall_s": 7.54,
+  "perf": {
+   "static_ms": 139.2,
+   "static_p95_ms": 239.7,
+   "static_max_ms": 239.7,
+   "frame_ms": 217.7,
+   "frame_p95_ms": 484,
+   "frame_max_ms": 484,
+   "warm_ms": 0.4,
+   "static_n": 5,
+   "frame_n": 5
+  },
+  "errors": []
+ },
+ "39-uplinks-mobile-card": {
+  "wall_s": 7.4,
+  "perf": {
+   "static_ms": 64.3,
+   "static_p95_ms": 210.9,
+   "static_max_ms": 210.9,
+   "frame_ms": 123.1,
+   "frame_p95_ms": 415.2,
+   "frame_max_ms": 415.2,
+   "warm_ms": 0.6,
+   "static_n": 10,
+   "frame_n": 10
+  },
+  "errors": []
+ }
+}

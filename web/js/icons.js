@@ -822,6 +822,15 @@ const RAW = {
       D('M8.2 17.6h7.6', 1.2),
     ],
   },
+  // ---- camera uplinks (v0.5): a spyglass on a tripod over a stone lookout — a public viewpoint, not a camera
+  'c-uplink': {
+    bg: '#5a4a2c',
+    paths: [
+      F('M5.2 12.6 17.6 5.2l1.6 2.7-12.4 7.4Z' + 'M3.4 13.4l2.2-1.3 1.3 2.2-2.2 1.3Z'),
+      D('M11.6 11.4 8 18.2M11.6 11.4l3.6 6.8M11.6 11.4v6.6', 1.3),
+      F('M5 18.4h13.2a1.2 1.2 0 0 1 0 2.4H5a1.2 1.2 0 0 1 0-2.4Z'),
+    ],
+  },
   // ---- tile improvements and trade
   't-road': {
     bg: '#6a5434',

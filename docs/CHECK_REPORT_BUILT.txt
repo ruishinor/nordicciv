@@ -1,10 +1,10 @@
-NOTE  validation mode: built; data hash 284a808a1f1bcc0d
+NOTE  validation mode: built; data hash 6949991564917fae
 PASS  files: world.json parses as strict JSON numbers (no NaN/Infinity) [2.13 MB]
 PASS  files: cities.json parses as strict JSON numbers (no NaN/Infinity) [1.99 MB]
 PASS  files: states.json parses as strict JSON numbers (no NaN/Infinity) [0.07 MB]
 PASS  files: nation.json parses as strict JSON numbers (no NaN/Infinity) [0.02 MB]
 PASS  files: lenses.json parses as strict JSON numbers (no NaN/Infinity) [1.26 MB]
-PASS  files: sources.json parses as strict JSON numbers (no NaN/Infinity) [0.04 MB]
+PASS  files: sources.json parses as strict JSON numbers (no NaN/Infinity) [0.05 MB]
 PASS  files: resources.json parses as strict JSON numbers (no NaN/Infinity) [0.14 MB]
 PASS  files: infrastructure.json parses as strict JSON numbers (no NaN/Infinity) [0.14 MB]
 PASS  files: wonders.json parses as strict JSON numbers (no NaN/Infinity) [0.03 MB]
@@ -98,6 +98,20 @@ PASS  shelters: national totals 555 shelters, 296,937 places
 PASS  shelters: coverage says Norway integrated, Sweden and Denmark not integrated (with reasons)
 PASS  shelters: capacity meaning, public/private distinction, absence caveat, licence and attribution are published with the data
 PASS  lens shelter_places: Sweden/Denmark no data (0 valued), every Norwegian municipality valued, 'no public shelter' exactly where the register has none
+PASS  uplinks: 196 cameras, stable identifiers well-formed and unique
+PASS  uplinks: only the necessary metadata is kept — no stream, snapshot, thumbnail, token or player fields (none extra)
+PASS  uplinks: every destination is an https viewing page on the provider's own host (no credentials, tokens, streams or image files; 0 bad)
+PASS  uplinks: no two cameras share a destination page
+PASS  uplinks: every position lies in its country's lon/lat envelope (0 outside)
+PASS  uplinks: map positions transform back to the listed coordinates (worst 0.8 m)
+PASS  uplinks: every camera belongs to a municipality of its own country; 10 just outside a simplified outline were assigned to the nearest (≤ 2,500 m, distance kept)
+PASS  uplinks: every camera has a known category, a named provider and a stated kind of position (published / place shown)
+PASS  uplinks: no duplicate camera (same name within 100 m; 0 found)
+PASS  uplinks: exactly the reviewed catalogue (196 reviewed, 196 published, 0 left out for a failed page check); no excluded camera published (0)
+PASS  uplinks: every published camera's page was checked and answered within the last 120 days (0 not); oldest check 2026-11-27
+PASS  uplinks: municipal lists and totals equal the camera records
+PASS  uplinks: no-live-claim, position meaning, page-check meaning, absence caveat, exclusions and attribution are published with the data
+NOTE  uplinks: 196 cameras — Norway 80, Sweden 108, Denmark 8; 21 at place positions; providers {'Falkenberg Energi': 1, 'Gaustabanen': 1, 'Port of Skjervøy': 1, 'WestWind': 1, 'camstreamer': 71, 'panomax': 8, 'skylinewebcams': 17, 'webcamcollections': 96}
 PASS  resources: 687 sites, all inside the map (0 outside)
 PASS  resources: 0 on foreign hexes []
 PASS  source gisco_grids: 926 files, licence: Eurostat/GISCO reuse policy (free reuse with attribution: © 
@@ -116,6 +130,7 @@ PASS  source sodir: 3 files, licence: NLOD 2.0 (Norwegian Licence for Open Gover
 PASS  source sgu: 2 files, licence: CC0 1.0 (SGU open data)
 PASS  source links: 2 files, licence: CC0 1.0 (Wikidata); CC BY 4.0 (Eurostat)
 PASS  source dsb_shelters: 4 files, licence: NLOD 1.0 (Norwegian Licence for Open Government Data)
+PASS  source camera_uplinks: 7 files, licence: Facts and links only: names, positions and page addresses as
 SKIP  source reconciliation and cache verification not run in 'built' mode
 
-111 pass, 7 note, 0 warn, 1 skipped, 0 fail → PASS (mode: built)
+125 pass, 8 note, 0 warn, 1 skipped, 0 fail → PASS (mode: built)

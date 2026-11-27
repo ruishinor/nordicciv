@@ -37,6 +37,15 @@ km in the Nordic LAEA frame described in `world.json.projection` (x right, y dow
 | `coast.json` | shore lines traced from the relief land mask |
 | `relief/index.json` | relief image levels (`L0` 1 km whole image, `L1` 0.5 km tiles), `gray` (Analyze), `sea`, `hex_fallback` (land hexes with no 1 km data), `sha256` |
 
+## Added in v0.5
+
+| Field | Meaning |
+|---|---|
+| `uplinks.json → cameras[]` | `{id (provider prefix + provider key, stable), name (NordicCiv's short name), cat, provider, provider_name? (operator pages), url (https viewing page on the provider's host), lat, lon (WGS 84 as listed), x, y (map km), cell, muni, country, pos ("published" / "place"), place? {qid, label}, verified (page-check date), assigned? {method, distance_m}}` — nothing else: no stream, image or token fields (checked) |
+| `uplinks.json → categories`, `providers` | category labels; provider name, home page and note |
+| `uplinks.json → policy`, `meaning`, `sources` | inclusion/exclusion rules, position and duplicate rules, no-live-claim wording, page-check meaning, absence caveat; raw listing URLs with retrieval time and SHA-256; attribution; the OSIRIS reference note |
+| `uplinks.json → munis{}`, `totals`, `left_out_unverified` | per municipality `n` and camera `ids`; totals by country, category and provider, place positions, nearest-outline assignments; cameras left out for a failed or stale page check |
+
 ## Added in v0.4
 
 | File / field | Meaning |

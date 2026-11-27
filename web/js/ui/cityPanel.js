@@ -207,6 +207,7 @@ export function openCityPanel(city, ctx) {
         <p class="muted small">Yields are game names for real figures: five count jobs at the place of work (2024), Gold is economic output (estimate). They are not production, research output or welfare quality. <a href="#" data-pedia-yields>What each yield measures ›</a></p>` },
       { tab: "Overview", title: "Economic profile", html: specSummary },
       { tab: "Overview", title: "Explore from here", html: actions },
+      ...extraSections(ctx, city, "Overview"),
       { tab: "Economy", title: "Economic output", html: gdpBlock },
       { tab: "Economy", title: "Specialisations", html: specs + (detailTxt ? `<p class="muted small">Finer detail published by ${COUNTRY[city.country]}: ${esc(detailTxt)}</p>` : "") },
       { tab: "Economy", title: "Jobs by industry · place of work, 2024", html: industryBars(city, nation) },

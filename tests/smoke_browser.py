@@ -41,7 +41,7 @@ URL = _pos[0] if _pos else "http://127.0.0.1:8765/"
 CANDIDATE = Path(_arg("--candidate", str(ROOT))).resolve()
 OUT = Path(_arg("--out", str(ROOT / "tests" / "results"))).resolve()
 # every journey must run and pass for a release (journey ids are the leading numbers of the names below)
-MANDATORY = [str(i) for i in range(0, 27)]  # 22–26: public shelters (v0.4)
+MANDATORY = [str(i) for i in range(0, 33)]  # 22–26: public shelters (v0.4); 27–32: camera uplinks (v0.5)
 AXE = ROOT / "tests" / ".node" / "node_modules" / "axe-core" / "axe.min.js"
 AXE_ALT = Path(os.environ.get("NORDICCIV_AXE", "/nonexistent"))
 
@@ -508,6 +508,151 @@ async def main():
             mcard["closed"] = await mp.evaluate("document.getElementById('shelter-card').hidden")
         await mctx.close()
         ok("26 phone: tapping a shelter opens its card fully on screen; it closes", bool(mpt) and mcard.get("shown") and mcard.get("inView") and mcard.get("closed"), {**(mpt or {}), **mcard})
+
+        # 27–32. camera uplinks (v0.5): optional layer, scale, selection and the one outbound link, no third-party
+        # requests, municipality panel, Discover and Almanac, phone
+        pg5 = await ctx.new_page()
+        pg5.on("pageerror", lambda e: errors.append("uplinks: " + str(e)))
+        pg5.on("console", lambda m: errors.append("uplinks: " + m.text) if m.type == "error" else None)
+        base = URL.split("#")[0]
+        reqs5 = []
+        pg5.on("request", lambda r: reqs5.append(r.url))
+        await pg5.goto(URL, wait_until="networkidle")
+        await pg5.evaluate("localStorage.setItem('nc-intro', '1'); document.getElementById('intro')?.remove()")
+        await pg5.wait_for_function("window.__app && __app.uplinks && __app.uplinks.data", timeout=30000)
+        ul = await pg5.evaluate("""(async () => { const a = __app, u = a.uplinks, R = a.w.grid.R, n = u.data.cameras.length;
+            const lay = a.staticLayers().find((l) => l.id === 'uplinks');
+            const def = u.on, before = lay.visible();
+            a.ui.setMapToggle('uplinks', true);
+            const after = lay.visible(), inMenu = a.ui.mapToggles().some((x) => x.id === 'uplinks');
+            const all = (l) => l.reduce((p, i) => p + i.n, 0);
+            const overlap = (l, rpx) => { const d = u.symbolPx(rpx) / (rpx / R); let k = 0;
+              for (let i = 0; i < l.length; i++) for (let j = i + 1; j < l.length; j++) if ((l[i].x - l[j].x) ** 2 + (l[i].y - l[j].y) ** 2 < (d * 0.98) ** 2) k++; return k; };
+            const mid = u.items(7), near = u.items(40);
+            const exact = near.filter((i) => i.kind === 'one').every((i) => i.x === i.members[0].x && i.y === i.members[0].y);
+            // far out the layer is not drawn and cannot be hit
+            const farHidden = lay.minRpx > 3 && !(3 >= lay.minRpx) && lay.hit(u.data.cameras[0].x, u.data.cameras[0].y, 3) === null;
+            const zOk = lay.z < a.staticLayers().find((l) => l.id === 'shelters').z && lay.z < a.staticLayers().find((l) => l.id === 'wonders').z;
+            return { n, def, before, after, inMenu, mid: mid.length, near: near.length, counts: [all(mid), all(near)],
+                     overlapMid: overlap(mid, 7), overlapNear: overlap(near, 40), exact, farHidden, zOk }; })()""")
+        ok("27 camera uplinks layer: off by default, in the Map menu, hidden at the Scandinavia view, grouped without overlap at the region view, every uplink counted once, singles at their own position, drawn under sites and shelters",
+           ul["def"] is False and ul["before"] is False and ul["after"] and ul["inMenu"] and ul["n"] >= 150 and set(ul["counts"]) == {ul["n"]}
+           and ul["mid"] < ul["near"] and ul["overlapMid"] == 0 and ul["overlapNear"] == 0 and ul["exact"] and ul["farHidden"] and ul["zOk"], ul)
+        # 28. click an uplink on the map: the card names it, its place and provider, and offers one outbound link
+        await pg5.evaluate("(() => { const a = __app, c = a.uplinks.data.byId.get('cs-425493061'); a.flyTo(c.x, c.y, 40 / a.w.grid.R, 0); })()")
+        await pg5.wait_for_timeout(1500)
+        upt = await pg5.evaluate("""(() => { const a = __app, R = a.cam.scale * a.w.grid.R;
+            const it = a.uplinks.items(R).filter((i) => i.kind === 'one').map((i) => [i, ...a.cam.toScreen(i.x, i.y)])
+              .filter(([, x, y]) => x > 420 && x < 1100 && y > 150 && y < 750 && !a.hitCity(x, y))
+              .sort((p, q) => Math.hypot(p[1] - 760, p[2] - 450) - Math.hypot(q[1] - 760, q[2] - 450))[0];
+            return it ? { x: it[1], y: it[2] - a.uplinks.symbolPx(R) * 0.15, id: it[0].members[0].id, name: it[0].members[0].name, url: it[0].members[0].url } : null; })()""")
+        ucard = {}
+        if upt:
+            await pg5.mouse.move(upt["x"], upt["y"])
+            await pg5.wait_for_timeout(250)
+            ucard["tip"] = await pg5.evaluate("document.getElementById('tooltip')?.innerText || ''")
+            await pg5.mouse.click(upt["x"], upt["y"])
+            await pg5.wait_for_timeout(700)
+            ucard.update(await pg5.evaluate("""(() => { const c = document.getElementById('uplink-card'), a = c.querySelector('a.uplink-open');
+                return { shown: !c.hidden, text: c.innerText, href: a?.href, target: a?.target, rel: a?.rel, ref: a?.referrerPolicy,
+                         links: c.querySelectorAll('a[href]').length, media: c.querySelectorAll('img,iframe,video,object,embed,source').length,
+                         selected: __app.uplinks.selected }; })()"""))
+        utxt = ucard.get("text", "")
+        ok("28 uplink selection: hover names it; a click opens a compact card (name, location, provider, page-check date, no-live-claim note) with one 'Open camera uplink' link to the provider's https page in a new tab without opener or referrer, and no media",
+           bool(upt) and ucard.get("shown") and upt["name"] in utxt and "Location" in utxt and "Provider" in utxt and "Open camera uplink" in utxt
+           and "does not know whether the camera is live" in utxt and "Page checked 2026" in utxt and upt["name"] in ucard.get("tip", "")
+           and ucard.get("href") == upt["url"] and ucard.get("href", "").startswith("https://") and ucard.get("target") == "_blank"
+           and "noopener" in ucard.get("rel", "") and "noreferrer" in ucard.get("rel", "") and ucard.get("ref") == "no-referrer"
+           and ucard.get("links") == 1 and ucard.get("media") == 0 and ucard.get("selected") == upt["id"],
+           {**(upt or {}), **{k: (v[:120] if isinstance(v, str) else v) for k, v in ucard.items()}})
+        # 29. nothing third-party was requested while the layer was on, hovered and selected; following the link is the
+        # only outbound request, and it goes to the provider's page (blocked here, so the test touches no provider)
+        foreign_before = [u for u in reqs5 if not u.startswith(base) and not u.startswith("data:") and not u.startswith("blob:")]
+        out_req = []
+        if upt:
+            def _foreign(u):
+                return not u.startswith(base)
+
+            async def _block(route):
+                out_req.append(route.request.url)
+                await route.abort()
+            await ctx.route(_foreign, _block)
+            try:
+                async with ctx.expect_page(timeout=5000) as pop:
+                    await pg5.click("#uplink-card a.uplink-open")
+                popup = await pop.value
+                await popup.wait_for_timeout(500)
+                await popup.close()
+            except Exception as e:
+                out_req.append(f"no popup: {e}")
+            await ctx.unroute(_foreign, _block)
+        check = await pg5.evaluate("""(() => { const u = __app.uplinks, d = u.data;
+            const bad = d.cameras.filter((c) => !u.safeUrl(c, d.operatorHosts));
+            const probes = [{ provider: 'camstreamer', url: 'http://camstreamer.com/live/stream/1' }, { provider: 'camstreamer', url: 'https://evil.example/x' },
+                            { provider: 'panomax', url: 'javascript:alert(1)' }, { provider: 'webcamcollections', url: 'https://user:pw@webcamcollections.com/' },
+                            { provider: 'Unknown', url: 'https://unknown.example/' }];
+            return { bad: bad.map((c) => c.id), probesBlocked: probes.every((p) => u.safeUrl(p, d.operatorHosts) === null) }; })()""")
+        await pg5.keyboard.press("Escape")
+        ok("29 privacy: no request to any third party while the layer is on, hovered and selected (no player, image, script or cookie); the link is the only way out and opens the provider's page; every outbound address passes the https/provider-host check and unsafe ones are refused",
+           not foreign_before and bool(upt) and out_req and out_req[0].startswith(upt["url"].rstrip("/")) and not check["bad"] and check["probesBlocked"],
+           {"foreign": foreign_before[:3], "outbound": out_req[:2], **check})
+        # 30. municipality panel (Overview): a concise uplinks section where there are some, an action that shows them
+        mp5 = await pg5.evaluate("""(async () => { const a = __app; const out = {};
+            const sec = async (id) => { a.selectCity(id, { fly: false }); await new Promise((r) => setTimeout(r, 300));
+              document.querySelector('[data-cptab="Overview"]')?.click(); await new Promise((r) => setTimeout(r, 200));
+              const h = [...document.querySelectorAll('#city-panel .cp-section')].find((x) => /camera uplinks/i.test(x.innerText)); return h ? h.innerText : null; };
+            a.ui.setMapToggle('uplinks', false); a.uplinks.closeCard();
+            out.stranda = await sec('NO-1525'); out.none = await sec('NO-1151');
+            await sec('NO-1525');
+            document.querySelector('[data-uplink-muni="NO-1525"]')?.click(); await new Promise((r) => setTimeout(r, 900));
+            out.layerOn = a.uplinks.on;
+            const view = a.visibleArea ? a.visibleArea() : null;
+            out.framed = a.uplinks.data.byMuni.get('NO-1525').every((c) => { const [x, y] = a.cam.toScreen(c.x, c.y); return x > 0 && x < innerWidth && y > 40 && y < innerHeight; });
+            document.querySelector('#city-panel [data-uplink-open]')?.click(); await new Promise((r) => setTimeout(r, 400));
+            out.cardOpens = !document.getElementById('uplink-card').hidden; a.uplinks.closeCard(); return out; })()""")
+        ok("30 municipality panel: Overview lists the municipality's camera uplinks and an action that turns the layer on and frames them; a name opens its card; municipalities without uplinks get no section",
+           mp5["stranda"] and "3 public webcams" in mp5["stranda"] and "Geirangerfjord" in mp5["stranda"] and "explore 3 camera uplinks" in mp5["stranda"].lower()
+           and mp5["none"] is None and mp5["layerOn"] is True and mp5["framed"] and mp5["cardOpens"], {k: (v[:80] if isinstance(v, str) else v) for k, v in mp5.items()})
+        # 31. Discover and the Almanac
+        da = await pg5.evaluate("""(async () => { const a = __app; a.ui.setMapToggle('uplinks', false);
+            const ds = a.explore.discoveries.filter((d) => d.key === 'uplink');
+            a.explore.show(ds[0]); await new Promise((r) => setTimeout(r, 800));
+            const disc = document.getElementById('discovery').innerText;
+            const opened = !document.getElementById('uplink-card').hidden && a.uplinks.on && a.uplinks.selected === ds[0].uplink;
+            a.uplinks.closeCard(); document.getElementById('discovery').hidden = true;
+            a.pedia.open(a.uplinks.page); await new Promise((r) => setTimeout(r, 200));
+            const page = document.getElementById('pedia-body').innerText; a.pedia.close();
+            return { n: ds.length, disc, opened, page: page.slice(0, 9000) }; })()""")
+        ok("31 Discover offers camera uplinks (opens the place, the layer and the card); the Almanac explains links-only, positions, no live claim, exclusions, providers and attribution",
+           da["n"] >= 8 and "public camera looks out over" in da["disc"] and da["opened"] and "never loads, copies or relays" in da["page"]
+           and "Listed is not live" in da["page"] and "traffic and road-monitoring cameras" in da["page"] and "CamStreamer" in da["page"]
+           and "Wikidata" in da["page"] and "OSIRIS" in da["page"], {k: (v[:80] if isinstance(v, str) else v) for k, v in da.items()})
+        await pg5.close()
+        # 32. phone: tapping an uplink opens its card fully on screen with the link visible; it closes
+        mctx2 = await b.new_context(viewport={"width": 390, "height": 844}, is_mobile=True, has_touch=True, device_scale_factor=2)
+        await mctx2.add_init_script("try { localStorage.setItem('nc-intro', '1') } catch (e) {}")
+        mq = await mctx2.new_page()
+        mq.on("pageerror", lambda e: errors.append("uplinks mobile: " + str(e)))
+        await mq.goto(URL, wait_until="networkidle")
+        await mq.wait_for_function("window.__app && __app.uplinks && __app.uplinks.data", timeout=30000)
+        await mq.evaluate("(() => { const a = __app, c = a.uplinks.data.byId.get('ln-gaustabanen'); a.ui.setMapToggle('uplinks', true); a.flyTo(c.x, c.y, 40 / a.w.grid.R, 0); })()")
+        await mq.wait_for_timeout(1500)
+        mqt = await mq.evaluate("""(() => { const a = __app, R = a.cam.scale * a.w.grid.R;
+            const it = a.uplinks.items(R).filter((i) => i.kind === 'one').map((i) => [i, ...a.cam.toScreen(i.x, i.y)])
+              .filter(([, x, y]) => x > 30 && x < 360 && y > 100 && y < 700 && !a.hitCity(x, y))[0];
+            return it ? { x: it[1], y: it[2] - a.uplinks.symbolPx(R) * 0.15 } : null; })()""")
+        mqc = {}
+        if mqt:
+            await mq.touchscreen.tap(mqt["x"], mqt["y"])
+            await mq.wait_for_timeout(800)
+            mqc = await mq.evaluate("""(() => { const c = document.getElementById('uplink-card'), r = c.getBoundingClientRect(), l = c.querySelector('a.uplink-open')?.getBoundingClientRect();
+                return { shown: !c.hidden, inView: r.left >= 0 && r.right <= innerWidth && r.top >= 0 && r.bottom <= innerHeight,
+                         linkVisible: !!l && l.bottom <= innerHeight && l.width > 40 }; })()""")
+            await mq.tap("#uplink-card [data-uc='close']")
+            mqc["closed"] = await mq.evaluate("document.getElementById('uplink-card').hidden")
+        await mctx2.close()
+        ok("32 phone: tapping a camera uplink opens its card fully on screen with the link visible; it closes",
+           bool(mqt) and mqc.get("shown") and mqc.get("inView") and mqc.get("linkVisible") and mqc.get("closed"), {**(mqt or {}), **mqc})
 
         ok("20 no console errors", not errors, errors[:3])
         await b.close()

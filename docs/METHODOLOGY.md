@@ -223,6 +223,80 @@ reuses Beredskap101's wording conventions (public vs private, the 72-hour readyi
 Compared with today's register, the snapshot has one extra room (8061, Gudbrandsdalsvegen 190, no longer published)
 and one position 173 m away from the current one (room 31679); every other room, place count and position is identical.
 
+## Camera uplinks (v0.5)
+
+**What they are.** Webcams that their operators publish for anyone to watch — over settlements, mountains and valleys,
+fjords, coasts, islands, ski resorts, weather stations, nature and viewpoints — shown as a geographical index. For each
+camera NordicCiv keeps a stable identifier, a short name, a position, the municipality, a category, the provider, the
+provider's public viewing page, attribution and the date that page was last checked. Nothing else: no footage, snapshot,
+thumbnail, stream address, token or player is fetched, stored or shown, and the app loads nothing from a provider.
+The only way to a camera is the "Open camera uplink" link on its card, which opens the provider's own page in a new tab
+(`rel="noopener noreferrer"`, no referrer). Whether a camera is live is only known there; the app never says so.
+
+**Reference: OSIRIS.** OSIRIS (github.com/simplifaisoul/osiris, MIT) was studied for how it discovers and identifies
+public webcams. Its code is MIT, but its generated webcam lists (`public-webcams.generated.ts`,
+`world-skyline.generated.ts`) are scraped from third-party catalogues — an index of public webcams and SkylineWebcams —
+whose database rights the MIT licence cannot pass on. A sample of its Norwegian entries was also mis-placed by geocoded
+captions (both Lofoten cameras sit near Bergen, 60.5° N). Nothing from OSIRIS is imported. What was reused is the
+*idea* of its "link" shape (a camera reached through its operator's page rather than replayed) and its per-provider
+host checks; its media player, stream resolution, proxy, surveillance terminology and road-camera feeds were not.
+
+**Where the cameras come from** (`pipeline/sources/uplinks.py`, raw answers in `data/raw/camera_uplinks/`):
+
+| Provider | What it publishes | Position | Reviewed in |
+|---|---|---|---|
+| CamStreamer public camera map (`camstreamer.com/live/map`) | owners' streams with a public stream page | as published by the owner | 71 of 107 Nordic listings |
+| Panomax public search (`panomax.com`) | panoramic cameras, one viewer per instance (`<id>.panomax.com`, which forwards to the operator's own viewer) | as published by Panomax | 8 of 8 |
+| WebcamCollections public map (`webcamcollections.com/en/map`) | a Swedish webcam publisher's cameras, one page each | as published on the map | 96 of 310 |
+| SkylineWebcams and operators' own pages | public camera pages without coordinates | Wikidata coordinates of the place shown (CC0) | 21 |
+
+**Review, not mirroring.** `pipeline/catalogue/camera_uplinks.json` is NordicCiv's reviewed selection: an explicit
+include list per provider (with NordicCiv's own short name and category) and, for CamStreamer, every exclusion with its
+reason. A camera that appears on a provider's map later stays out until it is reviewed. Excluded on principle: traffic
+and road-monitoring cameras (they watch vehicles; the national road authorities' networks were therefore not used),
+cameras aimed at people (shops, queues, courts, skateparks, street-level squares and parks), private, residential and
+exposed network cameras, vendor demonstrations and test or copy listings, golf courses, motorsport, airfields and
+construction sites, cameras whose owner does not say what they show, listings whose published position contradicts the
+place they name (five found, e.g. a stork camera listed 230 km from Fulltofta, a Hellesylt camera listed in Oslo, a
+Tromsø camera listed in Agder), duplicates, and pages served only over http. No network scanning or endpoint discovery is
+done. Of the selection only a small part of each provider's catalogue is used, never the catalogue as a whole.
+
+**Duplicates.** Several providers list the same physical camera (SkylineWebcams and WebcamCollections re-publish many
+of the CamStreamer streams). One record per camera is kept: the operator's own page first, then a listing with a
+published position. The build fails if two records share a page, or stand within 300 m with similar names (the
+municipality's own name does not count as similarity, so "Kristiansund – Nordlandet" and "Kristiansund – Kongens plass"
+are two cameras).
+
+**Positions and municipalities.** Positions (WGS 84) are transformed with PROJ into the map frame and checked back
+(worst 0.8 m). The municipality is the one whose shipped outline (`munis.json`, the outline the map draws and selects)
+contains the position; an enclave wins over the outline around it. Ten coastal cameras on piers, quays and fjords
+fall just outside the simplified outline (5–882 m) and are assigned to the nearest municipality with the distance kept;
+beyond 2.5 km, or in a different country than the provider lists, the build fails. Place positions mark the place a page
+shows (a village, a fjord, a resort) and are labelled as such on the card.
+
+**Page checks.** Every reviewed page was requested once on 2026-11-27 (`tools/verify_uplinks.js`; same-origin requests
+from each provider's own site, cross-origin pages opened in a browser tab) and recorded in
+`pipeline/catalogue/camera_uplinks_verification.json` with status, final address and title. The build leaves out a
+camera whose page did not answer as a working page on its provider's host, or whose check is older than 120 days; the
+built-data gate warns (and the release gate fails) when a published camera's check is stale. A check concerns the page,
+never the stream.
+
+**Map.** One optional layer, "Camera uplinks" in the Map menu, off by default. Hidden at the scale of the whole of
+Scandinavia (below 4.5 px per hex); from the region view in, uplinks that would overlap share one symbol with a count
+at the mean of their positions; closer in each stands at its own position. Nothing is ever moved to make room. The
+layer sits under shelters, ports, forts and wonders, is drawn smaller than them and fades under an active lens.
+
+**Symbol.** A brass spyglass on a short tripod over a small round stone lookout: the wonder plinth's perspective and
+the sites' ink outline, top-left light and ground shadow, but plain stone, smaller, and no building, so it reads as a
+modest geographical feature. It stands for a public viewpoint, not for the camera installation, its direction or what
+it shows. At small sizes its line widths are capped in art units so it never collapses into a dark barrel shape.
+
+**Interaction.** Card: name, location (municipality, county, country), provider and host, kind of position, page-check
+date, one "Open camera uplink" link and a note that no pictures are shown and liveness is unknown. Municipality panel,
+Overview tab: where a municipality has uplinks, a short list and "Explore N camera uplinks on the map". Discover: twelve
+landscapes with an uplink (fjords, capes, mountains, islands, coast) open the place, the layer and the card. Almanac:
+"Camera uplinks" (what, positions, liveness, exclusions, providers, attribution, raw-file hashes).
+
 ## Validation (`python -m pipeline check --mode built|source|release`)
 
 Modes: **built** (shipped files only), **source** (independent reconciliation with the original downloads, values

@@ -53,3 +53,22 @@ defect the accessibility journey hit on some Discover facts). No baseline was ap
 | 31 mobile | Card as a bottom sheet |
 | 14 mobile Tromsø | Type badge with higher contrast |
 
+## v0.5: camera uplinks (`v05/`)
+
+`v05/after` is v0.5.0 (states 32–39 of `tests/visual_states.py`); `v05/before` and `v05/compare` hold v0.4.0 at the
+same cameras for the regional and local states (v0.4 has no uplinks, so its frames show the map the symbols sit on).
+With the layer off, states 01, 02, 11, 25 and 27 were captured on v0.4.0 and v0.5.0 and are pixel-identical (0 pixels
+differ); state 32 (layer on, whole of Scandinavia) differs from 01 only in the Map-menu counter (31 pixels): the layer
+draws nothing at that scale.
+
+| State | What it shows |
+|---|---|
+| 32 overview, layer on | Nothing drawn at the scale of the whole of Scandinavia (suppressed below 4.5 px per hex) |
+| 33 regional south | Small spyglass-on-lookout symbols and count tabs, under the resource medallions, sites and banners |
+| 34 western Norway | Region view: coastal and fjord uplinks among hydropower and wind symbols |
+| 35 Lofoten (local) | Individual uplinks at their positions; Reine/Hamnøy still share one symbol at this scale |
+| 36 Reinefjorden selected | The card: category, name, location, provider and host, kind of position, one outbound link, no-live note |
+| 37 Stranda panel | Overview section: 3 public webcams, names, "Explore 3 camera uplinks on the map" |
+| 38 under a lens | Symbols fade under the population-density lens and stay above the choropleth, below the sites |
+| 39 phone card | Åreskutan: the card as a bottom sheet with the link visible |
+

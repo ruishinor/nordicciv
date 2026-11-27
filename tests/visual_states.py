@@ -44,6 +44,15 @@ def SH_PICK(text, s, muni=None):
             f"__app.cam.scale = {s}; __app.invalidate(); setTimeout(() => __app.shelters.openCard(r), 400); }})()")
 
 
+UP_ON = "__app.ui.setMapToggle?.('uplinks', true);"
+
+
+def UP_PICK(cid, s):
+    """Centre on a camera uplink by id and open its card (the layer is switched on by open())."""
+    return (f"(() => {{ const c = __app.uplinks.data.byId.get({json.dumps(cid)}); __app.cam.stop?.(); __app.cam.x = c.x; __app.cam.y = c.y; "
+            f"__app.cam.scale = {s}; __app.invalidate(); setTimeout(() => __app.uplinks.open(c.id, {{fly: false}}), 400); }})()")
+
+
 STATES = [
     ("01-overview", DESKTOP, "__app.home();", 1500),
     ("02-regional-south", DESKTOP, cam(560, 1450, 1.15), 0),
@@ -79,6 +88,16 @@ STATES = [
      "setTimeout(() => [...document.querySelectorAll('#city-panel .cp-section')].find((x) => /public shelters/i.test(x.innerText))?.scrollIntoView(), 200); }, 300);", 0),
     ("30-shelters-lens", DESKTOP, "__app.setLens('shelter_places');" + cam(560, 1150, 0.62), 0),
     ("31-shelters-mobile-card", MOBILE, SH_ON + SH_PICK("Bergen", 7, muni="NO-4601"), 0),
+    # v0.5 camera uplinks (off by default; each state switches the layer on itself)
+    ("32-uplinks-overview-on", DESKTOP, UP_ON + "__app.home();", 1500),
+    ("33-uplinks-regional", DESKTOP, UP_ON + cam(560, 1300, 1.3), 0),
+    ("34-uplinks-region-west", DESKTOP, UP_ON + cam(330, 1250, 2.6), 0),
+    ("35-uplinks-local-lofoten", DESKTOP, UP_ON + at_city("Moskenes", 7), 0),
+    ("36-uplinks-selected", DESKTOP, UP_PICK("ln-reinefjorden", 12), 0),
+    ("37-uplinks-municipality", DESKTOP, select("Stranda", 5) + UP_ON + "setTimeout(() => [...document.querySelectorAll('#city-panel .cp-section')]"
+     ".find((x) => /camera uplinks/i.test(x.innerText))?.scrollIntoView(), 500);", 0),
+    ("38-uplinks-under-lens", DESKTOP, UP_ON + "__app.setLens('density');" + cam(560, 1300, 2.2), 0),
+    ("39-uplinks-mobile-card", MOBILE, UP_PICK("wcc-sweden-are-areskutan", 7), 0),
 ]
 
 
