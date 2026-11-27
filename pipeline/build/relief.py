@@ -1,0 +1,309 @@
+"""Continuous shaded-relief land-cover raster for the map: web/data/relief/ (NC-V01–V03).
+
+The hexes summarise ~94 one-kilometre cells each, which is right for statistics but makes a poor landscape: every
+hex is one flat colour and mountains, valleys and coasts break into tiles. This builder paints the landscape once,
+from the same 1 km evidence, as a continuous image in the map frame:
+
+  colour    CORINE Land Cover 2018 class of each 1 km cell (painted palette), forest tone modulated by Copernicus
+            tree cover density; foreign land (outside NO/SE/DK) muted
+  relief    multidirectional hillshade of EU-DEM (1 km mean elevation, bicubically interpolated to the raster
+            resolution; vertical exaggeration ×3 for legibility at map scale); high-alpine tint above an elevation
+            that falls with latitude (no snow is drawn where there is no high ground)
+  water     sea is transparent (the map's water art shows through); lakes (CORINE water bodies) are painted in
+  coast     Norway and Denmark: the municipal polygons (Kartverket / DAGI, finer than 1 km); elsewhere the CORINE
+            1 km land/sea cells, smoothed
+
+Below 1 km the image interpolates: class boundaries are blended over about one cell and wobbled by a fixed noise
+field so they do not read as a grid, and canopy texture is a deterministic noise pattern. Neither adds information
+the 1 km data does not have; the Almanac says so. Levels: L0 = 1 km per pixel (one image), L1 = 0.5 km per pixel in
+512-px tiles (loaded only when zoomed in), gray = L0 hillshade without colour for Analyze mode.
+"""
+from __future__ import annotations
+
+import hashlib
+import json
+import math
+
+import numpy as np
+from PIL import Image, ImageDraw
+from pyproj import Transformer
+from scipy import ndimage
+
+from ..core import geo
+from ..core.paths import INTERIM, WEB_DATA
+from ..core.store import read_json, write_json
+
+OUT = WEB_DATA / "relief"
+RES = 0.5  # km per pixel at L1
+TILE = 512
+SEED = 20261127
+Z_EXAG = 3.0
+
+# CORINE grid class index (1..44) -> painted RGB
+PAL = {
+    1: (150, 128, 112), 2: (166, 146, 124), 3: (150, 136, 124), 4: (146, 140, 130), 5: (138, 142, 150),
+    6: (156, 150, 140), 7: (166, 150, 126), 8: (150, 144, 128), 9: (150, 152, 120), 10: (132, 160, 92),
+    11: (140, 162, 98),
+    12: (190, 180, 118), 13: (188, 178, 114), 14: (176, 172, 106), 15: (170, 168, 96), 16: (176, 170, 100),
+    17: (160, 160, 92), 18: (146, 168, 92), 19: (164, 166, 100), 20: (170, 170, 106), 21: (138, 158, 86),
+    22: (130, 150, 80),
+    23: (86, 124, 58), 24: (54, 92, 52), 25: (68, 108, 56), 26: (160, 166, 104), 27: (150, 142, 98),
+    28: (130, 132, 86), 29: (112, 136, 76), 30: (222, 208, 160), 31: (146, 142, 134), 32: (160, 154, 132),
+    33: (110, 100, 86), 34: (236, 242, 246), 35: (116, 132, 90), 36: (132, 126, 86), 37: (124, 132, 96),
+    38: (180, 176, 160), 39: (180, 170, 140),
+}
+FOREST = {23, 24, 25}
+OPEN_HIGH = {26, 27, 31, 32, 29}
+LAKE = {40, 41}
+SEA = {42, 43, 44}
+LAKE_RGB = np.array([58, 112, 156], float)
+
+
+def _noise(shape, scales, seed):
+    """Deterministic multi-octave value noise in [-1, 1] (fixed seed: same image every build)."""
+    rng = np.random.default_rng(seed)
+    out = np.zeros(shape, np.float32)
+    amp_tot = 0
+    for k, sc in enumerate(scales):
+        gh, gw = max(2, int(shape[0] / sc) + 3), max(2, int(shape[1] / sc) + 3)
+        g = rng.standard_normal((gh, gw)).astype(np.float32)
+        z = ndimage.zoom(g, (shape[0] / (gh - 2), shape[1] / (gw - 2)), order=3)[: shape[0], : shape[1]]
+        z = np.pad(z, ((0, max(0, shape[0] - z.shape[0])), (0, max(0, shape[1] - z.shape[1]))), mode="edge")
+        a = 1 / (k + 1)
+        out += a * z
+        amp_tot += a
+    out /= amp_tot
+    return np.clip(out / (np.std(out) * 2.5 + 1e-6), -1, 1)
+
+
+def _decode_rings(f, scale):
+    for ring in f["rings"]:
+        a = np.array(ring, np.float64).reshape(-1, 2).cumsum(axis=0) * scale
+        yield a
+
+
+def build():
+    world = read_json(WEB_DATA / "world.json")
+    W, H = world["width"], world["height"]
+    frame = geo.Frame(world["projection"]["x0_km"], world["projection"]["y1_km"])
+    nx, ny = int(math.ceil(W / RES)), int(math.ceil(H / RES))
+    print(f"    raster {nx}x{ny} px at {RES} km")
+
+    # --- dense 1 km grids in EPSG:3035 ---------------------------------------------------------------------------
+    g = np.load(INTERIM / "gisco_grids.npz")
+    X, Y = g["X"].astype(np.int64), g["Y"].astype(np.int64)  # km, lower-left corner of each cell
+    # map raster pixel centres -> EPSG:3035 km
+    to3035 = Transformer.from_crs(geo.NORDIC_LAEA, "EPSG:3035", always_xy=True)
+    jj, ii = np.mgrid[0:ny, 0:nx].astype(np.float32)
+    mx = (ii + 0.5) * RES
+    my = (jj + 0.5) * RES
+    px, py = to3035.transform(mx.ravel() + frame.x0, frame.y1 - my.ravel())
+    px = (px / 1000.0).reshape(ny, nx).astype(np.float32)
+    py = (py / 1000.0).reshape(ny, nx).astype(np.float32)
+    del jj, ii
+    xmin, xmax = int(np.floor(px.min())) - 2, int(np.ceil(px.max())) + 2
+    ymin, ymax = int(np.floor(py.min())) - 2, int(np.ceil(py.max())) + 2
+    keep = (X >= xmin) & (X <= xmax) & (Y >= ymin) & (Y <= ymax)
+    gx, gy = X[keep] - xmin, Y[keep] - ymin
+    shp = (ymax - ymin + 1, xmax - xmin + 1)
+
+    def dense(arr, fill):
+        d = np.full(shp, fill, np.float32)
+        d[gy, gx] = arr[keep]
+        return d
+
+    clc = g["clc2018"][keep].astype(np.int16)
+    elev = dense(np.nan_to_num(g["elev"], nan=np.nan), np.nan)
+    tcd = dense(g["tcd2018"], np.nan)
+    cls = np.full(shp, -1, np.int16)
+    cls[gy, gx] = clc
+    cntr = g["cntr"][keep]
+    nordic = np.zeros(shp, np.float32)
+    nordic[gy, gx] = np.isin(cntr, ["NO", "SE", "DK"]).astype(np.float32)
+    present = np.zeros(shp, np.float32)
+    present[gy, gx] = 1.0
+    ccode = np.zeros(shp, np.float32)  # 0 none/sea, 1 NO, 2 SE, 3 DK, 4 other
+    ccode[gy, gx] = np.select([cntr == "NO", cntr == "SE", cntr == "DK", np.char.str_len(cntr.astype(str)) > 0], [1, 2, 3, 4], 0)
+    land1 = np.zeros(shp, np.float32)
+    land1[gy, gx] = (~np.isin(clc, list(SEA | LAKE)) & ((clc > 0) | np.isfinite(g["elev"][keep]))).astype(np.float32)
+    lake1 = np.isin(cls, list(LAKE)).astype(np.float32)
+    elev = np.where(np.isfinite(elev), elev, np.where(land1 > 0, 0, -20)).astype(np.float32)
+    # fill unclassified land from neighbours (nearest classified cell)
+    unk = (cls <= 0) & (land1 > 0)
+    if unk.any():
+        idx = ndimage.distance_transform_edt(unk | (cls <= 0), return_distances=False, return_indices=True)
+        cls_f = cls[tuple(idx)]
+        cls = np.where(unk, cls_f, cls)
+
+    # colour per 1 km cell
+    rgb1 = np.zeros(shp + (3,), np.float32)
+    for k, col in PAL.items():
+        rgb1[cls == k] = col
+    t = np.nan_to_num(tcd, nan=50) / 100
+    forest = np.isin(cls, list(FOREST))
+    rgb1[forest] *= (1.12 - 0.3 * t[forest])[:, None]
+    # elevation tint on open ground: valleys warmer, high ground paler and cooler
+    hi = np.clip((elev - 600) / 900, 0, 1)
+    openh = np.isin(cls, list(OPEN_HIGH))
+    rgb1[openh] = rgb1[openh] * (1 - 0.35 * hi[openh, None]) + np.array([200, 200, 196]) * 0.35 * hi[openh, None]
+    # foreign land muted toward a neutral parchment so the three countries stand out
+    fmask = (land1 > 0) & (nordic < 0.5)
+    grey = rgb1[fmask].mean(axis=1, keepdims=True)
+    rgb1[fmask] = 0.45 * rgb1[fmask] + 0.55 * (0.8 * grey + np.array([40, 36, 28]))
+
+    # extend land colours over water cells so interpolation at the shore never blends toward black
+    wet = land1 < 0.5
+    if wet.any():
+        idx = ndimage.distance_transform_edt(wet, return_distances=False, return_indices=True)
+        rgb1 = rgb1[idx[0], idx[1]]
+
+    # --- sample at the raster resolution -------------------------------------------------------------------------
+    fx = px - xmin - 0.5
+    fy = py - ymin - 0.5
+    warp = 0.45
+    nxw = _noise((ny, nx), [24, 9], SEED) * warp
+    nyw = _noise((ny, nx), [24, 9], SEED + 1) * warp
+    wx, wy = fx + nxw, fy + nyw
+
+    def samp(field, coords_x, coords_y, order):
+        return ndimage.map_coordinates(field, [coords_y.ravel(), coords_x.ravel()], order=order, mode="nearest").reshape(ny, nx)
+
+    Z = samp(elev, fx, fy, 3)
+    Z = np.maximum(Z, -20)
+    rgb = np.stack([samp(rgb1[..., c], wx, wy, 1) for c in range(3)], axis=-1)
+    land_c = samp(land1, wx, wy, 1)
+    lake_c = samp(lake1, wx, wy, 1)
+    nord = samp(nordic, fx, fy, 1)
+    cc = samp(ccode, fx, fy, 0)
+    valid = samp(present, fx, fy, 1)
+    del rgb1
+
+    # --- coast: polygons for Norway and Denmark (finer than 1 km), CORINE elsewhere -----------------------------
+    munis = read_json(WEB_DATA / "munis.json")
+    ss = 2  # supersampling
+    img = Image.new("L", (nx * ss, ny * ss), 0)
+    dr = ImageDraw.Draw(img)
+    for f in munis["features"]:
+        if not f["id"].startswith(("NO-", "DK-")):
+            continue
+        rings = list(_decode_rings(f, munis["scale"]))
+        for k, a in enumerate(rings):
+            pts = [(float(x / RES * ss), float(y / RES * ss)) for x, y in a]
+            if len(pts) >= 3:
+                dr.polygon(pts, fill=255)
+    poly = np.asarray(img.resize((nx, ny), Image.BOX), np.float32) / 255
+    del img, dr
+    zone = ndimage.binary_dilation(poly > 0.5, iterations=int(3 / RES))
+    smooth_land = np.clip((land_c - 0.38) / 0.24, 0, 1)
+    near_sea = ndimage.binary_dilation((land_c < 0.5) & (lake_c < 0.5), iterations=int(2 / RES))
+    use_poly = ((cc == 1) | (cc == 3) | (cc == 0)) & zone & near_sea
+    alpha_land = np.where(use_poly, poly, np.maximum(poly, smooth_land))
+    alpha_land *= np.clip((valid - 0.5) * 4, 0, 1)  # nothing outside the 1 km data (Russia, Belarus: hex art only)
+    lake_a = np.clip((lake_c - 0.42) / 0.2, 0, 1) * (alpha_land > 0.5)
+
+    # --- hillshade -----------------------------------------------------------------------------------------------
+    Zs = ndimage.gaussian_filter(Z, 0.6) * Z_EXAG
+    dzdx = np.gradient(Zs, axis=1) / (RES * 1000)
+    dzdy = np.gradient(Zs, axis=0) / (RES * 1000)
+    slope = np.arctan(np.hypot(dzdx, dzdy))
+    aspect = np.arctan2(-dzdx, dzdy)
+    shade = np.zeros_like(Zs)
+    for az, alt, wgt in ((315, 45, 0.55), (270, 40, 0.2), (0, 40, 0.15), (225, 50, 0.1)):
+        a, h = math.radians(az), math.radians(alt)
+        s_ = math.sin(h) * np.cos(slope) + math.cos(h) * np.sin(slope) * np.cos(a - aspect - math.pi / 2)
+        shade += wgt * np.clip(s_, 0, 1)
+    flat = math.sin(math.radians(45))  # shade of flat ground
+    rel = (shade - flat * 0.98)  # <0 shadow, >0 lit
+    # high-alpine tint, snowline falling from ~1500 m at 60°N to ~800 m at 70°N
+    lat = _lat_raster(frame, nx, ny)
+    snowline = 1500 - 70 * np.clip(lat - 60, 0, 12)
+    alp = np.clip((Z - snowline) / 450, 0, 1) * (Z > 300)
+    rgb = rgb * (1 - 0.55 * alp[..., None]) + np.array([232, 236, 240]) * 0.55 * alp[..., None]
+    # canopy and field texture (deterministic, sub-km)
+    tex = _noise((ny, nx), [3, 1.4], SEED + 2)
+    rgb *= (1 + 0.07 * tex)[..., None]
+    # light and shadow: warm light, cool shadow
+    lit = np.clip(rel, 0, None)[..., None]
+    shd = np.clip(-rel, 0, None)[..., None]
+    rgb = rgb * (1 + 1.1 * lit) * (1 - 1.35 * shd)
+    rgb = rgb + np.array([255, 236, 190]) * 0.10 * lit - np.array([30, 20, 0]) * 0.6 * shd
+    # lakes painted in, darker toward the middle
+    depth = ndimage.gaussian_filter(lake_a, 2)
+    lake_rgb = LAKE_RGB * (1.04 - 0.18 * depth[..., None]) + (tex * 3)[..., None]
+    rgb = rgb * (1 - lake_a[..., None]) + lake_rgb * lake_a[..., None]
+    rgb = np.clip(rgb, 0, 255).astype(np.uint8)
+    alpha = np.clip(alpha_land * 255, 0, 255).astype(np.uint8)
+
+    OUT.mkdir(parents=True, exist_ok=True)
+    for old in OUT.glob("**/*.webp"):
+        old.unlink()
+    rgba = np.dstack([rgb, alpha])
+    manifest = {"crs": "map km, y down (world.json)", "levels": [], "note": __doc__.split("\n\n")[0].strip(),
+                "sources": ["gisco_grids (CORINE 2018, EU-DEM, Copernicus TCD 1 km)", "boundaries (Kartverket, DAGI)"]}
+    # L1 tiles
+    tiles = []
+    for ty in range(0, ny, TILE):
+        for tx in range(0, nx, TILE):
+            a = alpha[ty:ty + TILE, tx:tx + TILE]
+            if a.max() == 0:
+                continue
+            p = OUT / "L1" / f"{tx // TILE}_{ty // TILE}.webp"
+            p.parent.mkdir(exist_ok=True)
+            Image.fromarray(rgba[ty:ty + TILE, tx:tx + TILE], "RGBA").save(p, "WEBP", quality=82, alpha_quality=90, method=6)
+            tiles.append([tx // TILE, ty // TILE])
+    manifest["levels"].append({"id": "L1", "km_per_px": RES, "tile_px": TILE, "tiles": tiles, "path": "relief/L1/{x}_{y}.webp"})
+    # L0 whole image at 1 km
+    im0 = Image.fromarray(rgba, "RGBA").resize((nx // 2, ny // 2), Image.BOX)
+    im0.save(OUT / "L0.webp", "WEBP", quality=84, alpha_quality=90, method=6)
+    manifest["levels"].insert(0, {"id": "L0", "km_per_px": RES * 2, "size": [nx // 2, ny // 2], "path": "relief/L0.webp"})
+    # gray hillshade for analyze mode (multiplied over lens colours; flat ground ≈ white); lakes cut out
+    gval = np.clip(238 + 150 * rel, 0, 255)
+    gray = np.dstack([gval, gval, gval, alpha_land * (1 - lake_a) * 255]).clip(0, 255).astype(np.uint8)
+    Image.fromarray(gray, "RGBA").resize((nx // 2, ny // 2), Image.BOX).save(OUT / "gray.webp", "WEBP", quality=80, alpha_quality=90, method=6)
+    manifest["gray"] = {"km_per_px": RES * 2, "size": [nx // 2, ny // 2], "path": "relief/gray.webp"}
+    # land hexes the image does not cover (no 1 km data, e.g. Russia): the map draws those as hex tiles
+    gw = world["grid"]
+    hx = geo.cell_at(mx.ravel() if False else ((np.arange(nx) + 0.5) * RES)[None, :].repeat(ny, 0).ravel(),
+                     ((np.arange(ny) + 0.5) * RES)[:, None].repeat(nx, 1).ravel(), gw["radius"], gw["cols"], gw["rows"])
+    ok = hx >= 0
+    cov = np.bincount(hx[ok], weights=np.clip((valid.ravel()[ok] - 0.5) * 4, 0, 1), minlength=gw["cols"] * gw["rows"])
+    cnt = np.bincount(hx[ok], minlength=gw["cols"] * gw["rows"])
+    frac = cov / np.maximum(cnt, 1)
+    water = world["water"]
+    manifest["hex_fallback"] = [int(i) for i in range(len(frac)) if not water[i] and frac[i] < 0.5]
+    h = hashlib.sha256()
+    for p in sorted(OUT.glob("**/*.webp")):
+        h.update(p.read_bytes())
+    manifest["sha256"] = h.hexdigest()
+    manifest["bytes"] = sum(p.stat().st_size for p in OUT.glob("**/*.webp"))
+    write_json(OUT / "index.json", manifest)
+
+    # --- coastline vectors (crisp stroke at close zoom), traced from the same land alpha -------------------------
+    from skimage import measure
+    a_sea = alpha_land.copy()
+    a_sea[lake_a > 0.5] = 0
+    lines = []
+    for c in measure.find_contours(a_sea, 0.5):
+        if len(c) < 6:
+            continue
+        xy = np.column_stack([(c[:, 1] + 0.5) * RES, (c[:, 0] + 0.5) * RES])
+        from shapely.geometry import LineString
+        ls = LineString(xy).simplify(0.12)
+        pts = np.asarray(ls.coords)
+        if ls.length < 1.5:
+            continue
+        q = np.round(pts / 0.02).astype(np.int64)
+        d = np.vstack([q[:1], np.diff(q, axis=0)]).ravel().tolist()
+        lines.append(d)
+    write_json(WEB_DATA / "coast.json", {"scale": 0.02, "note": "shore lines (sea and lake) traced from the relief "
+                                         "raster's land mask at 0.5 km; for drawing only", "lines": lines})
+    print(f"    relief: {len(tiles)} L1 tiles, {manifest['bytes'] / 1e6:.1f} MB; {len(lines)} shore lines")
+
+
+def _lat_raster(frame, nx, ny):
+    """Latitude of each pixel (computed on a coarse grid and interpolated)."""
+    step = 16
+    jj, ii = np.mgrid[0:ny:step, 0:nx:step]
+    lon, lat = frame.to_ll((ii + 0.5) * RES, (jj + 0.5) * RES)
+    z = ndimage.zoom(lat.astype(np.float32), (ny / lat.shape[0], nx / lat.shape[1]), order=1)[:ny, :nx]
+    return np.pad(z, ((0, ny - z.shape[0]), (0, nx - z.shape[1])), mode="edge")
