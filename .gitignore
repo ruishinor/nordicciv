@@ -4,3 +4,6 @@ data/raw/
 data/interim/
 data/relay/
 dist/
+tests/.node/
+tests/results/
+.venv*/

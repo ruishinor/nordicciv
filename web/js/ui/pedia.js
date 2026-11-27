@@ -53,8 +53,16 @@ export function initPedia(data) {
       <p>Civilization's yields mapped onto real measures. Job-based yields count <i>jobs at the place of work</i> (November /
       4th quarter 2024: SSB table 07984, SCB TAB3204, DST RAS501), grouped into ${Object.keys(data.nation.industries || {}).length}
       industry groups that all three agencies publish (NACE Rev. 2 sections, with Denmark's NACE Rev. 2.1 data mapped back).</p>
-      <table>${data.nation.yields.map((y) => `<tr><td class="ic" style="color:${esc(y.color)}">${glyph(y, 26)}</td><td><b style="color:${esc(y.color)}">${esc(y.label)}${y.key === "gold" ? " (GDP)" : ""}</b><br>${esc(y.description)}</td></tr>`).join("")}</table>
-      <h4>Gold and the continental shelf</h4>
+      <table>${data.nation.yields.map((y) => `<tr><td class="ic" style="color:${esc(y.color)}">${glyph(y, 26)}</td><td><b style="color:${esc(y.color)}">${esc(y.label)}</b> = <i>${esc(y.measure || "")}</i><br>${esc(y.description)}</td></tr>`).join("")}</table>
+      <p><b>What yields are not.</b> Five yields count employment. Agricultural jobs are not food production, industrial jobs
+      are not industrial output, knowledge-sector jobs are not research output, culture jobs are not cultural value, and
+      welfare jobs are not the quality or accessibility of welfare services. Workplace jobs are not the number of employed
+      residents: commuters count where they work.</p>
+      <h4>Gold: economic output</h4>
+      <p>${esc(data.nation.gdp_label || "")}</p>
+      <p>${esc(data.nation.gdp_allocation || "")} The method assumes equal output per job within an industry in a region; for a
+      municipality the value is an estimate (≈), never an official statistic. Output is counted where people work, so a
+      municipality that draws commuters shows high output per resident.</p>
       <p>${esc(data.nation.extra_regio?.note || "")}</p>
       <h4>Specialisation (city types)</h4>
       <p>A municipality's type is its industry group with the highest <b>location quotient</b> — its share of local jobs ÷ the
@@ -63,7 +71,16 @@ export function initPedia(data) {
       Swedish mining town reads as "Industrial"; its mines appear as resources.</p>
       <h4>Suppressed values</h4>
       <p>Statistics Norway suppresses very small cells for confidentiality, and from 2025 Statistics Sweden adds small random
-      noise to protect individuals. A yield with a suppressed component is shown as a lower bound (≥).</p>`,
+      noise to protect individuals. A yield with a suppressed component is shown as a lower bound (≥). Because the
+      municipality's total jobs are published, the suppressed cells can add at most the unallocated remainder: the panel
+      and CSV give that upper bound, and where it makes the order uncertain a rank is shown as an interval (#10–14).
+      National figures for Norway come from SSB's national table, which has no suppression.</p>
+      <h4>Location quotients</h4>
+      <p>A location quotient (×) compares an industry's share of local jobs with its share in the three countries combined;
+      ×2 means twice as concentrated. It measures relative concentration only — not output, productivity, the largest
+      industry or strategic importance — and small municipalities can reach high quotients with few jobs, so a
+      specialisation needs at least ${data.nation.lq_rule?.min_jobs} jobs. The municipality panel shows the largest industry
+      and the strongest specialisation side by side.</p>`,
     Regions: () => `
       ${h2("terrain", "🗺️", "Regions")}
       <p>Regions are Norway's 15 counties (fylker, 2024), Sweden's 21 counties (län) and Denmark's 5 regions. Their figures
@@ -80,25 +97,44 @@ export function initPedia(data) {
       source updates; the browser never calls an external API.</p>
       <h4>Harmonisation</h4>
       <ul>
-        <li><b>Boundaries</b>: municipalities as of 2024 (Norway's 357, Sweden's 290, Denmark's 98). Norway's population series
-        uses SSB's aggregated series for today's municipalities; five municipalities created by splits have no earlier figures.</li>
+        <li><b>Boundaries</b>: municipalities as of 2024–2026 (Norway's 357, Sweden's 290, Denmark's 98). Norway's series use
+        SSB's aggregated series for today's municipalities. Where SSB could not reconstruct a municipality (it publishes 0),
+        the years are shown as not available, never as zero population; where a municipality's series describes a
+        different territory (Ålesund 2020–23 included Haram) or a part of a divided municipality moved (SSB's classification
+        131), the years before the change are marked as another territory. Growth, rankings, the Timeline and exports only
+        compare years on the same territory. Sweden and Denmark had no municipal reforms in the period.</li>
+        <li><b>Totals over time</b>: Scandinavia and each country use the agencies' own national series, not sums of
+        today's municipalities (which miss the residents of municipalities that cannot be reconstructed). Norwegian counties
+        use SSB's county series where it exists, else the sum of comparable municipalities, else "not available".</li>
         <li><b>Reference dates</b>: population 1 January 2026 (Sweden's 31 December 2025 is the same moment); jobs November/Q4 2024
         in all three; GDP 2023; land cover 2018.</li>
         <li><b>Industries</b>: NACE sections grouped to the finest common level (L–N and R–U are joint groups because SSB and SCB
         publish them together).</li>
         <li><b>Currencies</b>: national currency → euro at Eurostat annual averages; PPS via Eurostat GDP PPPs.</li>
-        <li><b>Income</b>: the three agencies publish different income concepts, so income is shown only relative to the
-        national figure of the same statistic (experimental).</li>
+        <li><b>Income</b>: the three agencies publish different concepts (${esc(Object.values(data.nation.income_definitions || {}).join("; "))}),
+        so income is shown only relative to the country's own figure for the same statistic. Values are nominal, not
+        adjusted for prices or purchasing power; read them within one country.</li>
       </ul>
       <h4>Spatial allocation</h4>
       <p>Every 1 km grid cell is assigned to the municipality polygon containing its centre (cells in the coastal fringe
       outside simplified polygons go to the nearest municipality). A hex belongs to the municipality holding most of its land
       cells. Hex population = Σ municipality population × that municipality's share of GEOSTAT 2018 grid population falling in
       the hex; the sum over hexes equals the official total.</p>
+      <h4>Geography: hexes, polygons and the landscape</h4>
+      <p>Hexes are the unit of terrain statistics (93.5 km² each). Municipalities are drawn, selected and coloured from their
+      own polygons (Kartverket, Valmyndigheten, DAGI), so a small municipality such as Frederiksberg, Solna or Utsira has
+      its own territory even where it owns no hex. Municipal lenses colour polygons; hex lenses colour hexes.</p>
+      <p>The landscape is one continuous image painted from the 1 km grids: CORINE land cover for colour, EU-DEM for a
+      multidirectional hillshade (vertical exaggeration ×3), Copernicus tree-cover density for forest tone, and the municipal
+      polygons for the Norwegian and Danish coast. Below 1 km it only interpolates; the fine grain that appears close in is
+      texture, not data. Mountain pieces stand only on summits: hexes whose highest 1 km cell is above 1,000 m and higher
+      than all six neighbours.</p>
       <h4>Validation</h4>
-      <p>The build checks that hex populations reconcile with municipal totals, municipal sums with national totals, that
-      every municipality has a banner on land, that missing values are null, and that every published indicator names its
-      source. See <code>python -m pipeline check</code>.</p>`,
+      <p><code>python -m pipeline check --mode built|source|release</code>. <i>built</i> checks the shipped files on their own;
+      <i>source</i> reconciles them with the original downloads read independently (for example: for every year 2008–2026,
+      Norway's municipalities plus SSB's "divided municipalities" bucket equal the national total) and verifies every
+      cached download against its SHA-256 and request; <i>release</i> also requires the browser journeys to have passed on
+      the same data files. A skipped check never counts as passed.</p>`,
     Terrain: () => {
       const t = data.w?.tables || resolveTables(data.world.tables);
       const hasCover = Array.isArray(data.world.cover);

@@ -663,15 +663,39 @@ export function install(app) {
     setTimeout(() => URL.revokeObjectURL(a.href), 2000);
   }
   function csvText(list) {
+    // Every value travels with its status (NC-T06): observed, lower_bound (suppressed cells; the upper bound follows),
+    // estimate, not_comparable (territory changed) or empty = not available. Never a bare zero for missing data.
     const cols = COLUMNS;
     const q = (s) => `"${String(s ?? "").replace(/"/g, '""')}"`;
+    const status = (col, c) => {
+      const v = col.get(c);
+      if (!fin(v)) return col.key === "growth" && c.growth_note ? "not_comparable" : "not_available";
+      if (col.partial && (c.yields_partial || []).includes(col.partial)) return "lower_bound";
+      if (col.estimate) return "estimate";
+      if (col.key === "income_index") return "observed_national_relative";
+      return "observed";
+    };
+    const head = ["id", "name", "country", "region", "strongest_specialisation"];
+    for (const c of cols) head.push(c.label, `${c.key}_status`, ...(c.partial ? [`${c.key}_upper_bound`] : []));
+    head.push("population_history_note", "economic_output_method");
     const lines = [
-      `# NordicCiv municipal data export (${new Date().toISOString().slice(0, 10)})`,
-      `# Population: 1 January 2026 (SSB 07459, SCB TAB628, DST FOLK1A). Jobs: place of work, Nov/Q4 2024 (SSB 07984, SCB TAB3204, DST RAS501).`,
-      `# GDP: regional accounts 2023 apportioned by jobs (estimate). Income index: experimental, relative to the same statistic nationally.`,
-      `# Licences: NLOD/CC BY 4.0 (SSB), CC0 (SCB), CC BY 4.0 (DST, Eurostat). Empty = not available (never zero).`,
-      ["id", "name", "country", "region", "type", ...cols.map((c) => c.label)].map(q).join(","),
-      ...list.map((c) => [c.id, c.name, c.country, c.states[0], c.type.label, ...cols.map((col) => { const v = col.get(c); return fin(v) ? +v.toPrecision(8) : ""; })].map(q).join(",")),
+      `# NordicCiv municipal data export (${new Date().toISOString().slice(0, 10)}), ${list.length} municipalities`,
+      `# Population: 1 January 2026 (SSB 07459, SCB TAB628, DST FOLK1A). Growth 2016–26 only where both years describe the same territory.`,
+      `# Jobs: place of work, Nov/Q4 2024 (SSB 07984, SCB TAB3204, DST RAS501). Yields count jobs, not output. lower_bound = the agency suppressed small cells; *_upper_bound = what they could add at most.`,
+      `# Economic output: regional accounts 2023 (NO GVA basic prices, SE GRDP market prices, DK GDP) shared to municipalities by industry value added and jobs — estimate.`,
+      `# Income: relative to each country's own figure (NO median household income after tax, SE median net income 20+, DK average disposable income); not comparable across countries.`,
+      `# Licences: NLOD/CC BY 4.0 (SSB), CC0 (SCB), CC BY 4.0 (DST, Eurostat). Empty value = not available (never zero).`,
+      head.map(q).join(","),
+      ...list.map((c) => {
+        const row = [c.id, c.name, c.country, c.states[0], c.type.label];
+        for (const col of cols) {
+          const v = col.get(c);
+          row.push(fin(v) ? +v.toPrecision(8) : "", status(col, c));
+          if (col.partial) row.push(fin(c.yields_hi?.[col.partial]) ? c.yields_hi[col.partial] : "");
+        }
+        row.push(c.growth_note || "", c.gdp_method === "sector" ? "sector-weighted share of regional output" : "job share of regional output");
+        return row.map(q).join(",");
+      }),
     ];
     return lines.join("\n");
   }
@@ -851,5 +875,5 @@ export function install(app) {
   };
   app.registerStaticLayer(detailLayer);
 
-  app.nordic = { toggle, OBS, compareSet, downloadCsv };
+  app.nordic = { toggle, OBS, compareSet, downloadCsv, csvText, peersOf, neighboursOf };
 }
