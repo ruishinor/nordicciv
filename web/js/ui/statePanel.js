@@ -5,6 +5,7 @@ import { icon } from "./icon.js";
 import { showPanel } from "./infoPanel.js";
 import { yieldTiles, industryBars } from "./cityPanel.js";
 import { popChart } from "../stats.js";
+import { mapsLink, regionTarget } from "../app/maps.js";
 
 const COUNTRY = { NO: "Norway", SE: "Sweden", DK: "Denmark" };
 const KIND = { NO: "County (fylke)", SE: "County (län)", DK: "Region" };
@@ -40,6 +41,9 @@ export function openStatePanel(idx, ctx) {
     <div class="landlegend">${LAND.filter(([k]) => land[k] >= 0.03).map(([k, name, c]) => `<span><b style="background:${c}"></b>${name} ${pct(land[k], 0)}</span>`).join("")}</div>
     <p class="muted small">Average share of hex land in each CORINE 2018 group (1 km cells).</p>`;
   const growth = Number.isFinite(st.growth) ? ` · <span class="growth ${st.growth >= 0 ? "good" : "bad"}">${st.growth >= 0 ? "▲" : "▼"} ${Math.abs(st.growth * 100).toFixed(1)}% <span class="since">since ${st.growth_years?.[0]}</span></span>` : "";
+  const regionMaps = regionTarget(st.name || geo.name, cities, { grid: w.grid });
+  const mapsHtml = regionMaps ? `<div class="cp-actions">${mapsLink(regionMaps, { id: "region" })}</div>
+    <p class="muted tiny">A satellite overview of the whole ${esc((KIND[cc] || "region").split(" ")[0].toLowerCase())} in Google Maps, in a new tab. NordicCiv keeps your place here.</p>` : "";
   showPanel({
     kind: "state",
     stripe: css(w.stateColor[idx] || [190, 190, 190]),
@@ -54,6 +58,7 @@ export function openStatePanel(idx, ctx) {
       { title: "Land", html: landBar },
       st.jobs && { title: "Jobs by industry · place of work, 2024", html: industryBars(st, nation, 8) },
       { title: "Largest municipalities", html: cityRows },
+      mapsHtml && { title: "The real place", html: mapsHtml },
     ],
     foot: `Sums of municipal statistics (SSB, SCB, DST); GDP: ${esc(nation.gdp_vintage || "")}.`,
     onClose: ctx.onClose,

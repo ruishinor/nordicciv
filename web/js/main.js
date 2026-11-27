@@ -20,6 +20,7 @@ import { installExtensions } from "./ext/index.js";
 import { initRelief, muniAt, muniNear } from "./render/art/relief.js";
 import { initShare } from "./app/share.js";
 import { initHelp } from "./app/help.js";
+import { initMaps } from "./app/maps.js";
 import { opening } from "./opening.js";
 
 const { drawStatic, drawOverlay, OCEAN_BG } = mapRender;
@@ -61,6 +62,7 @@ async function main() {
   const [world, cities, nation, lenses, sources, resources, statesData] = await Promise.all(
     START_DATA.map(([n, optional]) => loadJSON(n, optional, { track: true })));
   await opening.preparing();
+  initMaps(world);
   const lensFile = lenses && Array.isArray(lenses.lenses) ? lenses : { vintage: "", groups: [], lenses: [] };
   // NordicCiv packs lens values for the Scandinavian land hexes only (owner >= 0), in cell order: expand them.
   if (lensFile.packed === "owned" && world?.owner) {

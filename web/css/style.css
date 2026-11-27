@@ -764,7 +764,7 @@ button.link { background:none; border:0; padding:0; color:#f0d48a; cursor:pointe
 .uplink-card .uc-dl { display: grid; grid-template-columns: auto 1fr; gap: 2px 10px; margin: 0 0 8px; font-size: 13px; }
 .uplink-card .uc-dl dt { color: var(--ink-dim); }
 .uplink-card .uc-dl dd { margin: 0; }
-.uplink-card .uc-act { margin: 2px 0 6px; }
+.uplink-card .uc-act { margin: 2px 0 6px; display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
 .uplink-card .uplink-open { display: inline-block; padding: 4px 12px; font-size: 13px; text-decoration: none; border-color: var(--gold-bright, #e8cf8e); }
 .uplink-card .uplink-open:focus-visible { outline: 2px solid var(--gold-bright, #e8cf8e); outline-offset: 2px; }
 .uplink-card .uc-list { margin: 4px 0 6px; padding-left: 18px; font-size: 13px; line-height: 1.5; max-height: 240px; overflow: auto; }
@@ -774,3 +774,14 @@ button.link { background:none; border:0; padding:0; color:#f0d48a; cursor:pointe
 .sh-all { margin: 4px 0 6px; font-size: 12px; }
 .sh-all summary { cursor: pointer; color: var(--gold-bright); }
 .sh-all ul { margin: 4px 0 0; padding-left: 18px; max-height: 220px; overflow: auto; line-height: 1.5; }
+
+/* v0.5: "Open in Maps" — an ordinary outbound link styled as a chip (app/maps.js) */
+a.maps-open { text-decoration: none; display: inline-flex; align-items: center; gap: 4px; cursor: pointer; }
+a.maps-open:hover { border-color: var(--gold-bright); background: rgba(201,164,92,.14); }
+a.maps-open:focus-visible { outline: 2px solid var(--gold-bright); outline-offset: 2px; }
+.uplink-card .maps-open { padding: 4px 12px; font-size: 13px; }
+/* a site with a map link: name over its details, the link beside both, so nothing is cut short */
+.site.has-maps { display: grid; grid-template-columns: minmax(0, 1fr) auto; column-gap: 8px; align-items: center; }
+.site.has-maps > span:first-child { white-space: normal; overflow: visible; }
+.site.has-maps > .muted { grid-column: 1; max-width: none; text-align: left; white-space: normal; font-size: 12px; }
+.site.has-maps > a.maps-open { grid-column: 2; grid-row: 1 / span 2; margin-left: 0; }

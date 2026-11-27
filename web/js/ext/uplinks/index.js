@@ -1,12 +1,12 @@
 // Camera uplinks (NordicCiv v0.5): webcams their operators publish for anyone to watch, as a geographical index.
 // One optional map layer ("Camera uplinks" in the Map menu, off by default), a compact card for a selected uplink
-// with one outbound action, a concise "camera uplinks" section in the municipality panel's Overview, a few Discover
-// entries and an Almanac page.
+// with one outbound action to the provider ("Open uplink"; "Open in Maps" beside it for the place), a concise
+// "camera uplinks" section in the municipality panel's Overview, a few Discover entries and an Almanac page.
 //
 // NordicCiv is not a viewer. Nothing from a provider is ever loaded here: no player, stream, snapshot, thumbnail,
 // script, font or cookie — not when the layer is on, not when a symbol is hovered or selected. The only way to a
-// camera is the "Open camera uplink" link, which opens the provider's own public page in a new tab (no opener, no
-// referrer). Every outbound address is checked again before it is put in a link (https, the provider's own host).
+// camera is the "Open uplink" link, which opens the provider's own public page in a new tab (no opener, no
+// referrer). A second, separate action, "Open in Maps" (app/maps.js), opens the camera's place in Google Maps. Every outbound address is checked again before it is put in a link (https, the provider's own host).
 // Nothing here says a camera is live: that is only known on the provider's page.
 //
 // Scale. Far out (the whole of Scandinavia) the layer draws nothing, so it never clutters the overview. From the
@@ -15,6 +15,7 @@
 // smaller than shelters and sites and fades under an active lens, so it stays subordinate to the analysis.
 import { drawUplink, drawUplinkGroup } from "../../render/art/uplink.js";
 import { esc } from "../../format.js";
+import { mapsLink, cameraTarget } from "../../app/maps.js";
 
 const LAYER_Z = 63; // under public shelters (64), ports & airports (65), forts and wonders; over roads and rail
 const MIN_RPX = 4.5; // below this (country view) the layer is suppressed
@@ -23,7 +24,7 @@ const HOSTS = {
   camstreamer: /^camstreamer\.com$/, panomax: /^\d+\.panomax\.com$/,
   webcamcollections: /^webcamcollections\.com$/, skylinewebcams: /^www\.skylinewebcams\.com$/,
 };
-const NOTE = "Opens the provider's own page in a new tab. NordicCiv shows no camera pictures and does not know whether the camera is live; the provider's page does.";
+const NOTE = "Open uplink visits the provider's own page in a new tab; Open in Maps shows the place in Google Maps. NordicCiv shows no camera pictures and does not know whether the camera is live; the provider's page does.";
 // a few uplinks for Discover: distinct landscapes across the three countries (ids from uplinks.json)
 const DISCOVER = ["ln-reinefjorden", "cs-425493061", "pm-1267069", "wcc-sweden-are-areskutan", "ln-abisko", "ln-gaustabanen",
   "pm-3058468", "wcc-sweden-ulvon", "cs-1943", "wcc-sweden-gotland-farosund-harbour", "cs-847741412", "wcc-sweden-bastad-hovs-hallar"];
@@ -186,7 +187,7 @@ export function install(app) {
   card.setAttribute("aria-label", "Camera uplink");
   document.body.appendChild(card);
 
-  function linkHtml(c, label = "Open camera uplink") {
+  function linkHtml(c, label = "Open uplink") {
     const href = safeUrl(c, data.operatorHosts);
     if (!href) return `<span class="muted small">Link withheld: the address did not pass the link check.</span>`;
     return `<a class="chip uplink-open" data-uplink-out="${esc(c.id)}" href="${esc(href)}" target="_blank" rel="noopener noreferrer external" referrerpolicy="no-referrer">${esc(label)} ↗</a>`;
@@ -205,7 +206,7 @@ export function install(app) {
         <dt>Provider</dt><dd>${esc(providerName(c))} <span class="muted">· ${esc(host)}</span></dd>
         <dt>Position</dt><dd class="muted">${pos}</dd>
       </dl>
-      <div class="uc-act">${linkHtml(c)}</div>
+      <div class="uc-act">${linkHtml(c)} ${mapsLink(cameraTarget(c), { cls: "chip maps-open", id: c.id })}</div>
       <p class="muted small">${esc(NOTE)}</p>
       <p class="muted tiny">Page checked ${esc(c.verified)} · <button class="link" data-uc="pedia">About camera uplinks</button></p>`;
     card.hidden = false;

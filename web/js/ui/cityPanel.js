@@ -7,6 +7,8 @@ import { DISTRICT_ICON, showPanel, hidePanel } from "./infoPanel.js";
 import { industryIcon } from "./yieldReport.js";
 import { popChart, breakNotes, rankText, isPartial } from "../stats.js";
 import { distinctiveHtml } from "../explore.js";
+import { mapsLink, municipalityTarget, settlementTarget, wonderTarget, airportTarget, portTarget } from "../app/maps.js";
+import { muniFeature } from "../render/art/relief.js";
 
 const COUNTRY = { NO: "Norway", SE: "Sweden", DK: "Denmark" };
 const FLAG = { NO: "🇳🇴", SE: "🇸🇪", DK: "🇩🇰" };
@@ -89,14 +91,15 @@ function sitesIn(city) {
     const t = types.get(it.type) || {};
     out.push({ kind: t.name || it.type, name: it.name, val: it.value != null ? `${it.value.toLocaleString("en-US")} ${t.unit || ""}` : it.detail || "", t });
   }
+  // Public places a visitor can go to get an "Open in Maps" link; energy and extraction sites do not.
   for (const wd of data.wonders?.wonders || []) {
-    if (wd.county === city.id) out.push({ kind: "Wonder", name: wd.name, val: wd.rule.replace("_", " "), wonder: true });
+    if (wd.county === city.id) out.push({ kind: "Wonder", name: wd.name, val: wd.rule.replace("_", " "), wonder: true, maps: wonderTarget(wd) });
   }
   for (const a of data.infrastructure?.airports || []) {
-    if (a.county === city.id && a.passengers) out.push({ kind: "Airport", name: a.name, val: `${compact(a.passengers)} passengers (2024)` });
+    if (a.county === city.id && a.passengers) out.push({ kind: "Airport", name: a.name, val: `${compact(a.passengers)} passengers (2024)`, maps: airportTarget(a) });
   }
   for (const p of data.infrastructure?.ports || []) {
-    if (p.county === city.id) out.push({ kind: "Port", name: p.short || p.name, val: `${compact(p.tonnes)} t goods (2024)` });
+    if (p.county === city.id) out.push({ kind: "Port", name: p.short || p.name, val: `${compact(p.tonnes)} t goods (2024)`, maps: portTarget(p) });
   }
   return out;
 }
@@ -163,7 +166,7 @@ export function openCityPanel(city, ctx) {
 
   const sites = sitesIn(city);
   const siteHtml = sites.length
-    ? `<div class="site-list">${sites.slice(0, 14).map((s) => `<div class="site"><span>${s.t ? glyph(s.t, 13) : s.wonder ? "🏛️" : "•"} ${esc(s.name)}</span><span class="muted">${esc(s.kind)}${s.val ? " · " + esc(s.val) : ""}</span></div>`).join("")}${sites.length > 14 ? `<p class="muted">+${sites.length - 14} more</p>` : ""}</div>
+    ? `<div class="site-list">${sites.slice(0, 14).map((s) => `<div class="site${s.maps ? " has-maps" : ""}"><span>${s.t ? glyph(s.t, 13) : s.wonder ? "🏛️" : "•"} ${esc(s.name)}</span><span class="muted">${esc(s.kind)}${s.val ? " · " + esc(s.val) : ""}</span>${s.maps ? mapsLink(s.maps, { cls: "chip sm maps-open", label: "Open in Maps" }) : ""}</div>`).join("")}${sites.length > 14 ? `<p class="muted">+${sites.length - 14} more</p>` : ""}</div>
        <p class="muted small">Sites above the inclusion thresholds in the Almanac; absence here is not evidence of absence.</p>`
     : `<p class="muted">No site above the map's inclusion thresholds (power plants, oil and gas fields, Swedish mines, wonders, ports, major airports) lies in this municipality. That is not evidence that none exists.</p>`;
 
@@ -184,6 +187,17 @@ export function openCityPanel(city, ctx) {
       <button class="chip" data-act="council" title="What the advisors observe about ${esc(city.name)}">Ask the Council</button>
       <button class="chip" data-act="history" title="Population over time">Population history</button>
       <button class="chip" data-compare="${esc(city.id)}" title="Add to the comparison">Compare ⇄</button></div>`;
+  // The real place: the municipality as an area, and its main settlement (a named place) at town scale.
+  const muniMaps = municipalityTarget(city, { grid: w.grid, muniFeature });
+  const townMaps = settlementTarget(city);
+  const townName = (city.place || "").split("/")[0];
+  // The settlement's own name where it differs ("Open København in Maps"); "the town"/"the city" where it is the
+  // municipality's name too, so the two links never read the same.
+  const townLabel = townName && townName !== city.name ? `Open ${townName} in Maps` : `Open the ${city.population >= 50000 ? "city" : "town"} in Maps`;
+  const mapsHtml = muniMaps || townMaps ? `<div class="cp-actions" role="group" aria-label="See the real place">
+      ${mapsLink(muniMaps, { id: "municipality" })}
+      ${townMaps ? mapsLink(townMaps, { label: townLabel, id: "settlement" }) : ""}</div>
+    <p class="muted tiny">A satellite view in Google Maps, in a new tab: ${townMaps ? `the whole municipality, or ${esc(townName)}, its main settlement` : "the whole municipality (its population is spread out, with no single main settlement)"}. NordicCiv keeps your place here.</p>` : "";
 
   const srcRows = (SOURCES[city.country] || []).map(([k, v]) => row(k, "", v)).join("");
   const status = `<ul class="status-list">
@@ -207,6 +221,7 @@ export function openCityPanel(city, ctx) {
         <p class="muted small">Yields are game names for real figures: five count jobs at the place of work (2024), Gold is economic output (estimate). They are not production, research output or welfare quality. <a href="#" data-pedia-yields>What each yield measures ›</a></p>` },
       { tab: "Overview", title: "Economic profile", html: specSummary },
       { tab: "Overview", title: "Explore from here", html: actions },
+      mapsHtml && { tab: "Overview", title: "The real place", html: mapsHtml },
       ...extraSections(ctx, city, "Overview"),
       { tab: "Economy", title: "Economic output", html: gdpBlock },
       { tab: "Economy", title: "Specialisations", html: specs + (detailTxt ? `<p class="muted small">Finer detail published by ${COUNTRY[city.country]}: ${esc(detailTxt)}</p>` : "") },
