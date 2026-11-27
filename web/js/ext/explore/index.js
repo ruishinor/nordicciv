@@ -40,12 +40,15 @@ export function install(app) {
   card.setAttribute("aria-label", "Discovery");
   document.body.appendChild(card);
 
+  const showers = new Map(); // key → (d) => void, for discoveries contributed by other extensions
   function show(d) {
     const c = app.cityById.get(d.city);
     if (!c) return;
     app.selectCity(c, { fly: true });
+    const custom = showers.get(d.key);
     const hl = { cities: new Set([c.id]), cells: new Set(), color: "#ffe08a" };
-    if (d.group) app.emit("focus-industry", { group: d.group, from: c.id });
+    if (custom) { app.setLens(null); app.setHighlight(hl); }
+    else if (d.group) app.emit("focus-industry", { group: d.group, from: c.id });
     else { app.setLens(d.lens || null); app.setHighlight(hl); }
     if (d.key === "history") setTimeout(() => app.panels.element?.querySelector?.('[data-cptab="Society"]')?.click(), 60);
     const f = FACETS.find((x) => x.id === d.facet);
@@ -57,6 +60,17 @@ export function install(app) {
     card.hidden = false;
     card.querySelector('[data-d="next"]').onclick = () => surprise();
     card.querySelector('[data-d="close"]').onclick = () => { card.hidden = true; btn.focus(); };
+    if (custom) setTimeout(() => custom(d), 0);
+  }
+  /** Other extensions add discoveries of their own kind (same card); onShow(d) runs after the place is selected. */
+  function addDiscoveries(list, onShow) {
+    if (!list?.length) return;
+    for (const d of list) {
+      if (!d.key || !d.city || all.some((x) => x.id === d.id)) continue;
+      if (onShow) showers.set(d.key, onShow);
+      order.splice(pos + 1 + Math.floor(((order.length - pos) * (all.length % 7)) / 7), 0, all.length);
+      all.push(d);
+    }
   }
   function surprise() {
     if (!all.length) return;
@@ -95,7 +109,7 @@ export function install(app) {
     app.on("lens", off);
   }
 
-  app.explore = { discoveries: all, surprise, show };
+  app.explore = { discoveries: all, surprise, show, addDiscoveries };
 }
 
 function shuffle(a, seed) {
