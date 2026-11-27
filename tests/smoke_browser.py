@@ -199,7 +199,8 @@ async def main():
               if (/NaN|Infinity|undefined/.test(html)) out.push(k + ': non-finite');
             }
             return out; })()""")
-        ok("7 all 8 advisors compute for Scandinavia and Kiruna without unsupported claims or NaN", not bad, bad)
+        n_adv = await pg.evaluate("Object.keys(__app.nordic.OBS).length")
+        ok("7 all 8 advisors compute for Scandinavia and Kiruna without unsupported claims or NaN", n_adv == 8 and not bad, f"{n_adv} advisors; {bad}")
 
         # 8. every lens, and a focused industry
         lens_ids = await pg.evaluate("__app.data.lenses.lenses.map(l => l.id)")
