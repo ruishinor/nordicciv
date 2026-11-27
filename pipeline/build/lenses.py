@@ -109,7 +109,7 @@ def build():
         description="Change in resident population between 1 January 2016 and 1 January 2026 on today's municipal "
                     "borders (Norway: SSB's aggregated series for the 2024 municipalities). A municipality whose territory "
                     "changed between the two years (split predecessors, transfers recorded in SSB's classification) has "
-                    "no comparable figure and is shown as 'no data', never as zero; the municipality panel explains why.",
+                    "no comparable figure. The municipality panel explains why.",
         note=f"{sum(1 for c in cities if c['growth'] is None)} municipalities have no comparable 2016 figure (boundary changes) and show no value.")
     add("ageing", "people", "Aged 65+", "👴", "share of residents", "pct", muni_lens(lambda c: c["share_65plus"]),
         ramp=RAMP_WARM, resolution="municipality", source="ssb, scb, dst",
@@ -257,8 +257,8 @@ def build():
                         f"(extracted {sh['source']['extracted']}). Public shelters only: private shelters, which hold most "
                         "of Norway's places, are not published. Capacity on record, not availability or readiness; "
                         "not compared with population, because shelters serve whoever is present. Sweden and Denmark: "
-                        "dataset not integrated (no data), not zero.",
-            note="Not a preparedness score. Sweden and Denmark show as no data: not integrated, not zero.")
+                        "data unavailable.",
+            note="Public shelter data is unavailable for Sweden and Denmark.")
 
     owned = [i for i in range(n) if owner[i] >= 0]
     for l in lenses:  # pack: only Scandinavian land hexes carry values (the browser expands them)

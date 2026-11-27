@@ -25,13 +25,13 @@ feature branch. The 0.4.0 and 0.3.0 records follow unchanged below this section.
   airfield, motorsport, duplicates, unclear content and five listings whose published positions contradict the place
   they name); WebcamCollections construction, timelapse, golf, camping, street-level and duplicate pins; road cameras.
 
-## Five review perspectives (developer reviews, not user evidence)
+## Five review perspectives (developer reviews; participant testing pending)
 
 1. **Privacy and security.** No media, scripts, frames, fonts or cookies from providers; links open in a new tab with
    no opener and no referrer; outbound addresses checked in the build, the gate, a unit test and again in the browser
    before a link is drawn (javascript:, http:, look-alike hosts, credentials and odd ports refused — journey 29). No
    camera aimed at people, no traffic cameras, no scanning, no footage analysis.
-2. **Data honesty.** Nothing claims a camera is live; place positions are labelled; absence is "not found or not
+2. **Data sources.** Nothing claims a camera is live; place positions are labelled; absence is "not found or not
    reviewed"; provider positions kept as published, mis-placed listings excluded rather than "corrected".
 3. **Visual identity.** One symbol family with the sites (plinth perspective, ink outline, top-left light, ground
    shadow), smaller and plainer than wonders, hidden far out, fading under lenses; no pins, dots, radar or camera
@@ -83,7 +83,7 @@ the badge background (≥ 7:1). The mutation-tested release gates of v0.3 are un
   at least one public shelter; county and national totals equal the sums of their records.
 - Reconciliation with Beredskap101's snapshot: identical except one removed room and one position 173 m apart.
 
-## Five review perspectives (developer reviews, not user evidence)
+## Five review perspectives (developer reviews; participant testing pending)
 
 1. **Data integrity.** No inferred facilities, no merged private data, missing ≠ zero, SE/DK "not integrated", every
    number traceable to the cached answer. Found and fixed: a municipality whose shelters sum to 0 places would have
@@ -135,9 +135,9 @@ the same content identity, runs the gates on that copy, packages and verifies it
 | Cache | 1,003 / 1,003 downloads match SHA-256, size and request identity |
 | Package | extracted copy: every file's SHA-256 equals the manifest, same candidate id, built-data check PASS, no secrets found |
 
-**The gates themselves were tested** (each mutation must fail): browser evidence for another candidate, evidence listing
-no journey 16, a skipped journey, a `browser.running.json` left by an interrupted run, no browser evidence, an
-incomplete run, a skipped unit test, and evidence carrying only a data hash all FAIL. An interrupted browser run
+**The gates themselves were tested** (each mutation must fail): browser results for another candidate, results listing
+no journey 16, a skipped journey, a `browser.running.json` left by an interrupted run, no browser results, an
+incomplete run, a skipped unit test, and results carrying only a data hash all FAIL. An interrupted browser run
 (stopped after 12 s) left no `browser.json`. Source reconciliation: a mismatched value labelled "boundary" FAILS; a
 boundary year relabelled "observed" FAILS. Four test assertions were corrected: journey 18 passed through an `or` on the
 navigation labels alone (fixing it exposed that the labels are upper-cased by CSS — the comparison is now
@@ -165,7 +165,7 @@ Not run: the CI workflow on GitHub (no remote repository, none created); a real-
 - Preserved: population, history, employment and output values other than the allocation change above; the accepted
   key totals (release check) are unchanged.
 
-## Five review perspectives (developer reviews, not user evidence)
+## Five review perspectives (developer reviews; participant testing pending)
 
 | Perspective | Findings corrected in this release | Open |
 |---|---|---|
@@ -173,7 +173,7 @@ Not run: the CI workflow on GitHub (no remote repository, none created); a real-
 | Visual and game identity | isolated sprites removed over the relief; ranges as connected masses; lakes no longer 1 km stair steps (same area); heath and scree glyphs enlarged to be visible; greens toned down; polygonal shore strokes smoothed | soft base between illustrations at very close zoom; Russia edge in hexes; archipelago coasts from 1 km cells |
 | Product discovery, new users | first-run hint covered the Council (now under all panels, dismissed by use); Discover unreachable on phones (now in the bottom bar); a discovery showed the wrong definition; the Almanac button was cut off at 1440 px | no real-user test yet |
 | Responsiveness, accessibility, performance | illustrated redraw cost on a software GPU (first measured at 270 ms against 70 ms): occupancy skipping, mask decoding in idle steps, pre-painted patterns, adaptive detail (full → reduced → off), `?detail=off`; the benchmark tour first ran under a lens and measured no illustration — corrected and rerun | settled redraws in illustrated views still ~1.9× v0.2 on software rendering; more long frames while zooming |
-| Software and release assurance | candidate identity, browser verification of served files, evidence lifecycle, staged promotion, four test false positives, build backup removed from git, Pillow 12.3.0 → 13.0.0 (42 known CVEs; relief output byte-identical) | CI not executed remotely |
+| Software and release assurance | candidate identity, browser verification of served files, test result handling, staged promotion, four test false positives, build backup removed from git, Pillow 12.3.0 → 13.0.0 (42 known CVEs; relief output byte-identical) | CI not executed remotely |
 
 ## Performance (laboratory, `docs/perf/v02_v03_*.json`)
 

@@ -203,8 +203,8 @@ class Euronym(Source):
         publisher="Eurostat GISCO (from EuroGeographics EuroRegionalMap and the EC towns table)",
         homepage="https://github.com/eurostat/euronym",
         license="Eurostat reuse policy; © EuroGeographics",
-        description="Settlement names with the map resolution above which each label is hidden (rs): a published, "
-                    "evidence-based label prominence used for town names at close zoom.",
+        description="Settlement names with the map resolution above which each label is hidden (rs): the published "
+                    "zoom level for displaying town names.",
         used_for=["town labels"],
     )
 
