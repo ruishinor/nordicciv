@@ -2,7 +2,15 @@
 import { esc, popShort } from "../format.js";
 import { icon } from "../ui/icon.js";
 
-const norm = (s) => String(s || "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
+// Scandinavian letters that Unicode does not decompose are spelled out, so "tromso", "tromsø" and "TROMSØ" all match.
+export const norm = (s) => String(s || "").toLowerCase().replace(/ø/g, "o").replace(/æ/g, "ae").replace(/ß/g, "ss").replace(/đ/g, "d").replace(/ŋ/g, "n").replace(/ŧ/g, "t")
+  .normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[^a-z0-9]+/g, " ").trim();
+// English exonyms and common alternative spellings (the data use each agency's own municipality names).
+const ALIASES = {
+  "DK-101": "København Kobenhavn Kjobenhavn", "SE-1480": "Gothenburg Goteborg", "DK-217": "Elsinore", "SE-1280": "Malmo",
+  "SE-0180": "Stockholms stad", "NO-0301": "Christiania Kristiania", "DK-751": "Arhus Aarhus Århus", "DK-851": "Alborg Aalborg Ålborg",
+  "SE-0380": "Upsala", "NO-5001": "Trondhjem Nidaros", "SE-2584": "Giron", "NO-1875": "Hamaroy Hábmer Habmer",
+};
 const MAX = 8;
 
 /**
@@ -20,13 +28,13 @@ export function initSearch(opts) {
 
   const entries = [];
   for (const c of opts.cities || []) {
-    entries.push({ kind: "city", city: c, name: c.name, n: norm(c.name), full: norm(c.full + " " + (c.place || "")), pop: c.population || 0,
+    entries.push({ kind: "city", city: c, name: c.name, n: norm(c.name), full: norm(c.full + " " + (c.place || "") + " " + (ALIASES[c.id] || "")), pop: c.population || 0,
       sub: (c.place && c.place !== c.name ? `${c.place} · ` : "") + (c.full || ""), label: c.name });
   }
   (opts.states || []).forEach((s, index) => {
     if (!s) return;
     entries.push({ kind: "state", index, name: s.name, n: norm(s.name), full: norm(s.abbr), abbr: (s.abbr || "").toLowerCase(),
-      pop: s.population || 0, sub: "Region", label: s.name });
+      pop: s.population || 0, sub: `${({ NO: "County", SE: "County (län)", DK: "Region" })[s.country] || "Region"}`, label: s.name });
   });
 
   let results = [];
@@ -64,7 +72,7 @@ export function initSearch(opts) {
 
   function render() {
     if (!results.length) {
-      box.innerHTML = input.value.trim() ? `<div class="sr-empty">No city or state matches “${esc(input.value.trim())}”</div>` : "";
+      box.innerHTML = input.value.trim() ? `<div class="sr-empty">No municipality, town or region matches “${esc(input.value.trim())}”</div>` : "";
       box.hidden = !input.value.trim();
       input.setAttribute("aria-expanded", String(!box.hidden));
       input.removeAttribute("aria-activedescendant");

@@ -32,7 +32,7 @@
     </div>
   </header>
 
-  <canvas id="map" role="img" aria-label="Hex map of Norway, Sweden and Denmark"></canvas>
+  <canvas id="map" role="img" aria-label="Map of Norway, Sweden and Denmark. Use the search box to find a municipality; every statistic shown on the map is also available in the municipality and region panels and in the Council's Explorer table."></canvas>
 
   <div id="tooltip" class="tooltip" hidden></div>
   <aside id="city-panel" class="panel" hidden role="region" aria-label="Details"></aside>
@@ -46,6 +46,13 @@
       <button id="btn-lenses" class="lens-btn lens-more" aria-haspopup="dialog" aria-expanded="false" aria-controls="lens-picker"></button>
     </div>
   </div>
+
+  <nav id="mobile-nav" class="panel mobile-nav" aria-label="Main">
+    <button data-mnav="explore" aria-label="Explore the terrain map"><span aria-hidden="true">🗺️</span>Explore</button>
+    <button data-mnav="lenses" aria-label="Choose a statistical lens"><span aria-hidden="true">🔍</span>Lenses</button>
+    <button data-mnav="council" aria-label="Open the Council: advisors, compare, explorer, timeline"><span aria-hidden="true">🏛️</span>Council</button>
+    <button data-mnav="almanac" aria-label="Open the Almanac: definitions and sources"><span aria-hidden="true">📖</span>Almanac</button>
+  </nav>
 
   <div id="minimap-wrap" class="panel"><canvas id="minimap" aria-label="Minimap: click to jump" role="img"></canvas></div>
   <button id="btn-minimap" class="panel minimap-toggle" aria-pressed="false" aria-controls="minimap-wrap" aria-label="Show the minimap"></button>

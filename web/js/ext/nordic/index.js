@@ -6,6 +6,7 @@ import { icon } from "../../ui/icon.js";
 import { reliefReady, muniFeature } from "../../render/art/relief.js";
 import { comparable, growthBetween, whyNotComparable, popIn, rankBy } from "../../stats.js";
 import { showPanelTab } from "../../ui/infoPanel.js";
+import { norm } from "../../app/search.js";
 
 const COUNTRY = { NO: "Norway", SE: "Sweden", DK: "Denmark" };
 const FLAG = { NO: "🇳🇴", SE: "🇸🇪", DK: "🇩🇰" };
@@ -82,8 +83,13 @@ export function install(app) {
 
   function toggle(open) {
     const want = open ?? !(app.ui.isDockOpen?.("left"));
-    if (!want) { app.ui.undock("left"); dockEl = null; app.setHighlight(null); return; }
-    dockEl = app.ui.dock("left", { width: Math.min(460, Math.max(340, innerWidth * 0.32)), label: "Council" });
+    if (!want) { app.ui.undock("left"); dockEl = null; app.setHighlight(null); syncNav(); return; }
+    // Map-centred workspace (§18.2): the Council takes about a quarter of a wide screen, and below 1200 px only one
+    // analytical panel is open at a time, so the map never shrinks to a sliver between two columns.
+    const narrow = innerWidth < 1200 && !app.isMobile?.();
+    if (narrow && document.body.classList.contains("panel-open")) { const keep = context; app.clearSelection?.(); context = keep; }
+    dockEl = app.ui.dock("left", { width: Math.round(Math.min(420, Math.max(320, innerWidth * 0.25))), label: "Council" });
+    syncNav();
     const st = app.state;
     if (st?.selectedCity) context = { kind: "city", city: st.selectedCity };
     else if (st?.selectedState != null) context = { kind: "state", index: st.selectedState };
@@ -95,8 +101,25 @@ export function install(app) {
   });
   app.on("select", (s) => {
     context = s && s.kind ? s : null;
+    // narrow desktop: the municipality panel takes over from the Council rather than squeezing the map
+    if (dockEl && context && innerWidth < 1200 && !app.isMobile?.()) { toggle(false); return; }
     if (dockEl && tab === "advisors") render();
   });
+  // mobile navigation bar (index.html #mobile-nav)
+  const nav = document.getElementById("mobile-nav");
+  function syncNav() {
+    nav?.querySelector('[data-mnav="council"]')?.setAttribute("aria-pressed", String(!!dockEl));
+    nav?.querySelector('[data-mnav="explore"]')?.setAttribute("aria-pressed", String(!app.state.lens && !dockEl));
+  }
+  nav?.querySelectorAll("[data-mnav]").forEach((b) => (b.onclick = () => {
+    const k = b.dataset.mnav;
+    if (k === "explore") { if (dockEl) toggle(false); if (app.state.lens) app.setLens(null); else app.home(); }
+    else if (k === "lenses") document.getElementById("btn-lenses")?.click();
+    else if (k === "council") toggle();
+    else if (k === "almanac") document.getElementById("btn-pedia")?.click();
+    syncNav();
+  }));
+  app.on("lens", syncNav);
   app.on("compare", (e) => {
     if (e?.add && !compareSet.includes(e.add)) compareSet.push(e.add);
     while (compareSet.length > 4) compareSet.shift();
@@ -148,7 +171,7 @@ export function install(app) {
     const b = app.highlightBounds(h);
     if (b) app.fitBounds(b.x0, b.y0, b.x1, b.y1, { maxScale: 3 });
   }
-  const norm = (s) => String(s || "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
+  // shared with the top-bar search: ø, æ and diacritics folded (app/search.js)
   const cityLink = (c) => `<button class="link" data-city="${esc(c.id)}">${FLAG[c.country] || ""} ${esc(c.name)}</button>`;
   const obs = (text, { evidence = "", lensId = null, hl = null, source = "" } = {}) => `<div class="obs"><p>${text}</p>
     <div class="obs-foot">${evidence ? `<span class="muted">${evidence}</span>` : ""}${source ? `<span class="src">${esc(source)}</span>` : ""}
