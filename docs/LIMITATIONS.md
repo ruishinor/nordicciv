@@ -140,7 +140,7 @@
     monitoring workspace or new top-level navigation. Road and traffic cameras excluded on principle. Reviewed include
     lists instead of whole provider catalogues, so a provider's new cameras never appear unreviewed. OSIRIS studied,
     nothing imported (licence of its generated lists unclear, positions unreliable).
-21. **Opening screen and Open in Maps (v0.5) as small, honest additions.** The opening screen borrows OSIRIS's
+21. **Opening screen and Open in Maps (v0.5) kept small.** The opening screen borrows OSIRIS's
     structure (identity, emblem, version, progress line, changing status, automatic hand-over) in NordicCiv's own art,
     bound to the real start-up with no minimum duration. "Open in Maps" is a link in the existing inspectors (municipality
     and region panels, the site list, the camera card) rather than a navigation tool; Google Maps first because its

@@ -9,11 +9,10 @@
 //   ready()          the first map frame has been drawn: the app is released and the screen fades out
 //   fail(err)        start-up failed: progress stops, a plain explanation and "Try again" are shown
 //
-// Nothing here is staged. The bar's length is the share of the start-up work actually done (bytes where every size is
-// known, whole files where not, the map preparation last) and it is indeterminate until that share can be known; no
-// percentage is shown or invented, and the screen
-// never waits for an animation. Optional layers, relief tiles and extensions load after it has gone. With a warm
-// cache the whole thing takes a fraction of a second and the fade is shortened to match.
+// The bar's length is the share of the start-up work that has finished (bytes where every size is known, whole files
+// where not, the map preparation last); until the sizes are known it shows a glint instead. No percentage figure is
+// shown, and the screen never waits for an animation. Optional layers, relief tiles and extensions load after it has
+// gone. With a warm cache the whole thing takes a fraction of a second and the fade is shortened to match.
 //
 // Accessibility: the app behind is inert until ready (index.html, lifted here), so neither pointer nor keyboard can
 // reach hidden controls. Screen readers hear "Opening NordicCiv", then "Map ready" or the failure — not every step;
@@ -106,7 +105,7 @@ export function begin(names) {
   watchStall();
 }
 
-/** Parse a fetch Response as JSON, counting its bytes for the progress bar when they can be measured honestly. */
+/** Parse a fetch Response as JSON, counting its bytes for the progress bar when the sizes can be compared. */
 export async function read(name, res) {
   const f = files.get(name);
   const len = +res.headers.get("content-length");

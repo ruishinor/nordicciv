@@ -309,9 +309,9 @@ the app's code has arrived and `main.js` drives it through the real start-up:
   `sources`, `resources`, `states` (used if present), then building the world and drawing the first frame. The screen
   fades in the animation frame right after that first frame. Relief tiles, municipal outlines, map layers (shelters,
   uplinks, infrastructure, wonders) and extensions load afterwards, as before (journey 34 checks the order).
-- **Progress is measured, not staged.** Bytes as they arrive when every file's size is known (`Content-Length`, no
-  compression); whole files when it is not; the map preparation last (12 % of the line). Until the share can be known the
-  line is indeterminate (a slow glint). It never goes backwards, shows no percentage and has no minimum duration.
+- **What the progress line shows.** Bytes received when every file's size is known (`Content-Length`, no compression);
+  finished files when it is not; the map preparation is the last 12 % of the line. Until the sizes are known the line
+  shows a slow glint instead. It never goes backwards, shows no percentage figure and has no minimum duration.
 - **Status lines name what is still on its way.** The files download in parallel and finish roughly smallest first, so
   the lines are in that order — "Loading resources and regions…", "…population and economy…", "…cities and
   settlements…", "Loading the landscape…" — and the first line with a file still loading is shown; then "Preparing the
