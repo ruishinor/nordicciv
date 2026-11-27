@@ -1,0 +1,69 @@
+PASS  world: 9,005 Scandinavian land hexes ≈ 842,244 km² (land of NO+SE+DK ≈ 774,000 km² + inland water)
+PASS  world: every Scandinavian land hex has a municipality (0 without)
+PASS  world: hex population sums to 22,258,516
+PASS  dasymetric: hex population 22,258,516 vs municipal total 22,258,431 (Δ 0.00038%, rounding only)
+PASS  cities: municipalities per country {'SE': 290, 'NO': 357, 'DK': 98} (expected {'NO': 357, 'SE': 290, 'DK': 98}, 2024 boundaries)
+PASS  cities: every banner stands on Scandinavian land (0 off: [])
+PASS  cities: NO municipal population sum 5,627,400 = country aggregate 5,627,400
+PASS  cities: SE municipal population sum 10,605,520 = country aggregate 10,605,520
+PASS  cities: DK municipal population sum 6,025,511 = country aggregate 6,025,511
+PASS  cities: missing growth is null, not 0 (0 violations)
+NOTE  cities: 5 municipalities without a 2016 figure (boundary splits): Narvik, Orkland, Heim, Hitra, Hábmer
+PASS  cities: Oslo banner 1.6 km from its reference position
+PASS  cities: Stockholm banner 6.8 km from its reference position
+PASS  cities: Copenhagen banner 0.5 km from its reference position
+PASS  cities: Bergen banner 0.5 km from its reference position
+PASS  cities: Göteborg banner 3.3 km from its reference position
+PASS  cities: Trondheim banner 1.3 km from its reference position
+PASS  cities: Malmö banner 0.7 km from its reference position
+PASS  cities: Aarhus banner 0.9 km from its reference position
+PASS  cities: Tromsø banner 0.2 km from its reference position
+PASS  cities: Kiruna banner 1.0 km from its reference position
+PASS  cities: Luleå banner 3.5 km from its reference position
+PASS  cities: Stavanger banner 2.1 km from its reference position
+NOTE  cities: 307 municipalities have a yield with a suppressed component (shown as ≥ lower bound)
+PASS  totals: NO municipalities 5,627,400 vs national table 5,627,400 (Δ 0.0000%, tolerance 0.05%)
+PASS  totals: NO jobs 2,854,623 vs national 2,863,316 (Δ 0.304%; jobs abroad/unknown municipality excluded)
+PASS  totals: SE municipalities 10,605,520 vs national table 10,605,529 (Δ 0.0001%, tolerance 0.05%)
+PASS  totals: SE jobs 5,260,661 vs national 5,260,642 (Δ 0.000%; jobs abroad/unknown municipality excluded)
+PASS  totals: DK municipalities 6,025,511 vs national table 6,025,603 (Δ 0.0015%, tolerance 0.05%)
+PASS  totals: DK jobs 3,130,077 vs national 3,135,965 (Δ 0.188%; jobs abroad/unknown municipality excluded)
+PASS  lens density: source ['ssb', 'scb', 'dst', 'gisco_grids'], resolution derived
+PASS  lens growth: source ['ssb', 'scb', 'dst'], resolution municipality
+PASS  lens ageing: source ['ssb', 'scb', 'dst'], resolution municipality
+PASS  lens youth: source ['ssb', 'scb', 'dst'], resolution municipality
+PASS  lens gdp_pc: source ['regional_accounts'], resolution region
+PASS  lens jobs_ratio: source ['ssb', 'scb', 'dst'], resolution municipality
+PASS  lens share_BC: source ['ssb', 'scb', 'dst'], resolution municipality
+PASS  lens share_A: source ['ssb', 'scb', 'dst'], resolution municipality
+PASS  lens share_J: source ['ssb', 'scb', 'dst'], resolution municipality
+PASS  lens share_I: source ['ssb', 'scb', 'dst'], resolution municipality
+PASS  lens share_O: source ['ssb', 'scb', 'dst'], resolution municipality
+PASS  lens specialisation: source ['ssb', 'scb', 'dst'], resolution municipality
+PASS  lens income: source ['ssb', 'scb', 'dst', 'regional_accounts'], resolution municipality
+PASS  lens hospital: source ['gisco_grids'], resolution hex
+PASS  lens school: source ['gisco_grids'], resolution hex
+PASS  lens road_reach: source ['gisco_grids'], resolution hex
+PASS  lens remoteness: source ['ssb', 'scb', 'dst'], resolution hex
+PASS  lens elevation: source ['gisco_grids'], resolution hex
+PASS  lens forest: source ['gisco_grids'], resolution hex
+PASS  lens farmland: source ['gisco_grids'], resolution hex
+PASS  lens cover: source ['gisco_grids'], resolution hex
+PASS  lens urban_growth: source ['gisco_grids'], resolution hex
+PASS  resources: 687 sites; 0 on foreign hexes []
+NOTE  resources: hydro 237 (38799 MW), pumped 7 (564 MW), nuclear 3 (7184 MW), wind 145 (20814 MW), offshore_wind 26 (3160 MW), solar 42 (2963 MW), thermal 61 (10777 MW), oil_gas 101 (240.37 million Sm³ o.e./yr), metal_mine 20 (None ), industrial_mineral 45 (None )
+PASS  source gisco_grids: 926 files, licence: Eurostat/GISCO reuse policy (free reuse with attribution: © 
+PASS  source natural_earth: 18 files, licence: Public domain
+PASS  source boundaries: 10 files, licence: NO: CC BY 4.0 Kartverket; SE: public data, reuse permitted; 
+PASS  source euronym: 3 files, licence: Eurostat reuse policy; © EuroGeographics
+PASS  source ourairports: 1 files, licence: Public domain
+PASS  source powerplants: 1 files, licence: Data: CC BY 4.0 (aggregated from open sources; see project f
+PASS  source ssb: 8 files, licence: NLOD 2.0 / CC BY 4.0 (Statistics Norway)
+PASS  source scb: 4 files, licence: CC0 1.0 (Statistics Sweden open data)
+PASS  source dst: 6 files, licence: CC BY 4.0 (Statistics Denmark terms of use)
+PASS  source eurostat: 5 files, licence: Eurostat reuse policy (CC BY 4.0)
+PASS  source regional_accounts: 7 files, licence: NLOD/CC BY 4.0 (SSB), CC0 (SCB), CC BY 4.0 (DST, Eurostat)
+PASS  source wikidata: 5 files, licence: CC0 1.0
+PASS  source sodir: 3 files, licence: NLOD 2.0 (Norwegian Licence for Open Government Data)
+PASS  source sgu: 2 files, licence: CC0 1.0 (SGU open data)
+PASS  source links: 2 files, licence: CC0 1.0 (Wikidata); CC BY 4.0 (Eurostat)
