@@ -1,81 +1,80 @@
-# Verification record — NordicCiv 0.2.0
+# Verification record — NordicCiv 0.3.0
 
-Everything below was executed for this release on the build machine (Linux, 2 CPUs, Python 3.13.18, headless Chrome
-153 with a software GPU). "Independently reproduced" means recomputed in this release from the original downloads;
-"historical" means taken from the earlier audit and only reconciled here.
+Executed for this release on the build machine (Linux, 2 CPUs, Python 3.13, headless Chrome with a software GPU,
+SwiftShader). "Reproduced" means recomputed here from the original downloads or the shipped data. The v0.2.0 record is
+in the `v0.2.0` tag.
 
-## Commands and outcomes
+## Gates on the release candidate
 
-| Command | Outcome |
+The release command (`python -m pipeline release`) copies the candidate into `dist/.staging/`, checks that the copy has
+the same content identity, runs the gates on that copy, packages and verifies it there, and only then promotes it to
+`dist/release/` (the previous release moves to `dist/previous/`). Its output is summarised in the delivery note and in
+`RELEASE_MANIFEST.json` inside the package.
+
+| Gate | Outcome on the final candidate |
 |---|---|
-| `python -m unittest discover -s tests` | 28 tests, all pass (history rules, sector allocation, cache integrity, registry re-invocation, shipped-data fixtures) |
-| `python tests/smoke_browser.py` | 20 journeys pass, 0 fail, 0 skipped (`tests/results/browser.json`, data hash `c68ec9d6f244…`) |
-| `python -m pipeline check --mode built` | pass (run by every guarded build and by the release package check) |
-| `python -m pipeline check --mode release` | 113 pass, 19 note, 0 warn, 0 skipped, 0 fail (`docs/CHECK_REPORT.txt`) |
-| `python -m pipeline verify-cache` (inside the release check) | 1,003 / 1,003 cached downloads match SHA-256, size and request identity |
-| `python tests/visual_states.py` | 14 states captured for v0.1 and v0.2 (`docs/visual/`) |
-| `python tests/perf.py` | before/after, unthrottled and 4× CPU (`docs/perf/`) |
-| Adversarial build test | a build that corrupts `cities.json` and then fails restores the previous file (SHA-256 unchanged) |
+| Unit tests (`tests/run_unit.py`) | 31 run, 0 failed, 0 errors, 0 skipped — incl. the JavaScript ranking parity test (Node) |
+| Browser journeys (`tests/smoke_browser.py`) | 22 mandatory journeys (0–21) PASS, 0 skipped; journey 0 fetched all 161 app and data files through the browser and matched every SHA-256 |
+| `check --mode release` | 121 pass, 20 note, 0 warn, 0 skipped, 0 fail (`docs/CHECK_REPORT.txt`) |
+| Cache | 1,003 / 1,003 downloads match SHA-256, size and request identity |
+| Package | extracted copy: every file's SHA-256 equals the manifest, same candidate id, built-data check PASS, no secrets found |
 
-Not run: the CI workflow (`.github/workflows/validate.yml`) has not been executed on GitHub — there is no remote
-repository. No live deployment was made beyond the private artifact link.
+**The gates themselves were tested** (each mutation must fail): browser evidence for another candidate, evidence listing
+no journey 16, a skipped journey, a `browser.running.json` left by an interrupted run, no browser evidence, an
+incomplete run, a skipped unit test, and evidence carrying only a data hash all FAIL. An interrupted browser run
+(stopped after 12 s) left no `browser.json`. Source reconciliation: a mismatched value labelled "boundary" FAILS; a
+boundary year relabelled "observed" FAILS. Four test assertions were corrected: journey 18 passed through an `or` on the
+navigation labels alone (fixing it exposed that the labels are upper-cased by CSS — the comparison is now
+case-insensitive); journey 16 did not assert that Escape closes the panel; journey 13 now asserts the rank labels; and
+journey 7 the number of advisors. The summary baseline is no longer created automatically in release mode.
 
-## Evidence and statistical reconciliation
+Not run: the CI workflow on GitHub (no remote repository, none created); a real-user test (`docs/USER_TEST_SCRIPT.md`).
 
-- **Original evidence:** all 25 files of the supplied evidence archive match the SHA-256 recorded in the v0.1 build and
-  the files in `data/raw` (independently reproduced).
-- **Zero observations (NC-T01):** 64 municipality-years / 6 municipalities reported as 0 by SSB 07459 reproduced exactly;
-  now `null` with status "boundary". No zero population remains (check `history: no municipality-year …`).
-- **National series (NC-T02):** Scandinavia 19,395,889 (2008), 20,772,253 (2016), 22,258,532 (2026); +7.16 % 2016–26;
-  Norway +7.93 % — recomputed from the raw national tables, matching the audit. Norway, every year 2008–2026:
-  Σ municipalities + SSB's "divided municipalities and unknown" bucket = national total exactly.
-- **Boundary breaks:** 9 municipalities with recorded breaks (Narvik, Hábmer–Hamarøy, Orkland, Heim, Hitra — R1;
-  Ålesund/Haram — R2; Tønsberg, Sandefjord — R3 from SSB KLASS 131). Ålesund's 2023→2024 fall (67,520 → 58,509) is now
-  a change of territory, not a decline. 14 unexplained one-year changes above 6 % are listed and shown as cautions.
-- **Suppression (NC-T06):** 310 Norwegian municipalities with partial groups, 307 with a partial yield, 1,073 partial
-  group values, 882 with lower bound 0 — reproduced exactly. Groups + suppressed remainder = total jobs in all 745.
-- **Economic output (NC-T07):** combined €1,225.58 bn and continental shelf €104.1 bn reproduced; Σ municipal estimates =
-  all 43 published regional totals (worst €47.8 k, from €0.1 m rounding of the stored totals).
-- **Current totals:** municipal sums equal the published 2026 totals for Norway; Sweden −9 (SCB noise), Denmark −92
-  (residents without a municipality).
+## Statistical corrections (reproduced)
 
-## Geography
+- **Ranking:** the audit's 157 inconsistent intervals among 2,969 were reproduced (food 128, culture 29: exact ranks were
+  sorted positions with ties broken by population, intervals used strict inequalities). After: one convention, 2,969
+  intervals, 0 inconsistent, re-derived independently in the check; 6 hand-calculated fixtures and a brute-force test
+  that every interval end is attainable; Python and browser implementations agree on the fixtures.
+- **Suppression remainder:** 309 Norwegian municipalities with suppressed groups have a positive remainder, 1 has 0; no
+  negative remainder; unsuppressed Norwegian and Danish groups add up exactly; Swedish totals differ from the sum of
+  components by at most 0.92% in both directions, as SCB's TAB3204 note says its disclosure method allows.
+- **Output allocation:** v0.2 → v0.3 changes 28 Swedish and Danish estimates by more than 1%, largest Fanø −6.25%
+  (matching the audit), and 10 Norwegian ones (largest Tydal −3.9%); every regional total unchanged (largest difference
+  €0.0001 m). Missing denominator: Oslo NOK 45 m (agriculture etc.) now shared by total jobs and reported.
+- **Indre Østfold 2026:** checked against KLASS 131, the ministry decision and Vestby municipality; comparable (see
+  Methodology). SSB's own table notes are now shown on 28 municipalities.
+- **v0.2 visual-data defect found and fixed:** the 1 km grid's country code is empty for 1.25 million land cells, so
+  v0.2 muted most unpopulated Scandinavian land as foreign; the three countries now come from Natural Earth.
+- Preserved: population, history, employment and output values other than the allocation change above; the accepted
+  key totals (release check) are unchanged.
 
-- Every one of the 745 municipalities has its own polygon (3,643 rings, 113,805 vertices); fixtures Frederiksberg, Solna,
-  Sundbyberg, Haugesund, Utsira, Røst, Værøy, Rælingen and Randaberg are selectable (Frederiksberg by a real click in
-  the browser, although it owns no hex).
-- Banner positions of 12 reference towns within 25 km of their coordinates.
+## Five review perspectives (developer reviews, not user evidence)
 
-## Performance (laboratory, `docs/perf/`)
+| Perspective | Findings corrected in this release | Open |
+|---|---|---|
+| Statistical and geographical | ranking conventions; remainder checks; output classification and fallback; "remote" fact for Copenhagen (distance to Oslo) restricted to places under 50,000; "youngest population" for a low 65+ share and "job magnet" for 62 jobs per 100 reworded; Nordic land mask | bounds stay conservative by design |
+| Visual and game identity | isolated sprites removed over the relief; ranges as connected masses; lakes no longer 1 km stair steps (same area); heath and scree glyphs enlarged to be visible; greens toned down; polygonal shore strokes smoothed | soft base between illustrations at very close zoom; Russia edge in hexes; archipelago coasts from 1 km cells |
+| Product discovery, new users | first-run hint covered the Council (now under all panels, dismissed by use); Discover unreachable on phones (now in the bottom bar); a discovery showed the wrong definition; the Almanac button was cut off at 1440 px | no real-user test yet |
+| Responsiveness, accessibility, performance | illustrated redraw cost on a software GPU (see below): occupancy skipping, mask decoding in idle steps, pre-painted patterns, adaptive detail, `?detail=off` | more long frames while zooming on software rendering |
+| Software and release assurance | candidate identity, browser verification of served files, evidence lifecycle, staged promotion, four test false positives, build backup removed from git, Pillow 12.3.0 → 13.0.0 (42 known CVEs; relief output byte-identical) | CI not executed remotely |
 
-| Measure | v0.1 | v0.2 | v0.1 at 4× CPU | v0.2 at 4× CPU |
-|---|---|---|---|---|
-| Data ready (ms) | 1,041 | 1,018 | 3,648 | 3,398 |
-| Relief ready (ms) | — | 1,227 | — | 6,141 |
-| LCP (ms) / CLS | 84 / 0.091 | 112 / 0.079 | 184 / 0.091 | 200 / 0.079 |
-| Pan: median / p95 frame (ms) | 16.7 / 16.8 | 16.7 / 16.8 | 16.7 / 49.9 | 16.7 / 49.9 |
-| Zoom: p95 frame (ms), frames > 50 ms | 233 / 15 | 50 / 5 | 817 / 14 | 233 / 20 |
-| Lens switch to next frame (ms, cached) | 151 | 134 | 740 | 562 |
-| Municipality click (Event Timing max) | < 16 ms | < 16 ms | 56 ms | 32 ms |
-| JS heap (MB) | 35 | 58 | 32 | 55 |
+## Performance (laboratory, `docs/perf/v02_v03_*.json`)
 
-Targets met unthrottled (60 fps panning, lens change < 300 ms, selection < 150 ms, CLS < 0.1). At 4× CPU the lens change
-(≈ 0.56 s) misses the 300 ms target and the relief image arrives after ≈ 6 s (hex tiles show until then). LCP is a
-canvas-dominated page metric; field data (real users) have not been collected.
+PERF_TABLE
 
 ## Accessibility
 
-axe-core 4.14.1 (WCAG 2 A/AA, 2.1 AA, 2.2 AA) on the map, an open inspector, the Council and the Timeline: no violations
-of any impact. Manually verified in the journeys: keyboard tab navigation in the inspector (arrow keys), `/` to search,
-Escape to close, reduced-motion flights, labelled mobile navigation, no horizontal page scroll at 390 px. Not done:
-screen-reader testing with NVDA/VoiceOver; the map canvas itself is not accessible beyond its description, search and
-the panel/Explorer tables that carry every statistic.
+axe-core 4.14.1 (WCAG 2 A/AA, 2.1 AA, 2.2 AA) on the map, an open inspector, the Council, the Timeline, the first-run
+hint and a Discover card: no serious or critical violations. Keyboard: tab arrows, `/` search, Escape closes (asserted).
+The illustrations are decorative; every statement they support is in the panels, Explorer and Almanac, and
+`?detail=off` removes them. Not done: screen-reader testing (NVDA/VoiceOver).
 
 ## Security and publication
 
-Static site; Content-Security-Policy restricts scripts, styles, images and connections to the site's own origin (the
-mobile journey runs with the policy enforced and records no violation). No third-party runtime requests, telemetry or
-storage beyond two `localStorage` preferences (overview scope, existing UI settings). Data inserted into HTML passes
-through `esc()`. The release package is scanned for private keys and tokens (none found) and excludes `data/raw`,
-caches, local tooling and `tests/.node`. Not done: a dependency vulnerability scan (the site has no runtime dependencies;
-the Python build dependencies are pinned in `requirements-lock.txt`).
+Static site; Content-Security-Policy limits scripts, styles, images and connections to the site's own origin, and
+journey 0 confirms every resource the page loaded is a file of the candidate. Storage: three `localStorage` preferences
+(overview scope, lens shortcuts, first-run hint seen). Dependencies: `pip-audit` on `requirements-lock.txt` finds no
+known vulnerabilities after the Pillow upgrade (the site itself has no runtime dependencies; axe-core is a test tool,
+not audited). The package excludes `data/raw`, caches, `tests/.node` and test results, and is scanned for keys and tokens.
+No credentials are used or stored; nothing was published or deployed.

@@ -361,8 +361,8 @@ async def main():
         sx = await mp.evaluate("document.documentElement.scrollWidth <= innerWidth + 1")
         city_y = await mp.evaluate("(() => { const c = __app.state.selectedCity; return __app.cam.toScreen(c.x, c.y)[1]; })()")
         # innerText applies the CSS text-transform, so compare case-insensitively
-        labels_ok = [x.replace("🗺️", "").replace("🔍", "").replace("🏛️", "").replace("📖", "").strip().upper() for x in nav] == ["EXPLORE", "LENSES", "COUNCIL", "ALMANAC"]
-        ok("18 mobile: four labelled nav buttons, Council opens, Tromsø sheet leaves the town visible",
+        labels_ok = [x.replace("🗺️", "").replace("🔍", "").replace("🏛️", "").replace("📖", "").replace("✦", "").strip().upper() for x in nav] == ["EXPLORE", "LENSES", "COUNCIL", "ALMANAC", "DISCOVER"]
+        ok("18 mobile: five labelled nav buttons, Council opens, Tromsø sheet leaves the town visible",
            labels_ok and dock_hidden and council and not sheet["hidden"] and sx and city_y < sheet["top"],
            f"nav={nav} dockHidden={dock_hidden} council={council} sheet={sheet} townY={round(city_y)} noHScroll={sx}")
         await m.close()

@@ -1,6 +1,6 @@
 # NordicCiv — Scandinavia as a strategy game, built from real data
 
-**Version 0.2.0** (see `VERSION`, `docs/VERIFICATION.md` for this release's evidence, `docs/LEDGER.md` for the
+**Version 0.3.0** (see `VERSION`, `docs/VERIFICATION.md` for this release's evidence, `docs/LEDGER.md` for the
 requirement-by-requirement status).
 
 Norway, Sweden and Denmark drawn like a turn-based 4X strategy map. Every hex, municipality, yield, resource and
@@ -8,16 +8,18 @@ wonder comes from public data — EU-DEM and CORINE on a 1 km grid, the municipa
 Statistics Sweden and Statistics Denmark, Eurostat, the Norwegian Offshore Directorate, the Geological Survey of Sweden,
 Natural Earth and Wikidata — and every number says what it measures, where it came from and at what resolution.
 
-It is a visualiser, not a game: open your hometown, then wander off into Norwegian hydropower, Swedish mining towns,
-Danish farmland or the Øresund.
+It is a visualiser, not a game: open your hometown and see what stands out about it, follow its neighbours in a ranking,
+press **Discover** for a surprising fact about a real place, or wander off into Norwegian hydropower, Swedish mining
+towns, Danish farmland or the Øresund.
 
 ## What's in it
 
 - **The map.** A continuous painted landscape — CORINE land cover, Copernicus tree cover and a multidirectional EU-DEM
   hillshade on a 0.5 km image, coasts from the municipal polygons, a sea from Natural Earth depth bands — with 40,828
   equal-area hexes (93.5 km² each; 9,005 Scandinavian land) as the unit of terrain statistics, in a Lambert equal-area
-  projection centred on 63°N 15°E. Mountain pieces mark real summits; forests, farmland, fjords and glaciers come from
-  the 1 km data. Every municipality also has its own polygon for selection, borders and municipal lenses, so small ones
+  projection centred on 63°N 15°E. Ranges are shaded as connected masses under one north-west light, and closer in the
+  ground is illustrated — tree crowns, field patchwork, scree, mire, heath, rooftops — through the 1 km land-cover masks
+  (illustrations show what covers each square kilometre, not where a real tree or house stands). Every municipality also has its own polygon for selection, borders and municipal lenses, so small ones
   (Frederiksberg, Solna, Utsira, Røst …) are fully represented. Finland, Russia and Germany under fog for context.
 - **Cities = municipalities.** All 745 municipalities (357 NO, 290 SE, 98 DK; 2024 boundaries) are cities, with banners
   on their main settlement and six yields:
@@ -60,7 +62,7 @@ Windows (PowerShell 5.1 or 7):
 .\scripts\setup.ps1                 # .venv + requirements   (-Locked: exact release versions; -Browser: test browser + axe)
 .\scripts\serve.ps1                 # http://127.0.0.1:8765
 .\scripts\validate.ps1 -Mode built  # unit tests + built-data gates   (-Mode source / release, -Browser)
-.\scripts\release.ps1               # release gates, then dist\nordicciv-<version>.zip with its SHA-256
+.\scripts\release.ps1               # staged candidate → gates → package verified → promoted to dist\release\
 ```
 
 `web/` is a self-contained static site (plain ES modules + Canvas 2D, no framework, no build step, no runtime APIs).
@@ -79,7 +81,7 @@ python -m unittest discover -s tests
 python tests/smoke_browser.py       # 20 real-browser journeys (site served on :8765); writes tests/results/browser.json
 python tests/visual_states.py URL OUT   # the 14 standard screenshots at fixed cameras (visual regression)
 python tests/perf.py OUT.json now=URL   # laboratory performance (frame times, LCP, CLS, lens switch)
-python -m pipeline release          # release gates + dist/nordicciv-<version>.zip + RELEASE_MANIFEST.json, verified
+python -m pipeline release          # stage, gate (unit + browser + data evidence for this candidate), package, verify, promote
 python -m pipeline all              # fetch + process (strict) + build
 ```
 
@@ -101,10 +103,13 @@ pipeline/
              yields, GDP), resources, infrastructure, wonders, lenses, catalog (Almanac bibliography)
   build/     … also history (observation status, boundary breaks), gva (sector-weighted output keys), munis (polygons,
              borders), relief (landscape and sea images, shore lines)
-  check.py   validation gates in three modes; release.py packages and verifies a release
-web/          the static app (engine adapted from usaciv; ext/nordic adds the Council, Compare, Explorer, Timeline, ferries)
+  check.py   validation gates in three modes; candidate.py content identity of a release candidate; release.py stages,
+             verifies and only then promotes a release (dist/release/, previous in dist/previous/)
+web/          the static app (engine adapted from usaciv; ext/nordic adds the Council, Compare, Explorer, Timeline, ferries;
+              ext/explore adds Discover and the first-run hint)
 docs/         METHODOLOGY, SOURCES, LIMITATIONS (with decision log), DATA_CONTRACTS, CHECK_REPORT
-tests/        unit tests (28), browser journeys (20), visual states (14), performance script
+tests/        unit tests (31, run_unit.py writes candidate-bound evidence), browser journeys (0–21), visual states (24),
+              performance script, ranking fixtures shared by Python and JavaScript
 scripts/      PowerShell (setup, serve, validate, release) and validate.sh
 .github/      CI: built-data gates, unit tests and browser journeys on every push
 tools/        relay.js and bridge.py (browser relay), preview.py, shot.py

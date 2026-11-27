@@ -15,7 +15,9 @@
 
 - **Below 1 km the landscape only interpolates.** The relief image is painted from 1 km CORINE, EU-DEM and tree-cover
   cells; class boundaries are blended over about one cell and wobbled by a fixed noise field, and the grain seen close
-  in is texture. Coasts are finer only where polygons exist (Norway and Denmark); Swedish and Finnish shores, including
+  in is texture. The illustrations (trees, fields, scree, mire, heath, rooftops) show the class of each square kilometre,
+  never a real tree, field or building; crop and roof colours are illustrative. Very close in (≥ 15 px per km) the base
+  image is visibly soft between illustrated areas. Coasts are finer only where polygons exist (Norway and Denmark); Swedish and Finnish shores, including
   the Stockholm archipelago, follow 1 km cells and merge small skerries into larger shapes.
 - **Swedish municipal polygons** are a simplified Valmyndigheten file that, in archipelagos, includes water (Vaxholm's
   polygon is ~2× its land area). They are used for selection, borders and choropleths, not for areas or the coast.
@@ -30,7 +32,13 @@
   Denmark) and counts output where people work.
 - **Suppressed cells (Norway).** 310 municipalities have at least one industry group with suppressed components; values
   are lower bounds with an upper bound from the unallocated total, and 745 municipalities have at least one rank
-  interval rather than an exact rank (the interval can be wide, e.g. Oslo's farm/fish jobs).
+  interval rather than an exact rank. Most of these intervals are one place wide and come from a single municipality:
+  Oslo's agriculture, forestry and fishing jobs are suppressed with a remainder of 4,372 jobs that could, as far as the
+  published table shows, all be in that group. The bounds deliberately ignore national totals (see Methodology).
+- **Norway's output key for professional services** uses NACE 68–75 jobs, which include real estate; SSB publishes no
+  finer municipal split. Sweden and Denmark use M–N jobs only.
+- **Discovery facts** are single extremes under a stated filter; small municipalities dominate ratios, so most facts use
+  a 5,000-resident threshold. They describe, they do not explain.
 - Roads, railways and ferries are Natural Earth 1:10m line work: generalised and incomplete, drawn as map art.
 - Regional output: Norway publishes value added at basic prices on the 2020–23 counties; Sweden and Denmark publish GDP.
   The Scandinavian total (€1,225.6 bn) is therefore labelled "combined regional output, not harmonised GDP"; Norway is
@@ -72,3 +80,13 @@
 13. **Municipal polygons beside the hexes (v0.2).** Hexes stay the statistical unit for terrain lenses; municipal lenses,
     selection, borders and hit-testing use the polygons, so municipalities that own no hex are fully represented.
 14. **Sector-weighted output allocation (v0.2)** replaces the plain job share; regional totals are unchanged.
+15. **One ranking convention (v0.3)**: competition ranks, possible-rank intervals from each area's own bounds; national
+    totals are not used to narrow suppressed cells.
+16. **World style inside Canvas 2D (v0.3).** Illustrations are drawn through 1 km class masks with one reusable layer per
+    class; no WebGL migration (measurements in docs/VERIFICATION.md). Per-hex terrain sprites remain only in the hex-tile
+    fallback, so the World view has no rows of isolated sprites. A separate "Atlas" or "Strategic" style was not added:
+    the analysis view (any lens over the gray relief) is the legible alternative, and a third style would double the
+    visual baselines to maintain.
+17. **Indre Østfold 2026** stays comparable (two small areas, no visible effect), with the adjustment noted.
+18. **Release candidates** are identified by content hash and verified in a staging folder before promotion; the last
+    known-good release stays in `dist/release/` until then (previous release kept in `dist/previous/`).

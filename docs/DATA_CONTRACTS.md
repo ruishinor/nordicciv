@@ -36,3 +36,18 @@ km in the Nordic LAEA frame described in `world.json.projection` (x right, y dow
 | `borders.json` | internal borders without coastline: `country`, `region`, `municipality` line lists (delta-encoded) |
 | `coast.json` | shore lines traced from the relief land mask |
 | `relief/index.json` | relief image levels (`L0` 1 km whole image, `L1` 0.5 km tiles), `gray` (Analyze), `sea`, `hex_fallback` (land hexes with no 1 km data), `sha256` |
+
+## Changed or added in v0.3
+
+| File / field | Meaning |
+|---|---|
+| `cities[].ranks`, `states[].ranks` | competition ranks (1 = largest, equal values share a rank) among the areas with a value (was: sorted position) |
+| `cities[].rank_range`, `states[].rank_range` | possible-rank interval `[best, worst]` for the published bounds, only where `best ≠ worst`; always contains `ranks` |
+| `states[].yields_hi`, `nation.*.yields_hi` | upper bounds summed from the members (members are independent) |
+| `nation.rank_of` | `{municipalities: {key: n}, regions: {key: n}}` — the size of each comparison population ("of N") |
+| `nation.ranking` | the ranking convention in one sentence (shown in the Almanac) |
+| `cities[].jobs_detail.L`, `["68-75"]`, `["77-82"]` | real-estate jobs (SE, DK) and Norway's two L–N divisions, used by the output key |
+| `cities[].pop_adjustments` | recorded boundary adjustments that are not breaks, and the agency's own table notes: `[{year, change, national, note, sources}]` |
+| `nation.gdp_fallbacks` | per region, value added shared by total jobs because no municipality has a job in that industry (`value_added` in the source unit, `share_of_region`) |
+| `nation.gdp_sensitivity` | per alternative key and country: `n`, `over_1pct`, `over_5pct`, `median_abs`, `p95_abs`, `max`, `max_name` |
+| `relief/cover/{A,B,C}_{x}_{y}.webp`, `relief/index.json → cover` | 1 km land-cover masks for the illustration layer, 16 levels, three per image: A conifer, broadleaf, farmland; B rock, mire, heath; C built-up |

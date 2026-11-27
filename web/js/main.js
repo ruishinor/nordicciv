@@ -1293,7 +1293,10 @@ async function main() {
   window.__app = app;
   // Rendering timings for tests and profiling: medians (ms) of the last static renders, frames and warm-up strips.
   const med = (a) => { const v = [...a].sort((x, y) => x - y); return v.length ? +v[v.length >> 1].toFixed(1) : null; };
-  window.__perf = () => ({ static_ms: med(perf.static), frame_ms: med(perf.frame), warm_ms: med(perf.warm),
+  const q95 = (a) => { const v = [...a].sort((x, y) => x - y); return v.length ? +v[Math.min(v.length - 1, Math.floor(v.length * 0.95))].toFixed(1) : null; };
+  const mx = (a) => (a.length ? +Math.max(...a).toFixed(1) : null);
+  window.__perf = () => ({ static_ms: med(perf.static), static_p95_ms: q95(perf.static), static_max_ms: mx(perf.static),
+    frame_ms: med(perf.frame), frame_p95_ms: q95(perf.frame), frame_max_ms: mx(perf.frame), warm_ms: med(perf.warm),
     static_n: perf.static.length, frame_n: perf.frame.length });
 
   // --- go --------------------------------------------------------------------------------------------------------

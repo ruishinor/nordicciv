@@ -1,0 +1,1543 @@
+{
+ "conditions": {
+  "viewport": {
+   "width": 1440,
+   "height": 900
+  },
+  "cpu_throttle": 1,
+  "runs": 3,
+  "machine": "Linux-6.18.44-fc-v880-x86_64-with-glibc2.39",
+  "cpus": 2,
+  "note": "headless Chromium with SwiftShader (software GPU) unless a real GPU is available; laboratory data",
+  "browser": "153.0.8010.12"
+ },
+ "v0.2.0": {
+  "runs": 3,
+  "data_ready_ms": {
+   "n": 3,
+   "median_ms": 985,
+   "p95_ms": 1088,
+   "worst_ms": 1088
+  },
+  "relief_ready_ms": {
+   "n": 3,
+   "median_ms": 1453,
+   "p95_ms": 1508,
+   "worst_ms": 1508
+  },
+  "lcp_ms": {
+   "n": 3,
+   "median_ms": 84,
+   "p95_ms": 88,
+   "worst_ms": 88
+  },
+  "heap_mb": {
+   "n": 3,
+   "median_ms": 56.1,
+   "p95_ms": 57.0,
+   "worst_ms": 57.0
+  },
+  "pan": {
+   "median_of_medians_ms": 16.7,
+   "p95_ms_worst_run": 16.8,
+   "worst_ms": 83.4,
+   "long_frames_over_50ms": 17
+  },
+  "zoom": {
+   "median_of_medians_ms": 16.7,
+   "p95_ms_worst_run": 33.4,
+   "worst_ms": 116.7,
+   "long_frames_over_50ms": 12
+  },
+  "close_pan": {
+   "median_of_medians_ms": 16.7,
+   "p95_ms_worst_run": 16.8,
+   "worst_ms": 116.7,
+   "long_frames_over_50ms": 18
+  },
+  "lens_switch": {
+   "n": 18,
+   "median_ms": 121.8,
+   "p95_ms": 222.8,
+   "worst_ms": 222.8
+  },
+  "redraw_cold": {
+   "close": {
+    "n": 9,
+    "median_ms": 188.7,
+    "p95_ms": 213.2,
+    "worst_ms": 213.2
+   },
+   "mid": {
+    "n": 9,
+    "median_ms": 84.3,
+    "p95_ms": 131.7,
+    "worst_ms": 131.7
+   },
+   "overview": {
+    "n": 3,
+    "median_ms": 42.8,
+    "p95_ms": 49.9,
+    "worst_ms": 49.9
+   },
+   "regional": {
+    "n": 6,
+    "median_ms": 107.8,
+    "p95_ms": 167.4,
+    "worst_ms": 167.4
+   },
+   "very_close": {
+    "n": 9,
+    "median_ms": 151.8,
+    "p95_ms": 218.2,
+    "worst_ms": 218.2
+   }
+  },
+  "redraw_warm": {
+   "close": {
+    "n": 27,
+    "median_ms": 95.8,
+    "p95_ms": 122.8,
+    "worst_ms": 175.4
+   },
+   "mid": {
+    "n": 27,
+    "median_ms": 49.9,
+    "p95_ms": 87.1,
+    "worst_ms": 92.4
+   },
+   "overview": {
+    "n": 9,
+    "median_ms": 41.7,
+    "p95_ms": 58.5,
+    "worst_ms": 58.5
+   },
+   "regional": {
+    "n": 18,
+    "median_ms": 54.9,
+    "p95_ms": 80.6,
+    "worst_ms": 80.6
+   },
+   "very_close": {
+    "n": 27,
+    "median_ms": 91.3,
+    "p95_ms": 123.7,
+    "worst_ms": 124.7
+   }
+  },
+  "illustration_tiles": null,
+  "select_event_ms_max": [
+   16,
+   16,
+   16
+  ]
+ },
+ "v0.3.0": {
+  "runs": 3,
+  "data_ready_ms": {
+   "n": 3,
+   "median_ms": 911,
+   "p95_ms": 931,
+   "worst_ms": 931
+  },
+  "relief_ready_ms": {
+   "n": 3,
+   "median_ms": 1495,
+   "p95_ms": 1602,
+   "worst_ms": 1602
+  },
+  "lcp_ms": {
+   "n": 3,
+   "median_ms": 64,
+   "p95_ms": 72,
+   "worst_ms": 72
+  },
+  "heap_mb": {
+   "n": 3,
+   "median_ms": 60.0,
+   "p95_ms": 73.2,
+   "worst_ms": 73.2
+  },
+  "pan": {
+   "median_of_medians_ms": 16.7,
+   "p95_ms_worst_run": 16.8,
+   "worst_ms": 83.4,
+   "long_frames_over_50ms": 15
+  },
+  "zoom": {
+   "median_of_medians_ms": 16.7,
+   "p95_ms_worst_run": 50.1,
+   "worst_ms": 133.3,
+   "long_frames_over_50ms": 24
+  },
+  "close_pan": {
+   "median_of_medians_ms": 16.7,
+   "p95_ms_worst_run": 16.8,
+   "worst_ms": 216.7,
+   "long_frames_over_50ms": 18
+  },
+  "lens_switch": {
+   "n": 18,
+   "median_ms": 119.6,
+   "p95_ms": 207.6,
+   "worst_ms": 207.6
+  },
+  "redraw_cold": {
+   "close": {
+    "n": 9,
+    "median_ms": 234.6,
+    "p95_ms": 267.2,
+    "worst_ms": 267.2
+   },
+   "mid": {
+    "n": 9,
+    "median_ms": 65,
+    "p95_ms": 232.2,
+    "worst_ms": 232.2
+   },
+   "overview": {
+    "n": 3,
+    "median_ms": 50,
+    "p95_ms": 51.5,
+    "worst_ms": 51.5
+   },
+   "regional": {
+    "n": 6,
+    "median_ms": 55.6,
+    "p95_ms": 71.5,
+    "worst_ms": 71.5
+   },
+   "very_close": {
+    "n": 9,
+    "median_ms": 171.3,
+    "p95_ms": 321.6,
+    "worst_ms": 321.6
+   }
+  },
+  "redraw_warm": {
+   "close": {
+    "n": 27,
+    "median_ms": 181.3,
+    "p95_ms": 226.9,
+    "worst_ms": 238.2
+   },
+   "mid": {
+    "n": 27,
+    "median_ms": 127.5,
+    "p95_ms": 191.1,
+    "worst_ms": 213.7
+   },
+   "overview": {
+    "n": 9,
+    "median_ms": 43.7,
+    "p95_ms": 65.1,
+    "worst_ms": 65.1
+   },
+   "regional": {
+    "n": 18,
+    "median_ms": 43.8,
+    "p95_ms": 69.2,
+    "worst_ms": 69.2
+   },
+   "very_close": {
+    "n": 27,
+    "median_ms": 165.9,
+    "p95_ms": 220.5,
+    "worst_ms": 240.1
+   }
+  },
+  "illustration_tiles": {
+   "tiles": 8,
+   "decoded": 8,
+   "last": {
+    "ms": 90,
+    "classes": 3,
+    "tier": 1,
+    "at": 67011
+   }
+  },
+  "select_event_ms_max": [
+   "< 16 (no event above the 16 ms threshold)",
+   16,
+   "< 16 (no event above the 16 ms threshold)"
+  ]
+ },
+ "raw": {
+  "v0.2.0": [
+   {
+    "data_ready_ms": 944,
+    "relief_ready_ms": 1508,
+    "lcp_ms": 88,
+    "cls": 0.0794,
+    "pan": {
+     "frames": 220,
+     "median_ms": 16.7,
+     "p95_ms": 16.8,
+     "worst_ms": 83.4,
+     "fps_median": 59.9,
+     "long_frames_over_50ms": 6
+    },
+    "zoom": {
+     "frames": 193,
+     "median_ms": 16.7,
+     "p95_ms": 33.4,
+     "worst_ms": 83.3,
+     "fps_median": 59.9,
+     "long_frames_over_50ms": 5
+    },
+    "select_event_ms_max": 16,
+    "lens_switch_ms": [
+     180,
+     123.2,
+     120.3,
+     115.6,
+     90,
+     114.8
+    ],
+    "lens_switch_cached_ms": 114.8,
+    "tour_cold": {
+     "overview": [
+      42.8
+     ],
+     "regional": [
+      148.7,
+      83.4
+     ],
+     "mid": [
+      84.3,
+      129.9,
+      65.7
+     ],
+     "close": [
+      167.4,
+      188.7,
+      172.6
+     ],
+     "very_close": [
+      151.8,
+      120.1,
+      194.9
+     ]
+    },
+    "tour_warm": {
+     "overview": [
+      41.7,
+      39.8,
+      58.5
+     ],
+     "regional": [
+      54,
+      61.5,
+      50.9,
+      55.7,
+      52.8,
+      54
+     ],
+     "mid": [
+      48,
+      49.9,
+      46.9,
+      80.2,
+      68.8,
+      74.7,
+      46.9,
+      44.6,
+      41.6
+     ],
+     "close": [
+      74.9,
+      94,
+      70.1,
+      122.8,
+      112,
+      88.4,
+      108.5,
+      101.6,
+      112.4
+     ],
+     "very_close": [
+      72,
+      77,
+      71.2,
+      97.4,
+      91.3,
+      102.5,
+      107.6,
+      123.7,
+      100.5
+     ]
+    },
+    "tour_illustration": [
+     [
+      "overview",
+      null,
+      null
+     ],
+     [
+      "regional",
+      "Oslo",
+      null
+     ],
+     [
+      "regional",
+      "Ume\u00e5",
+      null
+     ],
+     [
+      "mid",
+      "Bergen",
+      null
+     ],
+     [
+      "mid",
+      "J\u00f6nk\u00f6ping",
+      null
+     ],
+     [
+      "close",
+      "Bergen",
+      null
+     ],
+     [
+      "close",
+      "Tingsryd",
+      null
+     ],
+     [
+      "close",
+      "Skurup",
+      null
+     ],
+     [
+      "very_close",
+      "Tinn",
+      null
+     ],
+     [
+      "very_close",
+      "Lom",
+      null
+     ],
+     [
+      "very_close",
+      "Frederiksberg",
+      null
+     ],
+     [
+      "mid",
+      "Narvik",
+      null
+     ]
+    ],
+    "close_pan": {
+     "frames": 222,
+     "median_ms": 16.7,
+     "p95_ms": 16.8,
+     "worst_ms": 100,
+     "fps_median": 59.9,
+     "long_frames_over_50ms": 6
+    },
+    "heap_mb": 57.0,
+    "illustration_tiles": null,
+    "app_perf": {
+     "static_ms": 42.6,
+     "frame_ms": 1.6,
+     "warm_ms": 0.6,
+     "static_n": 60,
+     "frame_n": 60
+    }
+   },
+   {
+    "data_ready_ms": 1088,
+    "relief_ready_ms": 1321,
+    "lcp_ms": 84,
+    "cls": 0.0794,
+    "pan": {
+     "frames": 215,
+     "median_ms": 16.7,
+     "p95_ms": 16.8,
+     "worst_ms": 83.3,
+     "fps_median": 59.9,
+     "long_frames_over_50ms": 6
+    },
+    "zoom": {
+     "frames": 195,
+     "median_ms": 16.7,
+     "p95_ms": 33.3,
+     "worst_ms": 83.3,
+     "fps_median": 59.9,
+     "long_frames_over_50ms": 2
+    },
+    "select_event_ms_max": 16,
+    "lens_switch_ms": [
+     202.3,
+     132.3,
+     113.8,
+     118,
+     93.9,
+     105.9
+    ],
+    "lens_switch_cached_ms": 105.9,
+    "tour_cold": {
+     "overview": [
+      49.9
+     ],
+     "regional": [
+      132.1,
+      82.7
+     ],
+     "mid": [
+      70.1,
+      115.6,
+      88.3
+     ],
+     "close": [
+      209.5,
+      213.2,
+      206.1
+     ],
+     "very_close": [
+      138.7,
+      187.2,
+      177.8
+     ]
+    },
+    "tour_warm": {
+     "overview": [
+      42,
+      39.6,
+      39.8
+     ],
+     "regional": [
+      53.8,
+      46.4,
+      49.1,
+      64.3,
+      56.8,
+      52.3
+     ],
+     "mid": [
+      44.9,
+      46.6,
+      47.6,
+      80.5,
+      92.4,
+      87.1,
+      63.6,
+      65.3,
+      43.8
+     ],
+     "close": [
+      83.1,
+      77.8,
+      82.1,
+      122.5,
+      115.6,
+      175.4,
+      95.8,
+      94,
+      98.2
+     ],
+     "very_close": [
+      78.4,
+      77.9,
+      104.7,
+      74.1,
+      82.6,
+      92.2,
+      99.1,
+      108.5,
+      124.7
+     ]
+    },
+    "tour_illustration": [
+     [
+      "overview",
+      null,
+      null
+     ],
+     [
+      "regional",
+      "Oslo",
+      null
+     ],
+     [
+      "regional",
+      "Ume\u00e5",
+      null
+     ],
+     [
+      "mid",
+      "Bergen",
+      null
+     ],
+     [
+      "mid",
+      "J\u00f6nk\u00f6ping",
+      null
+     ],
+     [
+      "close",
+      "Bergen",
+      null
+     ],
+     [
+      "close",
+      "Tingsryd",
+      null
+     ],
+     [
+      "close",
+      "Skurup",
+      null
+     ],
+     [
+      "very_close",
+      "Tinn",
+      null
+     ],
+     [
+      "very_close",
+      "Lom",
+      null
+     ],
+     [
+      "very_close",
+      "Frederiksberg",
+      null
+     ],
+     [
+      "mid",
+      "Narvik",
+      null
+     ]
+    ],
+    "close_pan": {
+     "frames": 227,
+     "median_ms": 16.7,
+     "p95_ms": 16.8,
+     "worst_ms": 116.7,
+     "fps_median": 59.9,
+     "long_frames_over_50ms": 6
+    },
+    "heap_mb": 56.1,
+    "illustration_tiles": null,
+    "app_perf": {
+     "static_ms": 45.7,
+     "frame_ms": 1.8,
+     "warm_ms": 0.7,
+     "static_n": 60,
+     "frame_n": 60
+    }
+   },
+   {
+    "data_ready_ms": 985,
+    "relief_ready_ms": 1453,
+    "lcp_ms": 64,
+    "cls": 0.0794,
+    "pan": {
+     "frames": 212,
+     "median_ms": 16.7,
+     "p95_ms": 16.8,
+     "worst_ms": 83.3,
+     "fps_median": 59.9,
+     "long_frames_over_50ms": 5
+    },
+    "zoom": {
+     "frames": 189,
+     "median_ms": 16.7,
+     "p95_ms": 33.4,
+     "worst_ms": 116.7,
+     "fps_median": 59.9,
+     "long_frames_over_50ms": 5
+    },
+    "select_event_ms_max": 16,
+    "lens_switch_ms": [
+     222.8,
+     139.9,
+     126.7,
+     134.6,
+     108.4,
+     131.1
+    ],
+    "lens_switch_cached_ms": 131.1,
+    "tour_cold": {
+     "overview": [
+      39.6
+     ],
+     "regional": [
+      167.4,
+      74.2
+     ],
+     "mid": [
+      76.1,
+      131.7,
+      60
+     ],
+     "close": [
+      188.1,
+      212.2,
+      165.6
+     ],
+     "very_close": [
+      140.4,
+      145.8,
+      218.2
+     ]
+    },
+    "tour_warm": {
+     "overview": [
+      37.7,
+      45.3,
+      43.5
+     ],
+     "regional": [
+      70.3,
+      61,
+      45.8,
+      66,
+      74.6,
+      80.6
+     ],
+     "mid": [
+      71.9,
+      46.1,
+      44.3,
+      67,
+      73.5,
+      64.3,
+      42,
+      48.1,
+      54.5
+     ],
+     "close": [
+      87.1,
+      90.2,
+      110.6,
+      99.9,
+      93.3,
+      106,
+      113.9,
+      93.9,
+      88.9
+     ],
+     "very_close": [
+      86.7,
+      89.4,
+      77.4,
+      74.5,
+      83.7,
+      73.3,
+      114.7,
+      106.4,
+      103.6
+     ]
+    },
+    "tour_illustration": [
+     [
+      "overview",
+      null,
+      null
+     ],
+     [
+      "regional",
+      "Oslo",
+      null
+     ],
+     [
+      "regional",
+      "Ume\u00e5",
+      null
+     ],
+     [
+      "mid",
+      "Bergen",
+      null
+     ],
+     [
+      "mid",
+      "J\u00f6nk\u00f6ping",
+      null
+     ],
+     [
+      "close",
+      "Bergen",
+      null
+     ],
+     [
+      "close",
+      "Tingsryd",
+      null
+     ],
+     [
+      "close",
+      "Skurup",
+      null
+     ],
+     [
+      "very_close",
+      "Tinn",
+      null
+     ],
+     [
+      "very_close",
+      "Lom",
+      null
+     ],
+     [
+      "very_close",
+      "Frederiksberg",
+      null
+     ],
+     [
+      "mid",
+      "Narvik",
+      null
+     ]
+    ],
+    "close_pan": {
+     "frames": 216,
+     "median_ms": 16.7,
+     "p95_ms": 16.8,
+     "worst_ms": 100.1,
+     "fps_median": 59.9,
+     "long_frames_over_50ms": 6
+    },
+    "heap_mb": 56.0,
+    "illustration_tiles": null,
+    "app_perf": {
+     "static_ms": 46.3,
+     "frame_ms": 1.5,
+     "warm_ms": 0.8,
+     "static_n": 60,
+     "frame_n": 60
+    }
+   }
+  ],
+  "v0.3.0": [
+   {
+    "data_ready_ms": 931,
+    "relief_ready_ms": 1495,
+    "lcp_ms": 72,
+    "cls": 0.0795,
+    "pan": {
+     "frames": 215,
+     "median_ms": 16.7,
+     "p95_ms": 16.8,
+     "worst_ms": 83.3,
+     "fps_median": 59.9,
+     "long_frames_over_50ms": 6
+    },
+    "zoom": {
+     "frames": 176,
+     "median_ms": 16.7,
+     "p95_ms": 50,
+     "worst_ms": 100,
+     "fps_median": 59.9,
+     "long_frames_over_50ms": 8
+    },
+    "select_event_ms_max": "< 16 (no event above the 16 ms threshold)",
+    "lens_switch_ms": [
+     168.7,
+     113,
+     106.2,
+     107.1,
+     80.4,
+     120.6
+    ],
+    "lens_switch_cached_ms": 120.6,
+    "tour_cold": {
+     "overview": [
+      51.5
+     ],
+     "regional": [
+      71.5,
+      48.6
+     ],
+     "mid": [
+      65,
+      232.2,
+      45.4
+     ],
+     "close": [
+      198.8,
+      243.3,
+      234.6
+     ],
+     "very_close": [
+      139.7,
+      139.5,
+      234.6
+     ]
+    },
+    "tour_warm": {
+     "overview": [
+      43.7,
+      35.7,
+      51.9
+     ],
+     "regional": [
+      39,
+      36.1,
+      33.4,
+      39.7,
+      55.6,
+      69.2
+     ],
+     "mid": [
+      139.9,
+      121.8,
+      112,
+      148.2,
+      172.1,
+      191.1,
+      127.5,
+      127.5,
+      105.8
+     ],
+     "close": [
+      132.1,
+      118.1,
+      146.9,
+      195.3,
+      172.5,
+      182.1,
+      166.9,
+      185.3,
+      168.7
+     ],
+     "very_close": [
+      132.5,
+      121.8,
+      119.9,
+      120.5,
+      120,
+      128.8,
+      214.4,
+      179.7,
+      175
+     ]
+    },
+    "tour_illustration": [
+     [
+      "overview",
+      null,
+      null
+     ],
+     [
+      "regional",
+      "Oslo",
+      null
+     ],
+     [
+      "regional",
+      "Ume\u00e5",
+      null
+     ],
+     [
+      "mid",
+      "Bergen",
+      {
+       "ms": 72,
+       "classes": 3,
+       "tier": 1,
+       "at": 31307
+      }
+     ],
+     [
+      "mid",
+      "J\u00f6nk\u00f6ping",
+      {
+       "ms": 119,
+       "classes": 3,
+       "tier": 1,
+       "at": 35004
+      }
+     ],
+     [
+      "close",
+      "Bergen",
+      {
+       "ms": 66,
+       "classes": 3,
+       "tier": 1,
+       "at": 38622
+      }
+     ],
+     [
+      "close",
+      "Tingsryd",
+      {
+       "ms": 96,
+       "classes": 3,
+       "tier": 1,
+       "at": 42397
+      }
+     ],
+     [
+      "close",
+      "Skurup",
+      {
+       "ms": 92,
+       "classes": 3,
+       "tier": 1,
+       "at": 46147
+      }
+     ],
+     [
+      "very_close",
+      "Tinn",
+      {
+       "ms": 61,
+       "classes": 3,
+       "tier": 1,
+       "at": 49662
+      }
+     ],
+     [
+      "very_close",
+      "Lom",
+      {
+       "ms": 67,
+       "classes": 3,
+       "tier": 1,
+       "at": 53155
+      }
+     ],
+     [
+      "very_close",
+      "Frederiksberg",
+      {
+       "ms": 86,
+       "classes": 3,
+       "tier": 1,
+       "at": 56920
+      }
+     ],
+     [
+      "mid",
+      "Narvik",
+      {
+       "ms": 81,
+       "classes": 3,
+       "tier": 1,
+       "at": 60362
+      }
+     ]
+    ],
+    "close_pan": {
+     "frames": 213,
+     "median_ms": 16.7,
+     "p95_ms": 16.8,
+     "worst_ms": 216.7,
+     "fps_median": 59.9,
+     "long_frames_over_50ms": 6
+    },
+    "heap_mb": 55.1,
+    "illustration_tiles": {
+     "tiles": 8,
+     "decoded": 8,
+     "last": {
+      "ms": 108,
+      "classes": 3,
+      "tier": 1,
+      "at": 66612
+     }
+    },
+    "app_perf": {
+     "static_ms": 105.7,
+     "static_p95_ms": 178.7,
+     "static_max_ms": 182.7,
+     "frame_ms": 1.4,
+     "frame_p95_ms": 3.1,
+     "frame_max_ms": 196.2,
+     "warm_ms": 0.6,
+     "static_n": 60,
+     "frame_n": 60
+    }
+   },
+   {
+    "data_ready_ms": 911,
+    "relief_ready_ms": 1602,
+    "lcp_ms": 64,
+    "cls": 0.0795,
+    "pan": {
+     "frames": 222,
+     "median_ms": 16.7,
+     "p95_ms": 16.8,
+     "worst_ms": 66.7,
+     "fps_median": 59.9,
+     "long_frames_over_50ms": 6
+    },
+    "zoom": {
+     "frames": 168,
+     "median_ms": 16.7,
+     "p95_ms": 50.1,
+     "worst_ms": 133.3,
+     "fps_median": 59.9,
+     "long_frames_over_50ms": 9
+    },
+    "select_event_ms_max": 16,
+    "lens_switch_ms": [
+     207.6,
+     118.6,
+     120.9,
+     120.7,
+     127.7,
+     109.8
+    ],
+    "lens_switch_cached_ms": 109.8,
+    "tour_cold": {
+     "overview": [
+      40.5
+     ],
+     "regional": [
+      55.4,
+      55.8
+     ],
+     "mid": [
+      61,
+      179,
+      57
+     ],
+     "close": [
+      189.8,
+      221.5,
+      267.2
+     ],
+     "very_close": [
+      171.3,
+      163.2,
+      321.6
+     ]
+    },
+    "tour_warm": {
+     "overview": [
+      52,
+      41.2,
+      51
+     ],
+     "regional": [
+      50.1,
+      36.4,
+      35.7,
+      49.8,
+      52.9,
+      52.1
+     ],
+     "mid": [
+      213.7,
+      154.1,
+      99.4,
+      150.6,
+      152.4,
+      168.9,
+      105.6,
+      108.7,
+      111.6
+     ],
+     "close": [
+      146.6,
+      155.8,
+      203,
+      217.3,
+      205.9,
+      226.9,
+      179.8,
+      186.6,
+      187.3
+     ],
+     "very_close": [
+      203.5,
+      197.6,
+      157.5,
+      174.6,
+      184,
+      156.8,
+      202.3,
+      220.5,
+      240.1
+     ]
+    },
+    "tour_illustration": [
+     [
+      "overview",
+      null,
+      null
+     ],
+     [
+      "regional",
+      "Oslo",
+      null
+     ],
+     [
+      "regional",
+      "Ume\u00e5",
+      null
+     ],
+     [
+      "mid",
+      "Bergen",
+      {
+       "ms": 62,
+       "classes": 3,
+       "tier": 1,
+       "at": 31746
+      }
+     ],
+     [
+      "mid",
+      "J\u00f6nk\u00f6ping",
+      {
+       "ms": 108,
+       "classes": 3,
+       "tier": 1,
+       "at": 35365
+      }
+     ],
+     [
+      "close",
+      "Bergen",
+      {
+       "ms": 99,
+       "classes": 3,
+       "tier": 1,
+       "at": 39054
+      }
+     ],
+     [
+      "close",
+      "Tingsryd",
+      {
+       "ms": 125,
+       "classes": 3,
+       "tier": 1,
+       "at": 42924
+      }
+     ],
+     [
+      "close",
+      "Skurup",
+      {
+       "ms": 101,
+       "classes": 3,
+       "tier": 1,
+       "at": 46734
+      }
+     ],
+     [
+      "very_close",
+      "Tinn",
+      {
+       "ms": 82,
+       "classes": 3,
+       "tier": 1,
+       "at": 50475
+      }
+     ],
+     [
+      "very_close",
+      "Lom",
+      {
+       "ms": 83,
+       "classes": 3,
+       "tier": 1,
+       "at": 54146
+      }
+     ],
+     [
+      "very_close",
+      "Frederiksberg",
+      {
+       "ms": 114,
+       "classes": 3,
+       "tier": 1,
+       "at": 58105
+      }
+     ],
+     [
+      "mid",
+      "Narvik",
+      {
+       "ms": 83,
+       "classes": 3,
+       "tier": 1,
+       "at": 61507
+      }
+     ]
+    ],
+    "close_pan": {
+     "frames": 215,
+     "median_ms": 16.7,
+     "p95_ms": 16.8,
+     "worst_ms": 200,
+     "fps_median": 59.9,
+     "long_frames_over_50ms": 6
+    },
+    "heap_mb": 73.2,
+    "illustration_tiles": {
+     "tiles": 8,
+     "decoded": 8,
+     "last": {
+      "ms": 114,
+      "classes": 3,
+      "tier": 1,
+      "at": 67728
+     }
+    },
+    "app_perf": {
+     "static_ms": 121.5,
+     "static_p95_ms": 183.7,
+     "static_max_ms": 252.9,
+     "frame_ms": 1.6,
+     "frame_p95_ms": 4.3,
+     "frame_max_ms": 195.9,
+     "warm_ms": 0.5,
+     "static_n": 60,
+     "frame_n": 60
+    }
+   },
+   {
+    "data_ready_ms": 850,
+    "relief_ready_ms": 1066,
+    "lcp_ms": 60,
+    "cls": 0.0795,
+    "pan": {
+     "frames": 233,
+     "median_ms": 16.7,
+     "p95_ms": 16.8,
+     "worst_ms": 83.4,
+     "fps_median": 59.9,
+     "long_frames_over_50ms": 3
+    },
+    "zoom": {
+     "frames": 176,
+     "median_ms": 16.7,
+     "p95_ms": 50,
+     "worst_ms": 116.7,
+     "fps_median": 59.9,
+     "long_frames_over_50ms": 7
+    },
+    "select_event_ms_max": "< 16 (no event above the 16 ms threshold)",
+    "lens_switch_ms": [
+     173.9,
+     129.2,
+     117.5,
+     162,
+     79.1,
+     103.9
+    ],
+    "lens_switch_cached_ms": 103.9,
+    "tour_cold": {
+     "overview": [
+      50
+     ],
+     "regional": [
+      58.2,
+      49.9
+     ],
+     "mid": [
+      92.4,
+      218.4,
+      48.7
+     ],
+     "close": [
+      199.8,
+      246.2,
+      237.4
+     ],
+     "very_close": [
+      151,
+      201.1,
+      244.9
+     ]
+    },
+    "tour_warm": {
+     "overview": [
+      65.1,
+      40.2,
+      38.4
+     ],
+     "regional": [
+      34.1,
+      31.7,
+      34.4,
+      47.8,
+      54.7,
+      51.1
+     ],
+     "mid": [
+      99,
+      126,
+      106.5,
+      175.4,
+      164.6,
+      162.6,
+      122.5,
+      130.9,
+      121.8
+     ],
+     "close": [
+      151,
+      159.8,
+      159.7,
+      183.6,
+      181.3,
+      168.9,
+      221.8,
+      238.2,
+      197.5
+     ],
+     "very_close": [
+      128.7,
+      118.3,
+      155.9,
+      165.9,
+      138,
+      159.6,
+      193.3,
+      210.4,
+      205.5
+     ]
+    },
+    "tour_illustration": [
+     [
+      "overview",
+      null,
+      null
+     ],
+     [
+      "regional",
+      "Oslo",
+      null
+     ],
+     [
+      "regional",
+      "Ume\u00e5",
+      null
+     ],
+     [
+      "mid",
+      "Bergen",
+      {
+       "ms": 66,
+       "classes": 3,
+       "tier": 1,
+       "at": 31198
+      }
+     ],
+     [
+      "mid",
+      "J\u00f6nk\u00f6ping",
+      {
+       "ms": 101,
+       "classes": 3,
+       "tier": 1,
+       "at": 34883
+      }
+     ],
+     [
+      "close",
+      "Bergen",
+      {
+       "ms": 83,
+       "classes": 3,
+       "tier": 1,
+       "at": 38563
+      }
+     ],
+     [
+      "close",
+      "Tingsryd",
+      {
+       "ms": 90,
+       "classes": 3,
+       "tier": 1,
+       "at": 42314
+      }
+     ],
+     [
+      "close",
+      "Skurup",
+      {
+       "ms": 105,
+       "classes": 3,
+       "tier": 1,
+       "at": 46192
+      }
+     ],
+     [
+      "very_close",
+      "Tinn",
+      {
+       "ms": 78,
+       "classes": 3,
+       "tier": 1,
+       "at": 49755
+      }
+     ],
+     [
+      "very_close",
+      "Lom",
+      {
+       "ms": 79,
+       "classes": 3,
+       "tier": 1,
+       "at": 53403
+      }
+     ],
+     [
+      "very_close",
+      "Frederiksberg",
+      {
+       "ms": 100,
+       "classes": 3,
+       "tier": 1,
+       "at": 57242
+      }
+     ],
+     [
+      "mid",
+      "Narvik",
+      {
+       "ms": 94,
+       "classes": 3,
+       "tier": 1,
+       "at": 60714
+      }
+     ]
+    ],
+    "close_pan": {
+     "frames": 218,
+     "median_ms": 16.7,
+     "p95_ms": 16.8,
+     "worst_ms": 200.1,
+     "fps_median": 59.9,
+     "long_frames_over_50ms": 6
+    },
+    "heap_mb": 60.0,
+    "illustration_tiles": {
+     "tiles": 8,
+     "decoded": 8,
+     "last": {
+      "ms": 90,
+      "classes": 3,
+      "tier": 1,
+      "at": 67011
+     }
+    },
+    "app_perf": {
+     "static_ms": 117,
+     "static_p95_ms": 178.9,
+     "static_max_ms": 186.2,
+     "frame_ms": 1.3,
+     "frame_p95_ms": 3.8,
+     "frame_max_ms": 159.1,
+     "warm_ms": 0.6,
+     "static_n": 60,
+     "frame_n": 60
+    }
+   }
+  ]
+ }
+}

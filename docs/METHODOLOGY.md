@@ -95,22 +95,50 @@ FOLK1A "000"): 19,395,889 (2008), 20,772,253 (2016), 22,258,532 (2026); +7.16 % 
 counties use SSB 07459 on the 2024 counties where the county existed; otherwise the sum of member municipalities if all
 are comparable (transfers wholly inside the county do not break the sum); otherwise "not available" with coverage.
 
-## Suppression (v0.2)
+## Suppression and ranks (v0.2, convention fixed in v0.3)
 
 A Norwegian industry group with suppressed components is a lower bound. Because each municipality's total jobs is
-published unsuppressed, the suppressed cells together add at most the unallocated remainder, which gives an upper bound
-(`yields_hi`). Ranks become intervals `[best, worst]`: best = 1 + number of municipalities whose lower bound exceeds this
-upper bound; worst = 1 + number whose upper bound exceeds this lower bound. National Norwegian yields come from SSB's
-national table (no suppression), so the overview bar is exact.
+published unsuppressed, the suppressed cells together add at most the unallocated remainder (total − published groups),
+which gives an upper bound (`yields_hi`) for each yield that contains a suppressed group. Sweden publishes no suppressed
+cells, but SCB's disclosure method means its totals need not equal the sum of components (≤ 1% here); Denmark's add up.
 
-## Economic output (v0.2)
+**One ranking convention** (`pipeline/build/ranking.py`, mirrored in `web/js/stats.js`, both tested against
+`tests/fixtures/ranking_cases.json`):
+- *comparison population*: the areas being ranked (all municipalities, all regions, or a filtered list such as one
+  country or "5,000+ residents") that have a value; unavailable values are never ranked and never counted in "of N";
+- *exact rank*: competition ranking, 1 = largest, rank = 1 + number of areas with a larger value, so equal values share
+  a rank; lists show tied areas by name, then id;
+- *possible-rank interval* where values are lower bounds: best = 1 + #(others' lower bound > this upper bound), worst =
+  1 + #(others' upper bound > this lower bound). It is exact for the stated bounds (both ends are reachable, checked by
+  brute force in the tests) and always contains the rank of the published figures. The bounds themselves are
+  conservative: they ignore the agencies' disclosure thresholds and the national totals the suppressed cells must add up
+  to — using those would come close to re-identifying cells the agency chose to suppress — so the true range can be
+  narrower. An interval covering at least half the areas is shown as "rank uncertain".
+
+v0.2 mixed two conventions (exact ranks by sorted position with ties broken by population; intervals by strict
+inequalities), which left 157 of 2,969 published intervals not containing their own rank.
+
+## Economic output (v0.2; classification and fallback corrected in v0.3)
 
 Regional totals are kept as published (Norway GVA at basic prices by 2020–23 county, excluding the continental shelf;
 Sweden GRDP at market prices by län; Denmark GDP by landsdel; euro at Eurostat 2023 average rates). Municipal estimates
 share each total by a sector-weighted key: Σ industry value added × the municipality's share of the region's jobs in
 that industry (SSB 11713; Eurostat nama_10r_3gva A*10), real estate (incl. imputed rents) by residents, value added the
-agency suppresses by total jobs. Σ municipal estimates = published regional totals (to €0.1 m). The Scandinavian sum is
-labelled "combined regional output (mixed concepts, not harmonised GDP)".
+agency does not break down by total jobs. Σ municipal estimates = published regional totals (to €0.1 m). The
+Scandinavian sum is labelled "combined regional output (mixed concepts, not harmonised GDP)".
+
+- *Classification (v0.3)*: professional and business services (M–N) are keyed by M–N jobs only. v0.2 keyed them by the
+  combined L–N group although real estate (L) is already allocated by residents. Sweden (SCB L and M+N) and Denmark
+  (DB25 section M = real estate) publish real-estate jobs separately, so they are removed. Norway's municipal table joins
+  real estate with professional services (NACE 68–75): there M (69–75) is keyed by 68–75 jobs — an approximation — and
+  N (77–82) by 77–82 jobs. Effect against v0.2: 28 Swedish and Danish estimates move by more than 1% (largest Fanø,
+  −6.25%), 10 Norwegian ones (largest Tydal, −3.9%); every regional total is unchanged.
+- *Missing denominator (v0.3)*: value added in an industry where no municipality of the region has a mapped job is
+  shared by total jobs and reported in `nation.gdp_fallbacks` (only Oslo: NOK 45 m of agriculture, forestry and fishing,
+  0.005% of Oslo's value added, whose NACE A jobs are suppressed). It is never dropped.
+- *Sensitivity* (`nation.gdp_sensitivity`, shown in the Almanac): median / 95th-percentile / largest change of the 745
+  estimates under alternative keys — v0.2 classification 0.15% / 1.0% / 6.7%; real estate by jobs instead of residents
+  1.6% / 8.6% / 20%; total jobs only (no industry weighting) 5.6% / 27% / 78%.
 
 ## Geography layers (v0.2)
 
@@ -123,13 +151,43 @@ labelled "combined regional output (mixed concepts, not harmonised GDP)".
   multidirectional EU-DEM hillshade (×3), high-alpine tint above an elevation falling from ~1,500 m at 60° N to ~800 m at
   70° N, lakes painted in; coast from municipal polygons in Norway and Denmark and smoothed 1 km cells elsewhere; sea from
   Natural Earth bathymetry bands. Mountain pieces stand only on summit hexes (highest 1 km cell ≥ 1,000 m and above all
-  six neighbours). Analyze mode multiplies lens colours by a gray hillshade, clipped to land.
+  six neighbours (v0.2; v0.3 replaces the pieces with the illustration layer, below). Analyze mode multiplies lens
+  colours by a gray hillshade, clipped to land.
+
+## Boundary adjustments that are not breaks (v0.3)
+
+SSB's classification (KLASS 131) records a 1 January 2026 adjustment from Indre Østfold to Nordre Follo and Vestby. The
+decisions describe two small areas (about 565 decares with eight property units by Slemmestadveien; the Loska cabin
+area, about 17 cabins). SSB's table 07459 counts each year on that year's boundaries (its own notes document earlier
+small transfers as not harmonised) and has no note for 2026; the three 2025→26 changes (+1.0%, +1.1%, +1.6%) are close to
+each municipality's previous year. The years stay comparable; each municipality carries a note (`pop_adjustments`) with
+the sources, and SSB's own table notes are shown for 28 other municipalities. Change size alone never creates or removes
+a break.
+
+## World style and illustrations (v0.3)
+
+The relief adds shading at the scale of ranges (2 km) to the detail shading and lifts crests, so ranges read as
+connected masses; one north-west light (as the buildings) with warm highlights and blue-violet shadows; snow on crests
+above a latitude-dependent line; slow illustrative crop tones on farmland. Lakes are smoothed from a signed distance
+field with the same total area as before (13,900 vs 12,800 km² painted on land). The three countries are recognised from
+Natural Earth (the 1 km grid's country code is empty for most unpopulated cells, which in v0.2 muted much of the
+Scandinavian mountains as if they were foreign land). Closer in, the browser paints trees, fields, scree, mire, heath
+and rooftops through 1 km CORINE class masks: they show what covers each square kilometre, not where any tree, field or
+house is. The analysis view (any lens) shows no illustrations.
+
+## Discovery (v0.3)
+
+"What stands out" lists a municipality's figures in the top or bottom 5% of the municipalities that have them (growth,
+density, 65+ share, jobs per 100 residents, distance to a larger municipality for places under 50,000, land area) and a
+strongest specialisation from ×2.5, each with its value, rank, definition and its neighbours in that ranking.
+"Discover" shows one of 18 facts computed the same way (single extremes, with the population filter in the sentence).
 
 ## Validation (`python -m pipeline check --mode built|source|release`)
 
-Modes: **built** (shipped files only), **source** (independent reconciliation with the original downloads and cache
-verification), **release** (also browser journeys on the same data hash and accepted key totals). A skipped check is
-never a pass. See docs/VERIFICATION.md for the results of this release.
+Modes: **built** (shipped files only), **source** (independent reconciliation with the original downloads, values
+checked by status, and cache verification), **release** (also unit and browser evidence for this exact candidate — app,
+data, assets, tests and pipeline by SHA-256 — with every mandatory journey passing, and accepted key totals). A skipped,
+missing or stale check is never a pass. See docs/VERIFICATION.md for the results of this release.
 
 
 Hex population vs municipal totals (rounding only); municipal sums vs national tables (≤ 0.05%; Christiansø and SCB noise

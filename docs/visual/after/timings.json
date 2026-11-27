@@ -1,155 +1,361 @@
 {
  "01-overview": {
-  "wall_s": 9.12,
+  "wall_s": 8.74,
   "perf": {
-   "static_ms": 145,
-   "frame_ms": 0.2,
-   "warm_ms": 0.1,
+   "static_ms": 146.3,
+   "static_p95_ms": 225.3,
+   "static_max_ms": 225.3,
+   "frame_ms": 0.3,
+   "frame_p95_ms": 210.1,
+   "frame_max_ms": 431.7,
+   "warm_ms": 0.2,
    "static_n": 4,
    "frame_n": 50
   },
   "errors": []
  },
  "02-regional-south": {
-  "wall_s": 7.49,
+  "wall_s": 6.99,
   "perf": {
-   "static_ms": 34.5,
-   "frame_ms": 224,
-   "warm_ms": 0.3,
+   "static_ms": 19.6,
+   "static_p95_ms": 174.9,
+   "static_max_ms": 174.9,
+   "frame_ms": 160.9,
+   "frame_p95_ms": 350.8,
+   "frame_max_ms": 350.8,
+   "warm_ms": 0.2,
    "static_n": 5,
    "frame_n": 5
   },
   "errors": []
  },
  "03-bergen-profile": {
-  "wall_s": 7.14,
+  "wall_s": 6.99,
   "perf": {
-   "static_ms": 59.6,
-   "frame_ms": 170,
+   "static_ms": 122,
+   "static_p95_ms": 182.3,
+   "static_max_ms": 182.3,
+   "frame_ms": 159.6,
+   "frame_p95_ms": 360.1,
+   "frame_max_ms": 360.1,
+   "warm_ms": 0.7,
+   "static_n": 10,
+   "frame_n": 10
+  },
+  "errors": []
+ },
+ "04-kiruna-council": {
+  "wall_s": 7.05,
+  "perf": {
+   "static_ms": 20.7,
+   "static_p95_ms": 198.9,
+   "static_max_ms": 198.9,
+   "frame_ms": 49.3,
+   "frame_p95_ms": 377.5,
+   "frame_max_ms": 377.5,
+   "warm_ms": 0.1,
+   "static_n": 10,
+   "frame_n": 14
+  },
+  "errors": []
+ },
+ "05-western-norway-terrain": {
+  "wall_s": 6.83,
+  "perf": {
+   "static_ms": 120.4,
+   "static_p95_ms": 181.9,
+   "static_max_ms": 181.9,
+   "frame_ms": 176,
+   "frame_p95_ms": 377.3,
+   "frame_max_ms": 377.3,
+   "warm_ms": 0.9,
+   "static_n": 10,
+   "frame_n": 10
+  },
+  "errors": []
+ },
+ "06-coast-fjord-detail": {
+  "wall_s": 7.13,
+  "perf": {
+   "static_ms": 117.9,
+   "static_p95_ms": 192.6,
+   "static_max_ms": 192.6,
+   "frame_ms": 223.4,
+   "frame_p95_ms": 375.4,
+   "frame_max_ms": 375.4,
+   "warm_ms": 0.4,
+   "static_n": 7,
+   "frame_n": 7
+  },
+  "errors": []
+ },
+ "07-small-municipality-frederiksberg": {
+  "wall_s": 7.12,
+  "perf": {
+   "static_ms": 110.2,
+   "static_p95_ms": 217,
+   "static_max_ms": 217,
+   "frame_ms": 218.8,
+   "frame_p95_ms": 388.3,
+   "frame_max_ms": 388.3,
    "warm_ms": 0.3,
+   "static_n": 7,
+   "frame_n": 7
+  },
+  "errors": []
+ },
+ "08-specialisation-lens": {
+  "wall_s": 7.34,
+  "perf": {
+   "static_ms": 118.6,
+   "static_p95_ms": 218,
+   "static_max_ms": 218,
+   "frame_ms": 217.3,
+   "frame_p95_ms": 430.3,
+   "frame_max_ms": 430.3,
+   "warm_ms": 0.1,
    "static_n": 5,
    "frame_n": 5
   },
   "errors": []
  },
- "04-kiruna-council": {
-  "wall_s": 7.1,
+ "09-population-density-lens": {
+  "wall_s": 6.75,
   "perf": {
-   "static_ms": 53.4,
-   "frame_ms": 87.7,
-   "warm_ms": 0.2,
-   "static_n": 8,
-   "frame_n": 10
-  },
-  "errors": []
- },
- "05-western-norway-terrain": {
-  "wall_s": 7.53,
-  "perf": {
-   "static_ms": 150.6,
-   "frame_ms": 210.8,
-   "warm_ms": 3.9,
-   "static_n": 6,
-   "frame_n": 6
-  },
-  "errors": []
- },
- "06-coast-fjord-detail": {
-  "wall_s": 7.16,
-  "perf": {
-   "static_ms": 196.6,
-   "frame_ms": 249.6,
-   "warm_ms": 0.6,
-   "static_n": 6,
-   "frame_n": 6
-  },
-  "errors": []
- },
- "07-small-municipality-frederiksberg": {
-  "wall_s": 7.37,
-  "perf": {
-   "static_ms": 145.7,
-   "frame_ms": 328.7,
-   "warm_ms": 0.5,
-   "static_n": 6,
-   "frame_n": 6
-  },
-  "errors": []
- },
- "08-specialisation-lens": {
-  "wall_s": 7.02,
-  "perf": {
-   "static_ms": 148.1,
-   "frame_ms": 188.8,
+   "static_ms": 121.6,
+   "static_p95_ms": 183.7,
+   "static_max_ms": 183.7,
+   "frame_ms": 178.3,
+   "frame_p95_ms": 376.5,
+   "frame_max_ms": 376.5,
    "warm_ms": 0.2,
    "static_n": 4,
    "frame_n": 4
   },
   "errors": []
  },
- "09-population-density-lens": {
-  "wall_s": 7.37,
-  "perf": {
-   "static_ms": 134.2,
-   "frame_ms": 189.2,
-   "warm_ms": 0.2,
-   "static_n": 5,
-   "frame_n": 5
-  },
-  "errors": []
- },
  "10-growth-lens-oresund": {
-  "wall_s": 7.45,
+  "wall_s": 6.78,
   "perf": {
-   "static_ms": 141.4,
-   "frame_ms": 203.8,
-   "warm_ms": 0.5,
-   "static_n": 5,
-   "frame_n": 5
+   "static_ms": 165.6,
+   "static_p95_ms": 197.1,
+   "static_max_ms": 197.1,
+   "frame_ms": 217.5,
+   "frame_p95_ms": 381.9,
+   "frame_max_ms": 381.9,
+   "warm_ms": 0.4,
+   "static_n": 4,
+   "frame_n": 4
   },
   "errors": []
  },
  "11-lofoten": {
-  "wall_s": 7.03,
+  "wall_s": 7.45,
   "perf": {
-   "static_ms": 54.7,
-   "frame_ms": 125.9,
-   "warm_ms": 0.4,
-   "static_n": 5,
-   "frame_n": 5
+   "static_ms": 86.6,
+   "static_p95_ms": 304.3,
+   "static_max_ms": 304.3,
+   "frame_ms": 169.3,
+   "frame_p95_ms": 561,
+   "frame_max_ms": 561,
+   "warm_ms": 0.8,
+   "static_n": 10,
+   "frame_n": 10
   },
   "errors": []
  },
  "12-stockholm-archipelago": {
-  "wall_s": 7.29,
+  "wall_s": 6.89,
   "perf": {
-   "static_ms": 152,
-   "frame_ms": 231.3,
-   "warm_ms": 1.5,
+   "static_ms": 133.8,
+   "static_p95_ms": 256.6,
+   "static_max_ms": 256.6,
+   "frame_ms": 196.5,
+   "frame_p95_ms": 417.2,
+   "frame_max_ms": 417.2,
+   "warm_ms": 0.7,
+   "static_n": 9,
+   "frame_n": 9
+  },
+  "errors": []
+ },
+ "13-mobile-overview": {
+  "wall_s": 8.22,
+  "perf": {
+   "static_ms": 15.6,
+   "static_p95_ms": 169.4,
+   "static_max_ms": 169.4,
+   "frame_ms": 0.3,
+   "frame_p95_ms": 38.5,
+   "frame_max_ms": 346.1,
+   "warm_ms": 0.3,
+   "static_n": 3,
+   "frame_n": 49
+  },
+  "errors": []
+ },
+ "14-mobile-tromso": {
+  "wall_s": 7.27,
+  "perf": {
+   "static_ms": 60.8,
+   "static_p95_ms": 194.5,
+   "static_max_ms": 194.5,
+   "frame_ms": 75.8,
+   "frame_p95_ms": 386.1,
+   "frame_max_ms": 386.1,
+   "warm_ms": 0.5,
+   "static_n": 10,
+   "frame_n": 10
+  },
+  "errors": []
+ },
+ "15-jotunheimen-range": {
+  "wall_s": 7.05,
+  "perf": {
+   "static_ms": 74.2,
+   "static_p95_ms": 193.4,
+   "static_max_ms": 193.4,
+   "frame_ms": 154.8,
+   "frame_p95_ms": 388.3,
+   "frame_max_ms": 388.3,
+   "warm_ms": 1.3,
+   "static_n": 10,
+   "frame_n": 10
+  },
+  "errors": []
+ },
+ "16-skane-farmland-close": {
+  "wall_s": 7.2,
+  "perf": {
+   "static_ms": 105.4,
+   "static_p95_ms": 249,
+   "static_max_ms": 249,
+   "frame_ms": 260.6,
+   "frame_p95_ms": 397.1,
+   "frame_max_ms": 397.1,
+   "warm_ms": 0.5,
+   "static_n": 8,
+   "frame_n": 8
+  },
+  "errors": []
+ },
+ "17-smaland-forest-close": {
+  "wall_s": 7.07,
+  "perf": {
+   "static_ms": 112.6,
+   "static_p95_ms": 191.9,
+   "static_max_ms": 191.9,
+   "frame_ms": 207.5,
+   "frame_p95_ms": 374.4,
+   "frame_max_ms": 374.4,
+   "warm_ms": 0.4,
+   "static_n": 7,
+   "frame_n": 7
+  },
+  "errors": []
+ },
+ "18-northern-scandes": {
+  "wall_s": 7.05,
+  "perf": {
+   "static_ms": 38.6,
+   "static_p95_ms": 183.7,
+   "static_max_ms": 183.7,
+   "frame_ms": 219.8,
+   "frame_p95_ms": 377.1,
+   "frame_max_ms": 377.1,
+   "warm_ms": 0.4,
    "static_n": 6,
    "frame_n": 6
   },
   "errors": []
  },
- "13-mobile-overview": {
-  "wall_s": 8.92,
+ "19-jutland-mid": {
+  "wall_s": 7.13,
   "perf": {
-   "static_ms": 200.9,
-   "frame_ms": 0.2,
-   "warm_ms": 0.2,
-   "static_n": 4,
-   "frame_n": 50
+   "static_ms": 115.8,
+   "static_p95_ms": 222.2,
+   "static_max_ms": 222.2,
+   "frame_ms": 171.6,
+   "frame_p95_ms": 383,
+   "frame_max_ms": 383,
+   "warm_ms": 1.2,
+   "static_n": 9,
+   "frame_n": 9
   },
   "errors": []
  },
- "14-mobile-tromso": {
-  "wall_s": 7.01,
+ "20-telemark-very-close": {
+  "wall_s": 7.19,
   "perf": {
-   "static_ms": 40.4,
-   "frame_ms": 110.8,
-   "warm_ms": 2.4,
+   "static_ms": 99.1,
+   "static_p95_ms": 235.7,
+   "static_max_ms": 235.7,
+   "frame_ms": 179.4,
+   "frame_p95_ms": 422.3,
+   "frame_max_ms": 422.3,
+   "warm_ms": 0.9,
+   "static_n": 8,
+   "frame_n": 8
+  },
+  "errors": []
+ },
+ "21-mobile-lofoten": {
+  "wall_s": 6.9,
+  "perf": {
+   "static_ms": 64.1,
+   "static_p95_ms": 169.8,
+   "static_max_ms": 169.8,
+   "frame_ms": 107.1,
+   "frame_p95_ms": 333.9,
+   "frame_max_ms": 333.9,
+   "warm_ms": 0.3,
+   "static_n": 8,
+   "frame_n": 8
+  },
+  "errors": []
+ },
+ "22-first-run": {
+  "wall_s": 7.03,
+  "perf": {
+   "static_ms": 121,
+   "static_p95_ms": 179,
+   "static_max_ms": 179,
+   "frame_ms": 300.7,
+   "frame_p95_ms": 359.6,
+   "frame_max_ms": 359.6,
+   "warm_ms": 0.3,
+   "static_n": 4,
+   "frame_n": 4
+  },
+  "errors": []
+ },
+ "23-what-stands-out": {
+  "wall_s": 7.07,
+  "perf": {
+   "static_ms": 93.6,
+   "static_p95_ms": 188.6,
+   "static_max_ms": 188.6,
+   "frame_ms": 168.3,
+   "frame_p95_ms": 383.5,
+   "frame_max_ms": 383.5,
+   "warm_ms": 0.3,
+   "static_n": 8,
+   "frame_n": 8
+  },
+  "errors": []
+ },
+ "24-discovery-card": {
+  "wall_s": 6.95,
+  "perf": {
+   "static_ms": 121.9,
+   "static_p95_ms": 197.4,
+   "static_max_ms": 197.4,
+   "frame_ms": 0.5,
+   "frame_p95_ms": 287.4,
+   "frame_max_ms": 392,
+   "warm_ms": 0.2,
    "static_n": 5,
-   "frame_n": 5
+   "frame_n": 28
   },
   "errors": []
  }

@@ -19,10 +19,10 @@ export const FACETS = [
     hi: "one of the most densely populated", lo: "one of the most thinly populated",
     value: (v) => `${v < 10 ? v.toFixed(1) : int(v)} residents per km² of land`, def: "Residents (1 Jan 2026) per km² of land area (lakes excluded)." },
   { id: "ageing", lens: "ageing", get: (c) => c.share_65plus,
-    hi: "one of the oldest populations", lo: "one of the youngest populations",
+    hi: "one of the highest shares of residents aged 65+", lo: "one of the lowest shares of residents aged 65+",
     value: (v) => `${pct(v, 0)} of residents aged 65 or over`, def: "Share of residents aged 65+, 1 Jan 2026." },
   { id: "jobs", lens: "jobs_ratio", get: (c) => c.jobs_per_100,
-    hi: "a job magnet: far more jobs located here per resident than almost anywhere", lo: "a home for commuters: very few local jobs per resident",
+    hi: "a job centre: one of the most jobs located here per resident", lo: "a commuter home: one of the fewest jobs located here per resident",
     value: (v) => `${v.toFixed(0)} jobs located here per 100 residents`, def: "Jobs at workplaces in the municipality (2024) per 100 residents (2026). Above 100 means people commute in; it is not an employment rate." },
   // distance to a larger municipality says something about small places only (for Copenhagen it is the distance to
   // Oslo), so it is measured among municipalities under 50,000 residents

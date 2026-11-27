@@ -13,13 +13,15 @@
 
 const CLASSES = [
   // order = painting order: flat ground first, trees last (they stand on everything)
-  { key: "farm", pack: "A", ch: 2, lo: 0.30, hi: 0.62 },
-  { key: "heath", pack: "B", ch: 2, lo: 0.35, hi: 0.75 },
-  { key: "wet", pack: "B", ch: 1, lo: 0.30, hi: 0.65 },
-  { key: "rock", pack: "B", ch: 0, lo: 0.25, hi: 0.60 },
-  { key: "broadleaf", pack: "A", ch: 1, lo: 0.22, hi: 0.50 },
-  { key: "conifer", pack: "A", ch: 0, lo: 0.22, hi: 0.50 },
-  { key: "urban", pack: "C", ch: 0, lo: 0.30, hi: 0.60 },
+  // tier 1 = drawn on slow (software-rendered) machines; tier 2 = full detail; tier 0 (no illustrations) when even
+// tier 1 takes more than ~200 ms per redraw
+  { key: "farm", pack: "A", ch: 2, lo: 0.30, hi: 0.62, tier: 1 },
+  { key: "heath", pack: "B", ch: 2, lo: 0.35, hi: 0.75, tier: 2 },
+  { key: "wet", pack: "B", ch: 1, lo: 0.30, hi: 0.65, tier: 2 },
+  { key: "rock", pack: "B", ch: 0, lo: 0.25, hi: 0.60, tier: 2 },
+  { key: "broadleaf", pack: "A", ch: 1, lo: 0.22, hi: 0.50, tier: 2 },
+  { key: "conifer", pack: "A", ch: 0, lo: 0.22, hi: 0.50, tier: 1 },
+  { key: "urban", pack: "C", ch: 0, lo: 0.30, hi: 0.60, tier: 1 },
 ];
 const PACKS = ["A", "B", "C"];
 const MAX_TILES = 8; // decoded tiles kept (6 class masks of 512² each)
@@ -30,6 +32,10 @@ let S = null; // {index, tiles: Map(key -> {A, B, masks}), invalidate}
 export function initIllustration(index, invalidate) {
   if (!index?.cover) return;
   S = { cover: index.cover, have: new Set(index.cover.tiles.map(([x, y]) => `${x}_${y}`)), tiles: new Map(), invalidate };
+  // paint the pattern tiles ahead of time, one per idle moment, so the first close zoom does not pay for them
+  const keys = CLASSES.map((c) => c.key);
+  const warm = () => { const k = keys.shift(); if (k) { pattern(k); if (keys.length) later(warm); } };
+  setTimeout(() => later(warm), 2500);
 }
 
 function loadImg(src, cb) {
@@ -43,31 +49,60 @@ function loadImg(src, cb) {
 
 const smooth = (lo, hi, v) => { const t = Math.min(1, Math.max(0, (v - lo) / (hi - lo))); return t * t * (3 - 2 * t); };
 
-/** Split the two packed mask images of a tile into one alpha canvas per class (once per tile). */
-function split(t) {
+/** Split a tile's packed mask images into one alpha canvas per class, in small steps scheduled when the browser is idle
+ *  (one pack read or one class per step, ~5–15 ms each), so decoding never blocks a frame for long. The tile is drawn
+ *  only when all its classes are ready, and the map is redrawn once per finished tile. */
+const OCC = 32; // occupancy grid per tile and class (16 km blocks): classes absent from the view are skipped
+const queue = [];
+let pumping = false;
+function schedule(t) { queue.push(t); if (!pumping) { pumping = true; later(pump); } }
+const later = (fn) => (typeof requestIdleCallback === "function" ? requestIdleCallback(fn, { timeout: 120 }) : setTimeout(() => fn(null), 16));
+function pump(deadline) {
+  const until = performance.now() + (deadline?.timeRemaining ? Math.max(4, Math.min(12, deadline.timeRemaining())) : 8);
+  while (queue.length && performance.now() < until) {
+    const t = queue[0];
+    if (!step(t)) { queue.shift(); if (t.masks) S.invalidate(); }
+  }
+  if (queue.length) later(pump);
+  else pumping = false;
+}
+// one unit of work; returns false when the tile is complete
+function step(t) {
   const N = S.cover.tile_px;
-  const src = {};
+  t.src ||= {};
+  t.done ||= {};
   for (const p of PACKS) {
+    if (t.src[p]) continue;
     const c = document.createElement("canvas");
     c.width = c.height = N;
     const g = c.getContext("2d", { willReadFrequently: true });
     g.drawImage(t[p], 0, 0);
-    src[p] = g.getImageData(0, 0, N, N).data;
+    t.src[p] = g.getImageData(0, 0, N, N).data;
+    t[p] = null; // the decoded image is no longer needed
+    return true;
   }
-  t.masks = {};
-  for (const cl of CLASSES) {
-    const c = document.createElement("canvas");
-    c.width = c.height = N;
-    const g = c.getContext("2d");
-    const id = g.createImageData(N, N);
-    const d = src[cl.pack], o = id.data;
-    const lut = new Uint8ClampedArray(256);
-    for (let v = 0; v < 256; v++) lut[v] = 255 * smooth(cl.lo, cl.hi, v / 255);
-    for (let i = 3, j = cl.ch; i < o.length; i += 4, j += 4) o[i] = lut[d[j]];
-    g.putImageData(id, 0, 0);
-    t.masks[cl.key] = c;
+  const cl = CLASSES.find((x) => !t.done[x.key]);
+  if (!cl) {
+    t.masks = t.done;
+    t.src = null;
+    return false;
   }
-  for (const p of PACKS) t[p] = null; // the decoded sources are no longer needed
+  const c = document.createElement("canvas");
+  c.width = c.height = N;
+  const g = c.getContext("2d");
+  const id = g.createImageData(N, N);
+  const d = t.src[cl.pack], o = id.data;
+  const lut = cl.lut || (cl.lut = (() => { const l = new Uint8ClampedArray(256); for (let v = 0; v < 256; v++) l[v] = 255 * smooth(cl.lo, cl.hi, v / 255); return l; })());
+  const B = OCC, bs = N / B, occ = new Uint8Array(B * B);
+  for (let i = 3, j = cl.ch, p = 0; i < o.length; i += 4, j += 4, p++) {
+    const a = lut[d[j]];
+    o[i] = a;
+    if (a > 8) occ[((p / N / bs) | 0) * B + (((p % N) / bs) | 0)] = 1;
+  }
+  g.putImageData(id, 0, 0);
+  c.occ = occ;
+  t.done[cl.key] = c;
+  return true;
 }
 
 function tile(tx, ty) {
@@ -76,7 +111,7 @@ function tile(tx, ty) {
   let t = S.tiles.get(k);
   if (t) { S.tiles.delete(k); S.tiles.set(k, t); return t.masks ? t : null; } // LRU: most recent last
   t = { masks: null };
-  const done = () => { if (PACKS.every((p) => t[p]?._ok) && !t.masks) { split(t); S.invalidate(); } };
+  const done = () => { if (PACKS.every((p) => t[p]?._ok) && !t.masks && !t.queued) { t.queued = true; schedule(t); } };
   const path = (p) => `data/${S.cover.path.replace("{k}", p).replace("{x}", tx).replace("{y}", ty)}`;
   for (const p of PACKS) t[p] = loadImg(path(p), done);
   S.tiles.set(k, t);
@@ -271,7 +306,7 @@ let layer = null;
 
 /** Paint the illustration over the relief in L (a screen-size canvas context whose transform is world → device). */
 export function drawIllustration(L, vp, devPerKm) {
-  if (!S || devPerKm < ILLUSTRATE_MIN || typeof DOMMatrix === "undefined") return false;
+  if (!S || DETAIL === "off" || tier === 0 || devPerKm < ILLUSTRATE_MIN || typeof DOMMatrix === "undefined") return false;
   const fade = Math.min(1, (devPerKm - ILLUSTRATE_MIN) / 1.6);
   const span = S.cover.tile_px * S.cover.km_per_px;
   const tx0 = Math.floor(vp.x0 / span), tx1 = Math.floor(vp.x1 / span), ty0 = Math.floor(vp.y0 / span), ty1 = Math.floor(vp.y1 / span);
@@ -284,27 +319,72 @@ export function drawIllustration(L, vp, devPerKm) {
   const T = L.getTransform();
   // one pattern pixel ≈ 0.75 device px, quantised to powers of two
   const kmPerPx = Math.pow(2, Math.round(Math.log2(0.75 / devPerKm)));
+  const t0 = performance.now();
+  const bk = span / OCC;
+  let drawn = 0;
   for (const cl of CLASSES) {
+    if (cl.tier > tier) continue;
+    // world bounding box of this class's occupied blocks inside the view; nothing to draw → skip the class
+    let bx0 = Infinity, by0 = Infinity, bx1 = -Infinity, by1 = -Infinity;
+    for (const [tx, ty, t] of ready) {
+      const occ = t.masks[cl.key].occ;
+      const ox = tx * span, oy = ty * span;
+      const i0 = Math.max(0, Math.floor((vp.x0 - ox) / bk)), i1 = Math.min(OCC - 1, Math.floor((vp.x1 - ox) / bk));
+      const j0 = Math.max(0, Math.floor((vp.y0 - oy) / bk)), j1 = Math.min(OCC - 1, Math.floor((vp.y1 - oy) / bk));
+      for (let j = j0; j <= j1; j++) for (let i = i0; i <= i1; i++) {
+        if (!occ[j * OCC + i]) continue;
+        bx0 = Math.min(bx0, ox + i * bk); by0 = Math.min(by0, oy + j * bk);
+        bx1 = Math.max(bx1, ox + (i + 1) * bk); by1 = Math.max(by1, oy + (j + 1) * bk);
+      }
+    }
+    bx0 = Math.max(bx0, vp.x0); by0 = Math.max(by0, vp.y0); bx1 = Math.min(bx1, vp.x1); by1 = Math.min(by1, vp.y1);
+    if (!(bx1 > bx0 && by1 > by0)) continue;
+    // the same box in device pixels (the transform is a scale and a translation)
+    const rx = Math.max(0, Math.floor(T.a * bx0 + T.e)), ry = Math.max(0, Math.floor(T.d * by0 + T.f));
+    const rw = Math.min(layer.width, Math.ceil(T.a * bx1 + T.e)) - rx, rh = Math.min(layer.height, Math.ceil(T.d * by1 + T.f)) - ry;
+    if (rw <= 0 || rh <= 0) continue;
     G.setTransform(1, 0, 0, 1, 0, 0);
     G.globalCompositeOperation = "source-over";
-    G.clearRect(0, 0, layer.width, layer.height);
+    G.clearRect(rx, ry, rw, rh);
+    G.save();
+    G.beginPath();
+    G.rect(rx, ry, rw, rh);
+    G.clip();
     G.setTransform(T);
     G.imageSmoothingEnabled = true;
     const e = 0.5 * S.cover.km_per_px / S.cover.tile_px;
-    for (const [tx, ty, t] of ready) G.drawImage(t.masks[cl.key], tx * span - e, ty * span - e, span + 2 * e, span + 2 * e);
+    for (const [tx, ty, t] of ready) {
+      const x0 = tx * span, y0 = ty * span;
+      if (x0 > bx1 || y0 > by1 || x0 + span < bx0 || y0 + span < by0) continue;
+      G.drawImage(t.masks[cl.key], x0 - e, y0 - e, span + 2 * e, span + 2 * e);
+    }
     G.globalCompositeOperation = "source-in";
     const p = G.createPattern(pattern(cl.key), "repeat");
     const k = cl.key === "farm" ? kmPerPx * 1.6 : kmPerPx; // fields a little larger than trees
     p.setTransform(new DOMMatrix([k, 0, 0, k, 0, 0]));
     G.fillStyle = p;
-    G.fillRect(vp.x0, vp.y0, vp.x1 - vp.x0, vp.y1 - vp.y0);
+    G.fillRect(bx0, by0, bx1 - bx0, by1 - by0);
+    G.restore();
     L.save();
     L.setTransform(1, 0, 0, 1, 0, 0);
     L.globalAlpha = fade * (cl.key === "farm" ? 0.85 : 1);
-    L.drawImage(layer, 0, 0);
+    L.drawImage(layer, rx, ry, rw, rh, rx, ry, rw, rh);
     L.restore();
+    drawn++;
   }
+  // adaptive detail: if illustrating takes too long on this machine (software rendering), draw only the main covers
+  const ms = performance.now() - t0;
+  cost = cost ? 0.6 * cost + 0.4 * ms : ms;
+  if (DETAIL !== "full") {
+    if (tier === 2 && cost > 110) tier = 1;
+    else if (tier === 1 && cost < 35) tier = 2;
+    else if (tier === 1 && cost > 200) tier = 0; // still too slow: plain relief for the rest of the session
+  }
+  lastStats = { ms: Math.round(ms), classes: drawn, tier, at: Math.round(performance.now()) };
   return true;
 }
 
-export const illustrationState = () => S && { tiles: S.tiles.size, decoded: [...S.tiles.values()].filter((t) => t.masks).length };
+// ?detail=full keeps every class (visual evidence, fast machines); ?detail=off turns the illustrations off
+const DETAIL = (() => { try { return new URLSearchParams(location.search).get("detail"); } catch { return null; } })();
+let tier = 2, cost = 0, lastStats = null;
+export const illustrationState = () => S && { tiles: S.tiles.size, decoded: [...S.tiles.values()].filter((t) => t.masks).length, last: lastStats };

@@ -20,6 +20,16 @@ export function install(app) {
   btn.innerHTML = `<span aria-hidden="true">✦</span><span class="lbl">Discover</span>`;
   bar?.insertBefore(btn, bar.firstChild);
   btn.onclick = () => surprise();
+  // phones: the top bar scrolls, so Discover also gets a place in the bottom navigation
+  const mnav = document.getElementById("mobile-nav");
+  if (mnav) {
+    const mb = document.createElement("button");
+    mb.dataset.mnav = "discover";
+    mb.setAttribute("aria-label", "Discover: a surprising fact about a place");
+    mb.innerHTML = `<span aria-hidden="true">✦</span>Discover`;
+    mb.onclick = () => surprise();
+    mnav.appendChild(mb);
+  }
 
   // --- discovery card
   const card = document.createElement("section");

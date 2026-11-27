@@ -1,8 +1,8 @@
-NOTE  validation mode: release; data hash c68ec9d6f2447f1b
+NOTE  validation mode: release; data hash 30aad91639999a52
 PASS  files: world.json parses as strict JSON numbers (no NaN/Infinity) [2.13 MB]
-PASS  files: cities.json parses as strict JSON numbers (no NaN/Infinity) [1.95 MB]
+PASS  files: cities.json parses as strict JSON numbers (no NaN/Infinity) [1.99 MB]
 PASS  files: states.json parses as strict JSON numbers (no NaN/Infinity) [0.07 MB]
-PASS  files: nation.json parses as strict JSON numbers (no NaN/Infinity) [0.01 MB]
+PASS  files: nation.json parses as strict JSON numbers (no NaN/Infinity) [0.02 MB]
 PASS  files: lenses.json parses as strict JSON numbers (no NaN/Infinity) [1.22 MB]
 PASS  files: sources.json parses as strict JSON numbers (no NaN/Infinity) [0.04 MB]
 PASS  files: resources.json parses as strict JSON numbers (no NaN/Infinity) [0.14 MB]
@@ -34,6 +34,9 @@ PASS  history: Scandinavia 2026 = sum of the three published national totals (22
 PASS  history: national series name their published source (not a sum of municipalities)
 PASS  suppression: every partial yield has an upper bound ≥ its lower bound (0 missing)
 PASS  industry: groups (+ suppressed remainder) add up to total jobs in every municipality (0 off: [])
+PASS  suppression: remainders are non-negative, equal total − published groups, bound only yields that contain a suppressed group, and are absent where nothing is suppressed (0 off: [])
+PASS  ranking: 2969 published intervals; every rank is a competition rank (ties share), every interval is the possible-rank interval for the published bounds and contains the rank (0 off: [])
+PASS  ranking: region ranks and intervals follow the same convention (0 off: [])
 PASS  industry: no double counting — group sums never exceed total jobs (0)
 NOTE  suppression: 307 municipalities with a suppressed yield component; 745 carry at least one rank interval instead of an exact rank
 PASS  economy: every municipal output value is flagged as an estimate
@@ -96,7 +99,7 @@ PASS  source sodir: 3 files, licence: NLOD 2.0 (Norwegian Licence for Open Gover
 PASS  source sgu: 2 files, licence: CC0 1.0 (SGU open data)
 PASS  source links: 2 files, licence: CC0 1.0 (Wikidata); CC BY 4.0 (Eurostat)
 PASS  source: SSB 07459 has no duplicate observations (0)
-PASS  source join: every Norwegian municipality-year equals SSB 07459 or is explicitly unavailable (0 off: [])
+PASS  source join: every Norwegian municipality-year matches SSB 07459 according to its status (observed = equal and non-zero, boundary = source 0, missing = source empty) (0 off: [])
 PASS  source: Norway, every year 2008–2026: Σ municipalities + SSB's 'divided municipalities' bucket = national total (0 years off: [])
 PASS  source: Norway national series 2008–2026 identical to SSB 07459 country
 PASS  source: Sweden 2008 published total 9,182,927 = SCB TAB628 '00' 9,182,927
@@ -128,7 +131,13 @@ NOTE  history review: NO-4649 Stad 2019→2020: +6.3% (no recorded boundary chan
 NOTE  history review: DK-187 Vallensbæk 2008→2009: +7.8% (no recorded boundary change)
 PASS  cache: 1003/1003 declared downloads match their manifest (SHA-256, size, request identity)
 PASS  release: key totals unchanged against the accepted baseline 
-PASS  release: browser journeys ran against these data files (c68ec9d6f244 vs c68ec9d6f244)
-PASS  release: browser journeys 20 passed, 0 failed (/usr/bin/google-chrome)
+NOTE  release: candidate 36d873dabf5ce395 (app 49, data 112, tests 9, pipeline 32 files)
+PASS  release: browser evidence is from a completed run during which the candidate did not change
+PASS  release: browser evidence is for this candidate (36d873dabf5c vs 36d873dabf5c)
+PASS  release: browser evidence lists the mandatory journeys of the test implementation (22)
+PASS  release: all 22 mandatory browser journeys PASS (/usr/bin/google-chrome)
+PASS  release: unit evidence is from a completed run during which the candidate did not change
+PASS  release: unit evidence is for this candidate (36d873dabf5c vs 36d873dabf5c)
+PASS  release: unit tests 31 ran, 0 failed, 0 errors, 0 skipped
 
-113 pass, 19 note, 0 warn, 0 skipped, 0 fail → PASS (mode: release)
+121 pass, 20 note, 0 warn, 0 skipped, 0 fail → PASS (mode: release)

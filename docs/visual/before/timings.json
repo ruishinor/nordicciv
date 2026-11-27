@@ -1,72 +1,233 @@
 {
  "01-overview": {
-  "wall_s": 8.4,
-  "perf": null,
+  "wall_s": 8.24,
+  "perf": {
+   "static_ms": 21.8,
+   "frame_ms": 0.3,
+   "warm_ms": 0.2,
+   "static_n": 3,
+   "frame_n": 49
+  },
   "errors": []
  },
  "02-regional-south": {
-  "wall_s": 6.73,
-  "perf": null,
+  "wall_s": 7.0,
+  "perf": {
+   "static_ms": 21.3,
+   "frame_ms": 206.3,
+   "warm_ms": 0.2,
+   "static_n": 5,
+   "frame_n": 5
+  },
   "errors": []
  },
  "03-bergen-profile": {
-  "wall_s": 6.77,
-  "perf": null,
+  "wall_s": 7.16,
+  "perf": {
+   "static_ms": 114,
+   "frame_ms": 213.5,
+   "warm_ms": 2.7,
+   "static_n": 6,
+   "frame_n": 6
+  },
   "errors": []
  },
  "04-kiruna-council": {
-  "wall_s": 6.83,
-  "perf": null,
+  "wall_s": 6.93,
+  "perf": {
+   "static_ms": 24,
+   "frame_ms": 66.1,
+   "warm_ms": 0.2,
+   "static_n": 9,
+   "frame_n": 10
+  },
   "errors": []
  },
  "05-western-norway-terrain": {
-  "wall_s": 6.72,
-  "perf": null,
+  "wall_s": 7.16,
+  "perf": {
+   "static_ms": 118.9,
+   "frame_ms": 184.6,
+   "warm_ms": 3.5,
+   "static_n": 6,
+   "frame_n": 6
+  },
   "errors": []
  },
  "06-coast-fjord-detail": {
-  "wall_s": 6.76,
-  "perf": null,
+  "wall_s": 7.25,
+  "perf": {
+   "static_ms": 120.2,
+   "frame_ms": 224.9,
+   "warm_ms": 0.5,
+   "static_n": 6,
+   "frame_n": 6
+  },
   "errors": []
  },
  "07-small-municipality-frederiksberg": {
-  "wall_s": 6.83,
-  "perf": null,
+  "wall_s": 7.29,
+  "perf": {
+   "static_ms": 123.4,
+   "frame_ms": 254.1,
+   "warm_ms": 0.4,
+   "static_n": 6,
+   "frame_n": 6
+  },
   "errors": []
  },
  "08-specialisation-lens": {
-  "wall_s": 6.68,
-  "perf": null,
+  "wall_s": 7.2,
+  "perf": {
+   "static_ms": 134.6,
+   "frame_ms": 203.1,
+   "warm_ms": 0.1,
+   "static_n": 5,
+   "frame_n": 5
+  },
   "errors": []
  },
  "09-population-density-lens": {
-  "wall_s": 6.71,
-  "perf": null,
+  "wall_s": 6.9,
+  "perf": {
+   "static_ms": 112.5,
+   "frame_ms": 171.1,
+   "warm_ms": 0.2,
+   "static_n": 5,
+   "frame_n": 5
+  },
   "errors": []
  },
  "10-growth-lens-oresund": {
-  "wall_s": 6.72,
-  "perf": null,
+  "wall_s": 6.95,
+  "perf": {
+   "static_ms": 102,
+   "frame_ms": 167.8,
+   "warm_ms": 0.3,
+   "static_n": 5,
+   "frame_n": 5
+  },
   "errors": []
  },
  "11-lofoten": {
-  "wall_s": 6.7,
-  "perf": null,
+  "wall_s": 6.76,
+  "perf": {
+   "static_ms": 43.4,
+   "frame_ms": 84.2,
+   "warm_ms": 3.5,
+   "static_n": 5,
+   "frame_n": 5
+  },
   "errors": []
  },
  "12-stockholm-archipelago": {
-  "wall_s": 6.69,
-  "perf": null,
+  "wall_s": 6.86,
+  "perf": {
+   "static_ms": 94.7,
+   "frame_ms": 171.6,
+   "warm_ms": 2.2,
+   "static_n": 6,
+   "frame_n": 6
+  },
   "errors": []
  },
  "13-mobile-overview": {
-  "wall_s": 8.05,
-  "perf": null,
+  "wall_s": 8.13,
+  "perf": {
+   "static_ms": 39.6,
+   "frame_ms": 0.3,
+   "warm_ms": 0.1,
+   "static_n": 3,
+   "frame_n": 49
+  },
   "errors": []
  },
  "14-mobile-tromso": {
-  "wall_s": 6.69,
-  "perf": null,
+  "wall_s": 6.87,
+  "perf": {
+   "static_ms": 59,
+   "frame_ms": 173.6,
+   "warm_ms": 2.3,
+   "static_n": 6,
+   "frame_n": 6
+  },
+  "errors": []
+ },
+ "15-jotunheimen-range": {
+  "wall_s": 7.06,
+  "perf": {
+   "static_ms": 110.5,
+   "frame_ms": 202.7,
+   "warm_ms": 5.2,
+   "static_n": 6,
+   "frame_n": 6
+  },
+  "errors": []
+ },
+ "16-skane-farmland-close": {
+  "wall_s": 6.79,
+  "perf": {
+   "static_ms": 56.6,
+   "frame_ms": 177.3,
+   "warm_ms": 0.4,
+   "static_n": 5,
+   "frame_n": 5
+  },
+  "errors": []
+ },
+ "17-smaland-forest-close": {
+  "wall_s": 7.07,
+  "perf": {
+   "static_ms": 115.4,
+   "frame_ms": 217.3,
+   "warm_ms": 0.4,
+   "static_n": 6,
+   "frame_n": 6
+  },
+  "errors": []
+ },
+ "18-northern-scandes": {
+  "wall_s": 7.15,
+  "perf": {
+   "static_ms": 58.1,
+   "frame_ms": 102,
+   "warm_ms": 0.2,
+   "static_n": 7,
+   "frame_n": 7
+  },
+  "errors": []
+ },
+ "19-jutland-mid": {
+  "wall_s": 7.09,
+  "perf": {
+   "static_ms": 118.1,
+   "frame_ms": 199.7,
+   "warm_ms": 1,
+   "static_n": 6,
+   "frame_n": 6
+  },
+  "errors": []
+ },
+ "20-telemark-very-close": {
+  "wall_s": 7.27,
+  "perf": {
+   "static_ms": 110.8,
+   "frame_ms": 185.7,
+   "warm_ms": 0.8,
+   "static_n": 6,
+   "frame_n": 6
+  },
+  "errors": []
+ },
+ "21-mobile-lofoten": {
+  "wall_s": 7.23,
+  "perf": {
+   "static_ms": 84.7,
+   "frame_ms": 192.6,
+   "warm_ms": 2.6,
+   "static_n": 7,
+   "frame_n": 7
+  },
   "errors": []
  }
 }

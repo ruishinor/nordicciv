@@ -1,0 +1,29 @@
+# NordicCiv — short user test (real participants)
+
+The release was reviewed from five perspectives by the developer, not by users. Those reviews cannot show whether
+people enjoy the map, understand it or find it useful; this script is for finding that out with 5–8 real people.
+
+**Setup (5 min).** Desktop or laptop browser at its usual size, the app freshly opened (first-run hint visible), audio
+or screen recording with consent. Mix: 2–3 who play strategy games, 2–3 who use statistics at work, 1–2 neither.
+Say: "We are testing the map, not you. Think aloud. There are no wrong answers." Do not demonstrate anything.
+
+**Tasks (20 min; note time, path, hesitations and words used; do not help unless stuck for 2 minutes).**
+
+1. *First look (2 min).* "Look at the map for a moment. What is this, and what could you do with it?"
+2. *A place you know.* "Find a municipality you know or have visited. What, if anything, surprises you about it?"
+   Probe: did they find "What stands out"? Did they read a definition (hover)?
+3. *Follow a thread.* "From that place, find another municipality that is similar in some way." (Any route: ranking
+   neighbours, Similar municipalities, Compare, a lens.)
+4. *Discover.* "Press Discover twice. Is each fact believable? Could you check it?"
+5. *Read the map.* At close zoom over forest, farmland and mountains: "What is the ground like here? How sure are you?"
+   Probe: do they think the trees and fields mark real locations? (They should not.)
+6. *Analyse.* "Which part of Scandinavia has the oldest population? How do you know?" (Lens + legend or report.)
+7. *History.* "Did Ålesund's population really fall in 2024?" (Society tab: boundary change, Haram.)
+
+**Questions (5 min).** 1–5 scales, then "why?": the map looks like a game world · I understood what the numbers mean ·
+I trusted the numbers · I would come back to explore more · something was confusing (what?). Last: "What would you
+change first?"
+
+**Analysis.** Per task: completed (yes / with help / no), time, the main obstacle. Count recurring confusions (≥ 2
+participants) as findings; quote, do not paraphrase. Record separately anything participants believed that the data
+does not say (for example, illustrated trees taken as real forest stands): those are integrity findings, fixed first.

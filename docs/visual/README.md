@@ -1,24 +1,35 @@
-# Visual evidence: before (v0.1) and after (v0.2)
+# Visual evidence: before (v0.2.0) and after (v0.3.0)
 
-Captured by `tests/visual_states.py` against the v0.1 baseline (git tag `v0.1-baseline`) and v0.2, with identical
-viewports (1440×900 desktop, 390×844 mobile, device pixel ratio 1), camera centres, zooms, selections and lenses.
-`before/` and `after/` hold the single frames, `compare/` the side-by-side pairs.
+Captured by `tests/visual_states.py` against v0.2.0 (git tag `v0.2.0`) and v0.3.0, with identical viewports (1440×900
+desktop, 390×844 mobile, device pixel ratio 1), camera centres, zooms, selections and lenses. The one-time first-run hint
+is suppressed in every state except 22, so the frames compare the map. `before/` and `after/` hold the frames,
+`compare/` the side-by-side pairs (before left, after right). The after frames use `?detail=full`: the capture machine
+renders without a GPU, where the map would otherwise drop to its reduced illustration detail (see VERIFICATION).
 
-| State | What changed |
+No baseline was approved automatically: these frames are evidence for review, not regression thresholds.
+
+| State | What changed (v0.2 → v0.3) |
 |---|---|
-| 01 overview | One continuous landscape (relief, land cover, sea depth bands) instead of hex tiles; national borders from polygons |
-| 02 regional south | Mountain ranges and valleys from the hillshade; mountain pieces only on summits |
-| 03 Bergen profile | Inspector in tabs; yields name their measure; rank intervals; Bergen's polygon outlined |
-| 04 Kiruna + Council | Council at ~25 % width; advisor statements computed, with sources |
-| 05 western Norway | Fjords, glaciers and plateaux continuous; the carpet of mountain sprites removed |
-| 06 Bergen coast (close) | 1 km blocks gone: polygon coast, painted lakes, smooth sea |
-| 07 Frederiksberg | Selectable by its own polygon although it owns no hex |
-| 08 specialisation | Municipal polygons coloured (every municipality its own value), clipped to the coast |
-| 09 population density | Hex lens clipped to land and shaded by relief |
-| 10 growth, Øresund | Municipal choropleth; grey = not comparable, never zero |
-| 11 Lofoten | Islands and sounds from polygons; no hex staircase in the sea |
-| 12 Stockholm archipelago | Coast from smoothed 1 km cells (the skerries merge: a documented limitation) |
-| 13/14 mobile | Labelled navigation bar (Explore, Lenses, Council, Almanac); Tromsø sheet leaves the town visible |
+| 01 overview | The Scandinavian interior is no longer muted as "foreign" (v0.2 bug); colours richer, foreign land still muted |
+| 02 regional south | Ranges as connected masses (form shading + crests); farmland tones in Denmark, Skåne, Mälardalen |
+| 03 Bergen profile | "What stands out" first in the inspector; ranks are competition ranks or possible-rank intervals |
+| 04 Kiruna + Council | Same layout; ranks and intervals follow the single convention |
+| 05 western Norway | Crest snow instead of whitened plateaus; deeper fjord valleys |
+| 06 Bergen coast (close) | Illustrated ground: broadleaf and conifer crowns, scree, fields, rooftops; no isolated sprites |
+| 07 Frederiksberg | Built-up land illustrated as rooftops and streets around the capital |
+| 08 / 09 / 10 lenses | Unchanged analysis view (no illustrations under a lens) |
+| 11 Lofoten, 12 Stockholm | Sea shadow under the land; archipelago coast still from 1 km cells (documented limitation) |
+| 13 / 14 mobile | Same navigation; Discover in the top bar (icon only on phones) |
+| 15 Jotunheimen | Connected massifs, snow on crests, valleys in blue-violet shadow |
+| 16 Skåne farmland (close) | Field patchwork with hedgerows instead of flat yellow and single barn sprites |
+| 17 Småland forest (close) | Continuous conifer canopy instead of scattered tree clumps |
+| 18 northern Scandes | Ranges continuous across the border |
+| 19 Jutland | Farmland patchwork, heath and plantations distinguishable |
+| 20 Telemark (very close) | Heath and scree on the plateau, forest on the slopes, smooth lake shores (was 1 km stair steps) |
+| 21 mobile Lofoten | Illustrated ground at phone size |
+| 22 first run (after only) | Three-line hint: click a municipality, lenses, Discover |
+| 23 Røst (after only) | "What stands out": fastest-shrinking and smallest by area, with neighbours and map links |
+| 24 Discover (after only) | A computed fact with its definition, the place selected and its lens applied |
 
-Timings for the same states are in `before/timings.json` and `after/timings.json`; the scripted performance
-comparison is in `docs/perf/`.
+Timings for the same states are in `before/timings.json` and `after/timings.json`; the scripted performance comparison
+is in `docs/perf/`.
