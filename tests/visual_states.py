@@ -47,6 +47,12 @@ def SH_PICK(text, s, muni=None):
 UP_ON = "__app.ui.setMapToggle?.('uplinks', true);"
 
 
+def SCROLL_TO(title):
+    """Scroll the open panel to the section with this heading."""
+    return (f"setTimeout(() => [...document.querySelectorAll('#city-panel .cp-section')].find((x) => x.querySelector('h3')?.textContent === "
+            f"{json.dumps(title)})?.scrollIntoView({{block: 'center'}}), 500);")
+
+
 def UP_PICK(cid, s):
     """Centre on a camera uplink by id and open its card (the layer is switched on by open())."""
     return (f"(() => {{ const c = __app.uplinks.data.byId.get({json.dumps(cid)}); __app.cam.stop?.(); __app.cam.x = c.x; __app.cam.y = c.y; "
@@ -98,6 +104,16 @@ STATES = [
      ".find((x) => /camera uplinks/i.test(x.innerText))?.scrollIntoView(), 500);", 0),
     ("38-uplinks-under-lens", DESKTOP, UP_ON + "__app.setLens('density');" + cam(560, 1300, 2.2), 0),
     ("39-uplinks-mobile-card", MOBILE, UP_PICK("wcc-sweden-are-areskutan", 7), 0),
+    # v0.5 opening screen (captured while the start-up is held on world.json; "failed" = world.json answers 404)
+    ("40-opening-desktop", DESKTOP, "opening:loading", 0),
+    ("41-opening-mobile", MOBILE, "opening:loading", 0),
+    ("42-opening-failed", DESKTOP, "opening:failed", 0),
+    # v0.5 Open in Maps
+    ("43-maps-municipality", DESKTOP, select("Bergen", 3.2) + SCROLL_TO("The real place"), 0),
+    ("44-maps-sites", DESKTOP, select("Bergen", 3.2) + "setTimeout(() => { document.querySelector('[data-cptab=\"Economy\"]')?.click(); "
+     "setTimeout(() => document.querySelector('#city-panel .site-list')?.scrollIntoView({block: 'center'}), 200); }, 300);", 0),
+    ("45-maps-region", DESKTOP, "__app.selectState('NO-15', {fly: false});" + SCROLL_TO("The real place"), 0),
+    ("46-maps-mobile-municipality", MOBILE, select("Stranda", 5) + SCROLL_TO("The real place"), 0),
 ]
 
 
@@ -120,6 +136,28 @@ async def main():
             errs = []
             pg.on("pageerror", lambda e: errs.append(str(e)))
             t0 = time.time()
+            if js.startswith("opening:"):  # the opening screen, held on world.json (or failing on it)
+                failed = js.endswith("failed")
+
+                async def held(route):  # (one parameter: Playwright passes the request as a second one if asked)
+                    if failed:
+                        await route.fulfill(status=404, body="not found")
+                    else:
+                        await asyncio.sleep(8)
+                        await route.continue_()
+                await ctx.route("**/data/world.json", held)
+                await pg.goto(base, wait_until="commit")
+                for _ in range(300):  # polled from here: the page's CSP does not allow wait_for_function's eval
+                    if await pg.evaluate("(() => { const o = document.getElementById('opening'); return !!o && getComputedStyle(o).position === 'fixed' "
+                                         "&& !!o.querySelector('.op-version').textContent; })()"):
+                        break
+                    await pg.wait_for_timeout(100)
+                await pg.wait_for_timeout(4000)  # the needle has settled
+                await pg.screenshot(path=str(out / f"{name}.png"))
+                timings[name] = {"wall_s": round(time.time() - t0, 2), "perf": None, "errors": errs}
+                print(f"{name}: {timings[name]['wall_s']}s")
+                await ctx.close()
+                continue
             await pg.goto(base, wait_until="networkidle")
             await pg.wait_for_function("window.__app && window.__app.data && window.__app.data.cities", timeout=30000)
             await pg.wait_for_timeout(2500 + extra)

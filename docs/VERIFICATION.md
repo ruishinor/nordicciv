@@ -1,4 +1,31 @@
-# Verification record — NordicCiv 0.5.0 (public camera uplinks)
+# Verification record — NordicCiv 0.5.0 (opening screen and Open in Maps; public camera uplinks)
+
+## Opening screen and Open in Maps (branch `feature/opening-maps`)
+
+Same build machine. Gates on the working tree (candidate `4e56daad195b…`; copy-only changes since):
+
+| Gate | Outcome |
+|---|---|
+| Unit tests | 57 run, 0 failed, 0 skipped (9 new in `tests/test_maps.py`: projection against pyproj, URL format and encoding, positions are the features' own, behaviour and zoom per kind, invalid input, link markup and escaping, version file, opening markup, no map service loaded) |
+| Browser journeys | 43 mandatory (0–42) PASS; 33–42 new (opening cold/slow with 4× CPU, not waiting for optional layers, cached, reduced motion, failures and retry, optional failures and the slow note, shared link and phone; Open in Maps across NO/SE/DK checked with pyproj, privacy and state, phone); 28 updated for the card's two actions |
+| `check --mode built` | 126 pass, 8 note, 0 warn, 0 fail (new: `version:`) |
+| Visual regression | 39 earlier states captured on `main` (ea7e6f3) and on the branch: 33 pixel-identical; 36, 37, 39 differ only by the new links (uplink card, municipality Overview). New states 40–46 |
+| Release run | `python -m pipeline release` on commit c9332d8: staged candidate `541649ad7f5b…`; on the staged copy unit tests 57/0/0 and browser journeys 43/43 PASS (bound to that candidate); then `check --mode release` stopped because the original downloads (data/raw) are not in this build environment, so nothing was **promoted** and 0.4.0 stays the last known-good release |
+| Start-up time | first map frame 1,043 ms vs 1,011 ms on `main` (median of 10 alternating cold loads; `docs/perf/v05_opening_startup.json`). An animated contour layer cost ~0.1 s and was made still |
+
+Real behaviour at Google (the build machine cannot reach Google; checked in a desktop browser on 2026-11-27). After
+Google's consent page (in Norway; "Reject all" chosen), each URL opened as intended:
+`center=62.17758,7.01086 zoom=9 satellite` → Stranda municipality in satellite view at that exact centre;
+`search query=55.61767,12.65646` → a pin on the Kastrup airfield (Tårnby kommune, Denmark);
+`center=59.32673,17.98147 zoom=10 satellite` → Stockholm municipality; `center=62.19522,7.15162 zoom=16 satellite` →
+the Eidsvatnet shore at Eidsdal, the camera's published position.
+
+Opening under a slow network (≈ 4 Mbit/s, 150 ms) and 4× slower CPU: status lines "Opening Scandinavia…" → "Loading
+resources and regions…" → "…population and economy…" → "…cities and settlements…" → "Loading the landscape…" →
+"Preparing the map…" → "Ready to explore." in the order the files arrived; ready at 16.2 s, before the municipal outlines
+had arrived and before the camera-uplink layer was requested. Cached: ready in about 0.9 s.
+
+## Camera uplinks
 
 Executed on the build machine (Linux, 2 CPUs, Python 3.13, headless Chrome 153 with a software GPU, SwiftShader) on a
 feature branch. The 0.4.0 and 0.3.0 records follow unchanged below this section.

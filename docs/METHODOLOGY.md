@@ -230,8 +230,8 @@ fjords, coasts, islands, ski resorts, weather stations, nature and viewpoints �
 camera NordicCiv keeps a stable identifier, a short name, a position, the municipality, a category, the provider, the
 provider's public viewing page, attribution and the date that page was last checked. Nothing else: no footage, snapshot,
 thumbnail, stream address, token or player is fetched, stored or shown, and the app loads nothing from a provider.
-The only way to a camera is the "Open camera uplink" link on its card, which opens the provider's own page in a new tab
-(`rel="noopener noreferrer"`, no referrer). Whether a camera is live is only known there; the app never says so.
+The only way to a camera is the "Open uplink" link on its card, which opens the provider's own page in a new tab
+(`rel="noopener noreferrer"`, no referrer). A second, separate action, "Open in Maps", shows the camera's place (below). Whether a camera is live is only known there; the app never says so.
 
 **Reference: OSIRIS.** OSIRIS (github.com/simplifaisoul/osiris, MIT) was studied for how it discovers and identifies
 public webcams. Its code is MIT, but its generated webcam lists (`public-webcams.generated.ts`,
@@ -292,10 +292,74 @@ modest geographical feature. It stands for a public viewpoint, not for the camer
 it shows. At small sizes its line widths are capped in art units so it never collapses into a dark barrel shape.
 
 **Interaction.** Card: name, location (municipality, county, country), provider and host, kind of position, page-check
-date, one "Open camera uplink" link and a note that no pictures are shown and liveness is unknown. Municipality panel,
+date, an "Open uplink" link (plus "Open in Maps" for the place) and a note that no pictures are shown and liveness is unknown. Municipality panel,
 Overview tab: where a municipality has uplinks, a short list and "Explore N camera uplinks on the map". Discover: twelve
 landscapes with an uplink (fjords, capes, mountains, islands, coast) open the place, the layer and the card. Almanac:
 "Camera uplinks" (what, positions, liveness, exclusions, providers, attribution, raw-file hashes).
+
+## Opening screen (v0.5)
+
+The page opens on a full-screen NordicCiv title card — an original compass emblem (the brand's gold ring and Nordic
+cross, a needle that settles), faint still map contours, the title, "Explore Scandinavia", a progress line, one status line and
+the release version (`web/data/version.json`, written from `VERSION` by `python -m pipeline build version`; `check` fails
+if they differ). It is in `index.html`, so it is on screen from the first paint; `js/opening.js` runs before the rest of
+the app's code has arrived and `main.js` drives it through the real start-up:
+
+- **What is waited for.** Only what the first map needs: `world`, `cities` and `nation` (essential) and `lenses`,
+  `sources`, `resources`, `states` (used if present), then building the world and drawing the first frame. The screen
+  fades in the animation frame right after that first frame. Relief tiles, municipal outlines, map layers (shelters,
+  uplinks, infrastructure, wonders) and extensions load afterwards, as before (journey 34 checks the order).
+- **What the progress line shows.** Bytes received when every file's size is known (`Content-Length`, no compression);
+  finished files when it is not; the map preparation is the last 12 % of the line. Until the sizes are known the line
+  shows a slow glint instead. It never goes backwards, shows no percentage figure and has no minimum duration.
+- **Status lines name what is still on its way.** The files download in parallel and finish roughly smallest first, so
+  the lines are in that order — "Loading resources and regions…", "…population and economy…", "…cities and
+  settlements…", "Loading the landscape…" — and the first line with a file still loading is shown; then "Preparing the
+  map…" and "Ready to explore.". Before the app's code has arrived it reads "Opening Scandinavia…".
+- **Fast starts.** With a warm cache the map is usually ready in well under a second; the fade is 0.18 s under 0.7 s and
+  0.42 s otherwise, and the map is live (pointer and keyboard) during it.
+- **Failures.** A missing or unreadable essential file, a failed download or an application file that does not load
+  stops the progress and says so in plain words ("The map data is missing", "The map didn't arrive", "NordicCiv didn't
+  start", or offline), with "Try again" (focused, an alert for screen readers) and the technical message under
+  "Details for developers" (also in the console). An optional file that fails is simply absent, as before. After 15 s
+  without progress the line adds "This is taking longer than usual." and keeps going.
+- **Accessibility.** Until ready, the app behind is `inert` (no pointer or keyboard access to hidden controls). Screen
+  readers hear "Opening NordicCiv" and then "Map ready" or the failure; the progress bar carries the current step as its
+  value text instead of announcing each change. `prefers-reduced-motion` stops every movement (needle,
+  glint, fade). Fixed overlay: no layout shift. No fonts, images, libraries or network requests were added (one 18-byte
+  version file).
+
+## Open in Maps (v0.5)
+
+Selected places can be handed over to Google Maps with an **Open in Maps** link — an ordinary link the user chooses to
+follow, built in one module (`web/js/app/maps.js`) from NordicCiv's own data with Google's documented cross-platform Maps
+URLs (no API key, script, embed, tiles or backend). It opens in a new tab (or the Maps app on phones) without opener or
+referrer; NordicCiv keeps its view, selection and lens. The URL carries only a position and a zoom — no application
+state, search text or user data — and nothing from Google is requested until the user clicks. Location is never asked.
+
+**Positions are the feature's own**, never a symbol moved aside on screen, the view centre or a polygon centroid
+presented as a town. Where a feature only has map coordinates (airports, ports, municipal extents) they are converted
+from the map's Lambert azimuthal equal-area projection (GRS80) to WGS84 by `web/js/util/geo.js` (Snyder's ellipsoidal
+formulas; within 10⁻⁷° of pyproj, unit test). Latitude is written first; invalid or missing positions give no link.
+
+**Two behaviours.** *View* (`map_action=map`, satellite, no marker) for areas and for positions that only mean "around
+here"; *marked* (`search` with a coordinate query: a pin) for things at a precise published spot that are easier to find
+with a marker. Per kind:
+
+| Where | Place | Behaviour and zoom |
+|---|---|---|
+| Municipality panel · Overview · "The real place" | the municipality | view of its whole extent (outline bounding box; hexes before outlines load), zoom fitted to its size (8–14) |
+| same | its main settlement (named place) | view at town (13) or city (12, 150,000+ residents) scale; none where the banner sits on a population peak |
+| Region panel | the county / län / region | landscape overview of its extent (5–10) |
+| Municipality panel · Economy · resources, wonders & hubs | national parks and natural sites | view fitted to the park's area (8–13) |
+| same | World Heritage and other landmarks | close view (15) |
+| same | universities, airports | marked (pin) |
+| same | ports (placed at their town in the data) | view at town scale (13) |
+| Camera uplink card | the camera | close view (16) at a published position; wider (14) around the place shown when only the place is known |
+
+Energy and extraction sites, military sites and public shelters get no such link: the feature is for ordinary
+geographical exploration. A municipality whose main settlement shares its name gets "Open the town/city in Maps" so the
+two links never read the same.
 
 ## Validation (`python -m pipeline check --mode built|source|release`)
 

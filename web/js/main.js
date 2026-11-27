@@ -20,19 +20,26 @@ import { installExtensions } from "./ext/index.js";
 import { initRelief, muniAt, muniNear } from "./render/art/relief.js";
 import { initShare } from "./app/share.js";
 import { initHelp } from "./app/help.js";
+import { initMaps } from "./app/maps.js";
+import { opening } from "./opening.js";
 
 const { drawStatic, drawOverlay, OCEAN_BG } = mapRender;
 
-async function loadJSON(name, optional = false) {
+async function loadJSON(name, optional = false, { track = false } = {}) {
   try {
     const r = await fetch(`data/${name}.json`);
     if (!r.ok) throw new Error(`data/${name}.json: HTTP ${r.status}`);
-    return await r.json();
+    return await (track ? opening.read(name, r) : r.json());
   } catch (err) {
     if (optional) return null;
     throw err;
+  } finally {
+    if (track) opening.settle(name);
   }
 }
+
+// The files the first map needs (world, cities, nation) and the ones it uses if present; the opening screen follows them.
+const START_DATA = [["world", false], ["cities", false], ["nation", false], ["lenses", true], ["sources", true], ["resources", true], ["states", true]];
 
 // Optional data files (docs/DATA_CONTRACTS.md). Small map-layer files are fetched right after the first frame; the
 // others only when something asks for them (app.loadData(name)). A missing file (404) loads as null.
@@ -51,10 +58,11 @@ const SELECT_ANIM_MS = 33; // ~30 fps while a state's border highlight animates
 const isMobile = () => matchMedia("(max-width: 700px)").matches;
 
 async function main() {
-  const [world, cities, nation, lenses, sources, resources, statesData] = await Promise.all([
-    loadJSON("world"), loadJSON("cities"), loadJSON("nation"),
-    loadJSON("lenses", true), loadJSON("sources", true), loadJSON("resources", true), loadJSON("states", true),
-  ]);
+  opening.begin(START_DATA.map(([n]) => n));
+  const [world, cities, nation, lenses, sources, resources, statesData] = await Promise.all(
+    START_DATA.map(([n, optional]) => loadJSON(n, optional, { track: true })));
+  await opening.preparing();
+  initMaps(world);
   const lensFile = lenses && Array.isArray(lenses.lenses) ? lenses : { vintage: "", groups: [], lenses: [] };
   // NordicCiv packs lens values for the Scandinavian land hexes only (owner >= 0), in cell order: expand them.
   if (lensFile.packed === "owned" && world?.owner) {
@@ -1313,7 +1321,9 @@ async function main() {
   setLens(null);
   dock.render(null, null);
   url.applyCurrent(true); // after the home fit, so "at" zoom is relative to it
-  document.getElementById("loading").remove();
+  // The first frame was requested by resize(); this callback runs right after it in the same animation frame, so the
+  // opening screen starts fading only once the map is drawn underneath. (In a background tab both wait until it is shown.)
+  requestAnimationFrame(() => opening.ready());
   // Small optional map-layer files load once the first frame is on screen (extensions can await app.loadData).
   // (A timer backs up the frame callback, which never fires while the page is in a background tab.)
   let eagerKicked = false;
@@ -1324,10 +1334,4 @@ async function main() {
   installExtensions(app);
 }
 
-main().catch((err) => {
-  console.error(err);
-  const el = document.getElementById("loading");
-  if (!el) return;
-  el.classList.add("error");
-  el.textContent = `Could not load the map data (${err.message}). Run "uv run python -m pipeline all" and serve web/ over HTTP.`;
-});
+main().catch((err) => opening.fail(err));

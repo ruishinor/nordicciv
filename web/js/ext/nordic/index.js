@@ -480,8 +480,8 @@ export function install(app) {
           : `<td>${x.html}${max > 0 && list.length > 1 ? `<i class="mag" style="width:${Math.round((Math.abs(x.v) / max) * 100)}%" aria-hidden="true"></i>` : ""}</td>`).join("")}</tr>`;
       }).join("")}
       </table></div><button class="chip" data-hl="${list.map((c) => c.id).join(",")}">Highlight on map</button>
-      <p class="muted small">Bars show size relative to the largest value in each row; they do not mean better or worse.
-      ≥ = lower bound (suppressed cells); ≈ = estimate; – = not available or not comparable (hover for why).
+      <p class="muted small">The largest number in each row gets a full bar.
+      ≥ = at least; ≈ = estimate; – = no comparable figure (hover for details).
       Income is relative to each country's own statistic and is not comparable across borders; output per resident is an estimate and counts output where people work.</p>`
       : `<p class="muted">Add municipalities with the box below, or with <i>Compare ⇄</i> in a municipality's panel.</p>`;
     return `${table}<div class="nc-add"><label for="nc-add" class="sr-only">Add a municipality</label><input id="nc-add" type="search" placeholder="Add a municipality…" autocomplete="off"><div id="nc-add-list" class="chips"></div></div>

@@ -38,8 +38,8 @@ export function initHelp() {
       <section><h3>${title}</h3>${rows.map(([keys, what]) => `
         <div class="help-row"><span class="keys">${keys.map((k) => `<kbd>${k}</kbd>`).join("")}</span><span>${what}</span></div>`).join("")}
       </section>`).join("")}</div>
-    <p class="help-foot">Every number traces back to public data: open the <b>Almanac</b> for sources.
-      The link in the address bar always reopens this exact view.
+    <p class="help-foot">Open the <b>Almanac</b> for map details and sources.
+      Copy the address bar link to share this view.
       NordicCiv: data pipeline and app are open source (MIT; see the README shipped with the source). Map engine adapted from Andrej Karpathy's usaciv (MIT).</p>`;
 
   const close = () => {

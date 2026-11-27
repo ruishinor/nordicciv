@@ -1,7 +1,26 @@
 # NordicCiv — requirements and test results
 
 Status: ✅ done and verified · 🟡 done, verification pending or partial · ⏳ open · ➖ out of scope. "Verification" names the
-check, test or file that verifies the item. v0.5 items first; the v0.4, v0.3 and v0.2 tables follow unchanged.
+check, test or file that verifies the item. v0.5 items first (opening screen and Open in Maps, then camera uplinks); the v0.4, v0.3 and v0.2 tables follow unchanged.
+
+## v0.5 — opening screen and Open in Maps
+
+| ID | Requirement | Status | Implementation | Evidence |
+|---|---|---|---|---|
+| NC-O01 | Full-viewport opening: identity, subtle animated emblem, discreet version, progress line, changing status, automatic hand-over; NordicCiv's own art (navy, gold, serif, compass and contours), no terminal look | ✅ | `index.html` markup, `js/opening.js`, CSS "opening screen" | journey 33; states 40, 41 |
+| NC-O02 | Version from the repository's version information | ✅ | `web/data/version.json` built from `VERSION`; `check` fails on a mismatch | check `version:`; unit `test_version_file_is_the_repository_version` |
+| NC-O03 | Bound to real readiness: byte progress where measurable, whole files otherwise, indeterminate until sizes are known; no percentage figure, no minimum delay | ✅ | `opening.read/settle/preparing/ready` driven by `main.js` | journeys 33 (the line only grows; status lines follow the files as they arrive), 35; METHODOLOGY "Opening screen" |
+| NC-O04 | Visible only until the first usable map; optional layers, relief and extensions not waited for | ✅ | ready in the frame after the first map frame | journey 34 (gone before outlines arrive and before uplinks are requested) |
+| NC-O05 | Cached start: immediate or short fade | ✅ | 0.18 s fade under 0.7 s, 0.42 s otherwise; map live during the fade | journey 35 |
+| NC-O06 | Failures: stop progress, plain explanation, retry, diagnostics kept; optional failures do not block | ✅ | `opening.fail`: missing data, failed download, code not loaded, offline; "Try again"; details + console | journeys 37, 38; state 42 |
+| NC-O07 | Accessibility and compatibility: desktop and phone, reduced motion, status without chatter, no hidden-control interaction, no layout shift, no new fonts/media/libraries | ✅ | app `inert` until ready; progressbar value text; one polite live line; `prefers-reduced-motion` | journeys 33, 36, 39; unit `test_opening_markup` |
+| NC-O08 | No slower start | ✅ | contours still, no live filters, progress drawn once per frame | `docs/perf/v05_opening_startup.json` (+32 ms to the first map frame vs `main`, one painted status frame) |
+| NC-M01 | "Open in Maps" to Google Maps with official cross-platform URLs; no key, SDK, embed, backend or proxy | ✅ | `web/js/app/maps.js` (one shared utility) | unit `test_url_formats`, `test_no_map_service_is_loaded` |
+| NC-M02 | Correct WGS84 positions from the features' own data; projected → lon/lat where needed; no centroid passed off as a town | ✅ | `web/js/util/geo.js` (LAEA inverse, ≤ 10⁻⁷° vs pyproj); municipality = extent view, settlement separate | unit `test_inverse_projection_matches_pyproj`, `test_positions_are_the_features_own`; journey 40 (pyproj in the test) |
+| NC-M03 | Zoom by the feature's scale; satellite view vs marked location kept distinct | ✅ | view/pin per kind (table in METHODOLOGY) | unit `test_behaviour_and_zoom_by_kind`; journey 40; real Google pages checked (VERIFICATION) |
+| NC-M04 | In existing inspectors only: municipality and region panels, sites list, camera card ("Open uplink" + "Open in Maps") | ✅ | no new navigation | journeys 28, 40; states 36, 43–46 |
+| NC-M05 | Explicit navigation, new tab, state kept, no geolocation, no turn-by-turn, nothing preloaded, no state or user data sent; invalid coordinates give no link; no links for energy, military or shelter sites | ✅ | anchors with `target=_blank`, `noopener noreferrer`, `no-referrer` | journeys 41, 42; unit `test_invalid_input` |
+| NC-M06 | Existing functionality and rendering preserved | ✅ | | journeys 0–32; 33 visual states pixel-identical to `main` (VERIFICATION) |
 
 ## v0.5 — public camera uplinks
 

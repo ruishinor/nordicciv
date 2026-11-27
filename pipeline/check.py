@@ -553,6 +553,7 @@ def main(argv=None):
     check_lenses(r, lenses, sources, world)
     check_shelters(r, load("shelters"), cities, world, lenses, mode)
     check_uplinks(r, load("uplinks"), cities, world, mode)
+    check_version(r, load("version"))
     if res:
         check_resources(r, res, world)
     check_sources(r, sources)
@@ -767,6 +768,14 @@ def check_uplinks(r, up, cities, world, mode):
             r.ok(not diff, f"source: every published position equals the provider's cached listing, read independently ({len(pub)} checked, {len(diff)} differ {diff[:3]})")
         else:
             r.add("FAIL", "source: cached provider listings for camera uplinks missing (data/raw/camera_uplinks)")
+
+
+def check_version(r, v):
+    """The opening screen shows web/data/version.json: it must be the repository's VERSION (pipeline/build/version.py)."""
+    want = (ROOT / "VERSION").read_text().strip()
+    got = v.get("version") if isinstance(v, dict) else None
+    r.ok(got == want and set(v) == {"version"},
+         f"version: web/data/version.json says {got!r}, VERSION says {want!r} (rebuild with: python -m pipeline build version)")
 
 
 def _finish(r):
