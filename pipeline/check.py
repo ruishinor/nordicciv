@@ -552,6 +552,7 @@ def main(argv=None):
     check_munis(r, munis, cities)
     check_lenses(r, lenses, sources, world)
     check_shelters(r, load("shelters"), cities, world, lenses, mode)
+    check_uplinks(r, load("uplinks"), cities, world, mode)
     if res:
         check_resources(r, res, world)
     check_sources(r, sources)
@@ -655,6 +656,117 @@ def check_shelters(r, sh, cities, world, lenses, mode):
              "'no public shelter' exactly where the register has none")
     else:
         r.add("FAIL", "lens shelter_places missing")
+
+
+UPLINK_KEYS = {"id", "name", "cat", "provider", "url", "lat", "lon", "x", "y", "cell", "muni", "country", "pos", "verified",
+               "place", "provider_name", "assigned"}
+UPLINK_HOSTS = {"camstreamer": r"camstreamer\.com", "panomax": r"\d+\.panomax\.com", "webcamcollections": r"webcamcollections\.com",
+                "skylinewebcams": r"www\.skylinewebcams\.com"}
+COUNTRY_BOX = {"NO": (4.0, 57.5, 31.5, 71.5), "SE": (10.5, 55.0, 24.5, 69.5), "DK": (7.5, 54.4, 15.5, 58.0)}
+
+
+def check_uplinks(r, up, cities, world, mode):
+    """Camera uplinks (v0.5): links only, safe outbound addresses, positions, municipalities, review and page checks."""
+    if up is None:
+        r.add("FAIL" if mode == "release" else "WARN", "uplinks: uplinks.json missing")
+        return
+    from datetime import date
+    from urllib.parse import urlsplit
+    cams = up["cameras"]
+    ids = [c["id"] for c in cams]
+    r.ok(len(ids) == len(set(ids)) and all(re.fullmatch(r"[a-z]{2,3}-[a-z0-9-]+", i) for i in ids),
+         f"uplinks: {len(ids)} cameras, stable identifiers well-formed and unique")
+    extra = sorted({k for c in cams for k in c} - UPLINK_KEYS)
+    r.ok(not extra, f"uplinks: only the necessary metadata is kept — no stream, snapshot, thumbnail, token or player fields ({extra or 'none extra'})")
+    bad_url = []
+    for c in cams:
+        u = urlsplit(c["url"])
+        pat = UPLINK_HOSTS.get(c["provider"])
+        host_ok = re.fullmatch(pat, u.hostname or "") if pat else bool(c.get("provider_name"))
+        if (u.scheme != "https" or u.username or u.password or u.port not in (None, 443) or not host_ok
+                or re.search(r"(token|auth|key|sig|session)=", u.query, re.I) or re.search(r"\.(m3u8|mp4|jpe?g|png|webp|mjpg|cgi)$", u.path, re.I)):
+            bad_url.append(c["id"])
+    r.ok(not bad_url, f"uplinks: every destination is an https viewing page on the provider's own host (no credentials, tokens, streams or image files; {len(bad_url)} bad)")
+    r.ok(len({c["url"] for c in cams}) == len(cams), "uplinks: no two cameras share a destination page")
+    out_box = [c["id"] for c in cams if not (COUNTRY_BOX[c["country"]][0] <= c["lon"] <= COUNTRY_BOX[c["country"]][2]
+                                             and COUNTRY_BOX[c["country"]][1] <= c["lat"] <= COUNTRY_BOX[c["country"]][3])]
+    r.ok(not out_box, f"uplinks: every position lies in its country's lon/lat envelope ({len(out_box)} outside)")
+    from .core import geo as _geo
+    from pyproj import Transformer
+    import numpy as _np
+    fr = _geo.Frame(world["projection"]["x0_km"], world["projection"]["y1_km"])
+    back = Transformer.from_crs(_geo.NORDIC_LAEA, "EPSG:4326", always_xy=True)
+    bx, by = back.transform(_np.array([c["x"] for c in cams]) + fr.x0, fr.y1 - _np.array([c["y"] for c in cams]))
+    err = max(max(abs(a - c["lon"]) * 55.0, abs(b - c["lat"]) * 111.2) for a, b, c in zip(bx, by, cams))
+    r.ok(err < 0.005, f"uplinks: map positions transform back to the listed coordinates (worst {err * 1000:.1f} m)")
+    by_id = {c["id"]: c for c in cities}
+    bad_m = [c["id"] for c in cams if by_id.get(c["muni"], {}).get("country") != c["country"]]
+    far = [c["id"] for c in cams if c.get("assigned", {}).get("distance_m", 0) > 2500]
+    r.ok(not bad_m and not far, f"uplinks: every camera belongs to a municipality of its own country; {sum(1 for c in cams if 'assigned' in c)} just outside a "
+         f"simplified outline were assigned to the nearest (≤ 2,500 m, distance kept)")
+    cats, provs = up["categories"], up["providers"]
+    r.ok(all(c["cat"] in cats for c in cams) and all(c["provider"] in provs or c.get("provider_name") for c in cams)
+         and all(c["pos"] in ("published", "place") and (c["pos"] == "published") == ("place" not in c) for c in cams),
+         "uplinks: every camera has a known category, a named provider and a stated kind of position (published / place shown)")
+    # duplicates: same spot and same distinctive name
+    def norm(s):
+        import unicodedata
+        s = unicodedata.normalize("NFKD", s.lower())
+        return re.sub(r"[^a-z0-9]+", " ", "".join(ch for ch in s if not unicodedata.combining(ch))).strip()
+    dup = [(a["id"], b["id"]) for i, a in enumerate(cams) for b in cams[i + 1:]
+           if math.hypot(a["x"] - b["x"], a["y"] - b["y"]) < 0.1 and norm(a["name"]) == norm(b["name"])]
+    r.ok(not dup, f"uplinks: no duplicate camera (same name within 100 m; {len(dup)} found)")
+    # review and page checks (pipeline/catalogue, tracked in the repository)
+    catf = ROOT / "pipeline" / "catalogue" / "camera_uplinks.json"
+    verf = ROOT / "pipeline" / "catalogue" / "camera_uplinks_verification.json"
+    if catf.exists() and verf.exists():
+        cat = json.loads(catf.read_text(encoding="utf-8"))
+        ver = json.loads(verf.read_text(encoding="utf-8"))["results"]
+        keyed = {}
+        for c in cams:
+            kind, rest = c["id"].split("-", 1)
+            keyed[c["id"]] = c
+        excluded = set(cat["camstreamer"]["exclude"])
+        leaked = [c["id"] for c in cams if c["provider"] == "camstreamer" and c["url"].rsplit("/", 1)[-1].split("-")[0] in excluded]
+        n_inc = len(cat["camstreamer"]["include"]) + len(cat["panomax"]["include"]) + len(cat["webcamcollections"]["include"]) + len(cat["linked"])
+        left = up["totals"].get("unverified_left_out", 0)
+        r.ok(not leaked and len(cams) + left == n_inc, f"uplinks: exactly the reviewed catalogue ({n_inc} reviewed, {len(cams)} published, {left} left out "
+             f"for a failed page check); no excluded camera published ({len(leaked)})")
+        vmap = {v["url"]: v for v in ver.values()}
+        today = date.today()
+        stale = [c["id"] for c in cams if not (vmap.get(c["url"], {}).get("ok") and vmap[c["url"]]["checked"] == c["verified"]
+                                               and 0 <= (today - date.fromisoformat(c["verified"])).days <= 120)]
+        r.ok(not stale, f"uplinks: every published camera's page was checked and answered within the last 120 days ({len(stale)} not); oldest check "
+             f"{min(c['verified'] for c in cams)}", bad="FAIL" if mode == "release" else "WARN")
+    else:
+        r.add("FAIL", "uplinks: reviewed catalogue or page-check record missing from pipeline/catalogue")
+    agg = {}
+    for c in cams:
+        agg.setdefault(c["muni"], []).append(c["id"])
+    r.ok({m: sorted(v) for m, v in agg.items()} == {m: sorted(a["ids"]) for m, a in up["munis"].items()} and up["totals"]["cameras"] == len(cams)
+         and sum(up["totals"]["by_country"].values()) == len(cams), "uplinks: municipal lists and totals equal the camera records")
+    r.ok(all(k in up.get("meaning", {}) for k in ("status", "position", "verified", "absence")) and up.get("sources", {}).get("attribution")
+         and up.get("policy", {}).get("exclude"), "uplinks: no-live-claim, position meaning, page-check meaning, absence caveat, exclusions and attribution are published with the data")
+    cc = up["totals"]["by_country"]
+    r.add("NOTE", f"uplinks: {len(cams)} cameras — Norway {cc['NO']}, Sweden {cc['SE']}, Denmark {cc['DK']}; {up['totals']['place_positions']} at place positions; "
+                  f"providers {up['totals']['by_provider']}")
+    if mode in ("source", "release"):
+        raw = ROOT / "data" / "raw" / "camera_uplinks"
+        if (raw / "camstreamer_NO.json").exists():
+            listed = {}
+            for f in ("camstreamer_NO.json", "camstreamer_SE.json", "camstreamer_DK.json"):
+                for v in json.loads((raw / f).read_text(encoding="utf-8")).get("videos", []):
+                    listed["https://camstreamer.com" + v["detail_link"]] = (float(v["lat"]), float(v["lng"]))
+            for x in json.loads((raw / "panomax_search.json").read_text(encoding="utf-8"))["data"]:
+                listed[f"https://{x['instanceId']}.panomax.com/"] = (float(x["camLatitude"]), float(x["camLongitude"]))
+            html = (raw / "webcamcollections_map.html").read_text(encoding="utf-8")
+            for m in re.finditer(r'"url":"/countries/([^"]+)"[^{}]*?"media":\{[^{}]*?"position":\{"__typename":"GeoPosition","lat":([-\d.]+),"long":([-\d.]+)', html):
+                listed.setdefault(f"https://webcamcollections.com/en/countries/{m.group(1)}", (float(m.group(2)), float(m.group(3))))
+            pub = [c for c in cams if c["pos"] == "published"]
+            diff = [c["id"] for c in pub if c["url"] not in listed or abs(listed[c["url"]][0] - c["lat"]) > 1e-6 or abs(listed[c["url"]][1] - c["lon"]) > 1e-6]
+            r.ok(not diff, f"source: every published position equals the provider's cached listing, read independently ({len(pub)} checked, {len(diff)} differ {diff[:3]})")
+        else:
+            r.add("FAIL", "source: cached provider listings for camera uplinks missing (data/raw/camera_uplinks)")
 
 
 def _finish(r):

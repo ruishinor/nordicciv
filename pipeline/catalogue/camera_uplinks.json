@@ -1,0 +1,977 @@
+{
+ "about": "NordicCiv's reviewed selection of public camera uplinks. Each entry is a camera its operator publishes for anyone to watch; NordicCiv keeps a name, a position, a category and the provider's public viewing page, and only links to it. A camera appears only after review: new cameras on a provider's map stay out until they are added here. Display names are NordicCiv's own short descriptions of what the provider lists.",
+ "reviewed": "2026-11-27",
+ "policy": {
+  "include": "Cameras intentionally published for public viewing on the operator's or a webcam publisher's public page, showing a place: settlements, mountains and valleys, fjords and coasts, islands, tourist destinations, ski resorts, weather observation, nature and viewpoints.",
+  "exclude": [
+   "traffic and road-monitoring cameras",
+   "private, residential or exposed network cameras and unpublished endpoints",
+   "cameras aimed at people (shops, queues, courts, skateparks, street-level squares and parks)",
+   "vendor demonstrations, test and copy listings",
+   "golf courses, motorsport, airfields and construction sites",
+   "cameras whose owner does not say what they show",
+   "listings whose published position contradicts the place they name",
+   "duplicates of a camera already listed",
+   "pages served only over plain http"
+  ],
+  "positions": "Published positions are used as published. Pages without coordinates are placed at the Wikidata coordinates of the place they show and marked as place positions.",
+  "duplicates": "One record per camera. Where the same camera is listed by several providers, the operator's own page is preferred, then the listing with a published position.",
+  "status": "Nothing here says a camera is live or working: that is only known on the provider's page."
+ },
+ "categories": {
+  "settlement": "Town or city",
+  "mountain": "Mountains and valleys",
+  "fjord": "Fjord",
+  "coast": "Coast and harbour",
+  "island": "Island and archipelago",
+  "destination": "Tourist destination",
+  "ski": "Ski resort",
+  "weather": "Weather observation",
+  "nature": "Nature",
+  "viewpoint": "Scenic viewpoint"
+ },
+ "providers": {
+  "camstreamer": {
+   "name": "CamStreamer",
+   "home": "https://camstreamer.com/live/map",
+   "note": "Streams published by the camera owners on CamStreamer's public gallery; position as published by the owner."
+  },
+  "panomax": {
+   "name": "Panomax",
+   "home": "https://www.panomax.com/",
+   "note": "Panoramic cameras run with the operators; position as published by Panomax."
+  },
+  "webcamcollections": {
+   "name": "WebcamCollections",
+   "home": "https://webcamcollections.com/en/map",
+   "note": "Swedish webcam publisher; position as published on its public map."
+  },
+  "skylinewebcams": {
+   "name": "SkylineWebcams",
+   "home": "https://www.skylinewebcams.com/",
+   "note": "Webcam publisher; pages publish no coordinates (place position from Wikidata)."
+  }
+ },
+ "camstreamer": {
+  "include": {
+   "960488448": {
+    "name": "Store Mosse National Park",
+    "category": "nature"
+   },
+   "895108667": {
+    "name": "Hertingforsen, Falkenberg",
+    "category": "nature"
+   },
+   "871738375": {
+    "name": "Poolviken, Varberg",
+    "category": "coast"
+   },
+   "783403208": {
+    "name": "Olofsbo Strand, Falkenberg",
+    "category": "coast"
+   },
+   "695264008": {
+    "name": "Stormhuset, Apelviken, Varberg",
+    "category": "coast"
+   },
+   "708385140": {
+    "name": "Apelviken, Varberg",
+    "category": "coast"
+   },
+   "503018648": {
+    "name": "Stockholm from DN-skrapan",
+    "category": "settlement"
+   },
+   "657399421": {
+    "name": "Sälen – Lindvallen, Gustavbacken top",
+    "category": "ski"
+   },
+   "464078330": {
+    "name": "Bäckvallen",
+    "category": "nature"
+   },
+   "389987629": {
+    "name": "Böda Sand, Öland",
+    "category": "coast"
+   },
+   "234558907": {
+    "name": "View over Anåfjället",
+    "category": "mountain"
+   },
+   "192211280": {
+    "name": "Stöten, Sälen – World Cup slope",
+    "category": "ski"
+   },
+   "90959039": {
+    "name": "Arvidsjaur",
+    "category": "settlement"
+   },
+   "34327316": {
+    "name": "Tällberg – view over Siljan",
+    "category": "viewpoint"
+   },
+   "54006346": {
+    "name": "Liseberg, Gothenburg",
+    "category": "destination"
+   },
+   "40093061": {
+    "name": "Rengsfallet, Valsjöbyn",
+    "category": "nature"
+   },
+   "27857184": {
+    "name": "Björkliden, Lapland",
+    "category": "mountain"
+   },
+   "45759": {
+    "name": "Trelleborg",
+    "category": "settlement"
+   },
+   "44895": {
+    "name": "Getterön nature reserve, Varberg",
+    "category": "nature"
+   },
+   "40236": {
+    "name": "Tänndalen",
+    "category": "ski"
+   },
+   "38455": {
+    "name": "Falkenberg Strandbad",
+    "category": "coast"
+   },
+   "11928": {
+    "name": "Kåsa Strand, Varberg",
+    "category": "coast"
+   },
+   "3270": {
+    "name": "Varberg Fortress",
+    "category": "destination"
+   },
+   "956939062": {
+    "name": "Utsikt fra toppen, Telemark",
+    "category": "viewpoint"
+   },
+   "930307404": {
+    "name": "Turufjell",
+    "category": "mountain"
+   },
+   "878373272": {
+    "name": "Ilene nature reserve, Tønsberg",
+    "category": "nature"
+   },
+   "847741412": {
+    "name": "Gudvangen, Nærøyfjord",
+    "category": "fjord"
+   },
+   "740212026": {
+    "name": "Hafjell – Pellestova",
+    "category": "ski"
+   },
+   "718228928": {
+    "name": "Selje, Risnakken",
+    "category": "coast"
+   },
+   "716341146": {
+    "name": "Mehamn",
+    "category": "coast"
+   },
+   "701055294": {
+    "name": "Eidsvatnet, Eidsdal",
+    "category": "nature"
+   },
+   "692023311": {
+    "name": "Oppdal Skisenter – Stølen",
+    "category": "ski"
+   },
+   "657170571": {
+    "name": "Oppdal Skisenter – Vangslia",
+    "category": "ski"
+   },
+   "643095337": {
+    "name": "Halsnøy",
+    "category": "island"
+   },
+   "581358688": {
+    "name": "Kristiansund – Nordlandet",
+    "category": "settlement"
+   },
+   "499146140": {
+    "name": "Trondheim – Rosenborg",
+    "category": "settlement"
+   },
+   "456906083": {
+    "name": "Harstad",
+    "category": "settlement"
+   },
+   "450257317": {
+    "name": "Kråkenes lighthouse",
+    "category": "coast"
+   },
+   "425493061": {
+    "name": "Geirangerfjord",
+    "category": "fjord"
+   },
+   "406616538": {
+    "name": "Eikedalen – Tobiasheisen",
+    "category": "ski"
+   },
+   "385333612": {
+    "name": "White-tailed eagle nest, Kristiansund",
+    "category": "nature"
+   },
+   "384525310": {
+    "name": "Vidden, Bergen",
+    "category": "mountain"
+   },
+   "311287426": {
+    "name": "Vindøldalen",
+    "category": "mountain"
+   },
+   "253181929": {
+    "name": "Hjørundfjorden",
+    "category": "fjord"
+   },
+   "204420247": {
+    "name": "Setertrekket",
+    "category": "nature"
+   },
+   "68505530": {
+    "name": "Smøla Havfiskesenter",
+    "category": "island"
+   },
+   "61969050": {
+    "name": "Nordfjordhjort, Bryggja",
+    "category": "nature"
+   },
+   "34948": {
+    "name": "Lifjell",
+    "category": "ski"
+   },
+   "37967": {
+    "name": "Sandøya",
+    "category": "island"
+   },
+   "38667": {
+    "name": "Jørpeland",
+    "category": "fjord"
+   },
+   "42900": {
+    "name": "Bodø harbour",
+    "category": "coast"
+   },
+   "1879": {
+    "name": "Bodø – Molostua",
+    "category": "coast"
+   },
+   "31304": {
+    "name": "Dale, Sandnes",
+    "category": "fjord"
+   },
+   "27756": {
+    "name": "Tømmerstø brygge, Kristiansand",
+    "category": "coast"
+   },
+   "25689": {
+    "name": "Kristiansund – Kongens plass",
+    "category": "settlement"
+   },
+   "22148": {
+    "name": "Eide, Grimstad",
+    "category": "coast"
+   },
+   "20305": {
+    "name": "Bud and Hustadvika",
+    "category": "coast"
+   },
+   "10166": {
+    "name": "Harstad harbour",
+    "category": "coast"
+   },
+   "6021": {
+    "name": "Nordfjordeid harbour",
+    "category": "fjord"
+   },
+   "5386": {
+    "name": "Molde",
+    "category": "fjord"
+   },
+   "5212": {
+    "name": "Geiranger cruise port",
+    "category": "fjord"
+   },
+   "4412": {
+    "name": "Drag harbour, Tysfjord",
+    "category": "fjord"
+   },
+   "4006": {
+    "name": "Sæbøvik",
+    "category": "fjord"
+   },
+   "2895": {
+    "name": "Måløy",
+    "category": "coast"
+   },
+   "528619846": {
+    "name": "Vindebæk Kyst weather station",
+    "category": "weather"
+   },
+   "476137240": {
+    "name": "Holbæk airfield weather station",
+    "category": "weather"
+   },
+   "467280192": {
+    "name": "Assens / Torø weather station",
+    "category": "weather"
+   },
+   "466724539": {
+    "name": "Store Jyndevad weather station",
+    "category": "weather"
+   },
+   "457999877": {
+    "name": "Isenvad weather station",
+    "category": "weather"
+   },
+   "348756862": {
+    "name": "Henne Strand",
+    "category": "coast"
+   },
+   "1943": {
+    "name": "Lyngvig lighthouse",
+    "category": "coast"
+   }
+  },
+  "exclude": {
+   "899214887": "vendor demonstration (thermal camera test stream)",
+   "785375478": "vendor demonstration (experience centre)",
+   "819712219": "golf course: a leisure facility, not a geographical viewpoint",
+   "778494701": "golf course",
+   "772077467": "golf course",
+   "766723143": "golf course",
+   "766700740": "golf course",
+   "766678350": "golf course",
+   "764186845": "golf course",
+   "169549171": "golf course",
+   "7772433": "golf course",
+   "41478": "golf course",
+   "31358": "golf course",
+   "31373": "golf course",
+   "513495148": "duplicate: same published position and view as 695264008 (Stormhuset)",
+   "315329771": "aimed at people (skatepark)",
+   "180511588": "aimed at people (padel courts)",
+   "9157": "aimed at people (queue status at a department store)",
+   "198867803": "motorsport facility: vehicles and people, not a geographical viewpoint",
+   "198867802": "motorsport facility; also published at a position 40 km from the club",
+   "12671": "street-level public space (park) where passers-by are the main subject",
+   "558474685": "subject not stated by the owner ('Granens Tid', category 'Other')",
+   "8658": "duplicate: same name and published position as 27857184 (Björkliden)",
+   "41043": "published position (57.93° N, 16.42° E) is 230 km from Fulltofta, Skåne, the place it names; the same camera is listed with a correct position by WebcamCollections",
+   "12014": "duplicate: Skrea strand is linked through its operator, Falkenberg Energi (Wikidata Q106677606)",
+   "895859236": "a copy/test listing of 385333612",
+   "651092979": "test stream",
+   "707458335": "named only by camera model; content not stated by the owner",
+   "8659349": "named only by camera model; content not stated by the owner",
+   "8110": "content not stated by the owner",
+   "261897670": "near-duplicate of 5212 (same quay in Geiranger, 130 m apart)",
+   "140588618": "published position is 12 km from Hellesylt, the port it names",
+   "8458": "published position is in Oslo, 300 km from Hellesylt, the place it names; Hellesylt is linked through WebcamCollections with a consistent position",
+   "125115176": "published position is in Agder, 1,250 km from Vervet in Tromsø, the place it names; Vervet is linked through WebcamCollections",
+   "1880": "duplicate published position of 42900 (Bodø harbour)",
+   "1034": "airfield operations: aircraft, vehicles and people"
+  }
+ },
+ "panomax": {
+  "include": {
+   "4055159": {
+    "name": "Fjellheisen, Tromsø",
+    "category": "viewpoint"
+   },
+   "4053605": {
+    "name": "Romsdalsgondolen, Åndalsnes",
+    "category": "mountain"
+   },
+   "1745821": {
+    "name": "Storefjell – Storefjellstoppen",
+    "category": "ski"
+   },
+   "1753845": {
+    "name": "Storefjellstølen",
+    "category": "ski"
+   },
+   "2614": {
+    "name": "Loen Skylift – Hoven",
+    "category": "mountain"
+   },
+   "3058468": {
+    "name": "Leirvassbu, Jotunheimen",
+    "category": "mountain"
+   },
+   "1763695": {
+    "name": "Golsfjellet – Bualie",
+    "category": "ski"
+   },
+   "1267069": {
+    "name": "Nordkapp",
+    "category": "coast"
+   }
+  },
+  "exclude": {}
+ },
+ "webcamcollections": {
+  "include": {
+   "sweden/ostersund": {
+    "name": "Östersund",
+    "category": "settlement"
+   },
+   "sweden/gallivare/dundret-toppstationen": {
+    "name": "Dundret, Gällivare",
+    "category": "ski"
+   },
+   "sweden/hassela/mountain-top": {
+    "name": "Hassela",
+    "category": "ski"
+   },
+   "sweden/skillingaryd-kyllasbacken": {
+    "name": "Kyllasbacken, Skillingaryd",
+    "category": "ski"
+   },
+   "sweden/smedjebacken-uvbergsbacken": {
+    "name": "Uvbergsbacken, Smedjebacken",
+    "category": "ski"
+   },
+   "sweden/safsen/vy-fran-toppen": {
+    "name": "Säfsen",
+    "category": "ski"
+   },
+   "sweden/vemdalen/vemdalsskalet-skalspasset": {
+    "name": "Vemdalsskalet",
+    "category": "ski"
+   },
+   "sweden/vemdalen/klovsjo-klovsjo-express": {
+    "name": "Klövsjö",
+    "category": "ski"
+   },
+   "sweden/vemdalen/bjornrike-grahogna-solliften": {
+    "name": "Björnrike",
+    "category": "ski"
+   },
+   "sweden/the-stork-project": {
+    "name": "Fulltofta stork enclosure",
+    "category": "nature"
+   },
+   "sweden/norrbystrommen-fly-fishing": {
+    "name": "Norrbyströmmen, Borensberg",
+    "category": "nature"
+   },
+   "sweden/gothenburg/alafors-alebacken": {
+    "name": "Alebacken, Älvängen",
+    "category": "ski"
+   },
+   "sweden/bjursas/southern-area": {
+    "name": "Bjursås",
+    "category": "ski"
+   },
+   "sweden/branas/snow-square-amundsbacken": {
+    "name": "Branäs",
+    "category": "ski"
+   },
+   "sweden/bydalen/bydalsfjallen": {
+    "name": "Bydalsfjällen",
+    "category": "mountain"
+   },
+   "sweden/idre/fjatervalen/fjatervalen": {
+    "name": "Fjätervålen",
+    "category": "ski"
+   },
+   "sweden/funasfjallen/tanndalen/tanndalen-hamrafjallet-top": {
+    "name": "Hamrafjället, Tänndalen",
+    "category": "mountain"
+   },
+   "sweden/funasfjallen/ramundberget": {
+    "name": "Ramundberget",
+    "category": "ski"
+   },
+   "sweden/funasfjallen/funasdalen/funasdalen-mountain": {
+    "name": "Funäsdalsberget",
+    "category": "mountain"
+   },
+   "sweden/salen/hundfjallet/hundfjallet-toppen": {
+    "name": "Hundfjället, Sälen",
+    "category": "ski"
+   },
+   "sweden/salen/hogfjallet": {
+    "name": "Högfjället, Sälen",
+    "category": "ski"
+   },
+   "sweden/salen/klappen/klappen-top-cabin": {
+    "name": "Kläppen",
+    "category": "ski"
+   },
+   "sweden/salen/tandadalen/tandadalen-top": {
+    "name": "Tandådalen, Sälen",
+    "category": "ski"
+   },
+   "sweden/hemavan/kungsliften-and-kungstoppen": {
+    "name": "Hemavan",
+    "category": "mountain"
+   },
+   "sweden/idre/idre-fjall/idre-top-station-east-6": {
+    "name": "Idre Fjäll",
+    "category": "ski"
+   },
+   "sweden/idre/idre-himmelsfjall/idre-himmelfjall-top-station": {
+    "name": "Idre Himmelfjäll",
+    "category": "ski"
+   },
+   "sweden/isaberg/mountain-top": {
+    "name": "Isaberg",
+    "category": "ski"
+   },
+   "sweden/kabdalis/view-from-mountain-top": {
+    "name": "Kåbdalis",
+    "category": "ski"
+   },
+   "sweden/kungsberget/kungs8-an": {
+    "name": "Kungsberget",
+    "category": "ski"
+   },
+   "sweden/vadstena/vadstena-ombergsliden-toppen": {
+    "name": "Ombergsliden, Omberg",
+    "category": "ski"
+   },
+   "sweden/orsa/orsa-gronklitt-norrbacken": {
+    "name": "Orsa Grönklitt",
+    "category": "ski"
+   },
+   "sweden/leksand/granberget/granberget-toppstationen": {
+    "name": "Granberget, Leksand",
+    "category": "ski"
+   },
+   "sweden/borlange/romme-alpin/romme-alpin-romme-south": {
+    "name": "Romme Alpin",
+    "category": "ski"
+   },
+   "sweden/lofsdalen": {
+    "name": "Lofsdalen",
+    "category": "ski"
+   },
+   "sweden/oland/borgholm/port-view-from-strand-hotel-2": {
+    "name": "Borgholm harbour, Öland",
+    "category": "coast"
+   },
+   "sweden/arjeplog/view-over-lake-hornavan": {
+    "name": "Lake Hornavan, Arjeplog",
+    "category": "nature"
+   },
+   "sweden/falsterbo/falsterbokanalen-boat-club": {
+    "name": "Falsterbo Canal",
+    "category": "coast"
+   },
+   "sweden/gotland/tofta-beach": {
+    "name": "Tofta beach, Gotland",
+    "category": "coast"
+   },
+   "sweden/fjallbacka": {
+    "name": "Fjällbacka",
+    "category": "coast"
+   },
+   "sweden/garpen": {
+    "name": "Garpen lighthouse, Kalmarsund",
+    "category": "coast"
+   },
+   "sweden/gotland/ronehamn-harbour": {
+    "name": "Ronehamn, Gotland",
+    "category": "coast"
+   },
+   "sweden/gotland/farosund-harbour": {
+    "name": "Fårösund, Gotland",
+    "category": "coast"
+   },
+   "sweden/gotland/herrvik-harbour": {
+    "name": "Herrvik, Gotland",
+    "category": "coast"
+   },
+   "sweden/gotland/klintehamn-1": {
+    "name": "Klintehamn, Gotland",
+    "category": "coast"
+   },
+   "sweden/gotland/slite-hamn": {
+    "name": "Slite, Gotland",
+    "category": "coast"
+   },
+   "sweden/gotland/visby/visby-outer-harbour": {
+    "name": "Visby harbour",
+    "category": "coast"
+   },
+   "sweden/vrango": {
+    "name": "Vrångö",
+    "category": "island"
+   },
+   "sweden/roro": {
+    "name": "Rörö",
+    "category": "island"
+   },
+   "sweden/hono-klava": {
+    "name": "Hönö Klåva",
+    "category": "island"
+   },
+   "sweden/kallo-knippla/kallo-knippla-yttre-hamnen": {
+    "name": "Källö-Knippla",
+    "category": "island"
+   },
+   "sweden/helsingborg": {
+    "name": "Helsingborg",
+    "category": "settlement"
+   },
+   "sweden/jukkasjarvi": {
+    "name": "Jukkasjärvi",
+    "category": "settlement"
+   },
+   "sweden/kalmar/varvsholmen": {
+    "name": "Kalmar – Öland Bridge",
+    "category": "coast"
+   },
+   "sweden/hunnebostrand/vaderofjord": {
+    "name": "Väderöfjorden, Hunnebostrand",
+    "category": "coast"
+   },
+   "sweden/karingon/karingon-1": {
+    "name": "Käringön",
+    "category": "island"
+   },
+   "sweden/karlskrona/water-tower": {
+    "name": "Karlskrona from Bryggareberget",
+    "category": "settlement"
+   },
+   "sweden/stockholm/landsort/landsort-lighthouse-south": {
+    "name": "Landsort, Öja",
+    "category": "island"
+   },
+   "sweden/ludvika/krafttanken": {
+    "name": "Ludvika",
+    "category": "settlement"
+   },
+   "sweden/mora/mora-church": {
+    "name": "Mora",
+    "category": "settlement"
+   },
+   "sweden/oskarshamn/oskarshamn-harbor-entrance": {
+    "name": "Oskarshamn harbour",
+    "category": "coast"
+   },
+   "sweden/pajala/sundial": {
+    "name": "Pajala",
+    "category": "settlement"
+   },
+   "sweden/stockholm/sandhamn/sandhamn-1": {
+    "name": "Sandhamn, Sandön",
+    "category": "island"
+   },
+   "sweden/sorsele": {
+    "name": "Sorsele",
+    "category": "settlement"
+   },
+   "sweden/stockholm/stockholms-inlopp/danvikshem": {
+    "name": "Stockholm inlet",
+    "category": "settlement"
+   },
+   "sweden/storuman": {
+    "name": "Storuman",
+    "category": "settlement"
+   },
+   "sweden/fishing-skarsa": {
+    "name": "Skärså, Söderhamn",
+    "category": "coast"
+   },
+   "sweden/tjorn/tjornbron-west-pylon-west": {
+    "name": "Tjörn Bridge",
+    "category": "viewpoint"
+   },
+   "sweden/tarnaby": {
+    "name": "Tärnaby",
+    "category": "settlement"
+   },
+   "sweden/tarnaby-alpint": {
+    "name": "Tärnaby Alpint",
+    "category": "ski"
+   },
+   "sweden/valdemarsvik/fyrudden-1": {
+    "name": "Fyrudden, Gryt archipelago",
+    "category": "coast"
+   },
+   "sweden/valdemarsvik/gryts-archipelago-1": {
+    "name": "Häradskär lighthouse",
+    "category": "island"
+   },
+   "sweden/ulvon": {
+    "name": "Ulvön, High Coast",
+    "category": "island"
+   },
+   "sweden/vastervik/slottsholmen-gamlebyviken": {
+    "name": "Västervik – Gamlebyviken",
+    "category": "coast"
+   },
+   "sweden/are/areskutan": {
+    "name": "Åreskutan",
+    "category": "mountain"
+   },
+   "sweden/are/cable-car-mountain-station": {
+    "name": "Åre – Kabinbanan top station",
+    "category": "ski"
+   },
+   "sweden/vasteras/city-hall-against-malaren": {
+    "name": "Västerås – Lake Mälaren",
+    "category": "settlement"
+   },
+   "sweden/vasteras/vedbobacken": {
+    "name": "Vedbobacken, Västerås",
+    "category": "ski"
+   },
+   "sweden/jarvso/jarvsobacken-top": {
+    "name": "Järvsöbacken",
+    "category": "ski"
+   },
+   "sweden/kiruna-luossavaara-hill": {
+    "name": "Kiruna from Luossavaara",
+    "category": "settlement"
+   },
+   "sweden/bastad/hovs-hallar": {
+    "name": "Hovs Hallar",
+    "category": "nature"
+   },
+   "sweden/stockholm/flottsbro": {
+    "name": "Flottsbro, Huddinge",
+    "category": "ski"
+   },
+   "sweden/boras/accumulator-tank-top": {
+    "name": "Borås",
+    "category": "settlement"
+   },
+   "norway/kirkenes/prestefjellet-vy-norrut-mot-kirkenes-centrum": {
+    "name": "Kirkenes from Prestefjellet",
+    "category": "settlement"
+   },
+   "norway/kirkenes/lyngfjell-vy-mot-kirkenes-och-hamnen": {
+    "name": "Kirkenes from Lyngfjell",
+    "category": "coast"
+   },
+   "norway/hellesylt": {
+    "name": "Hellesylt",
+    "category": "fjord"
+   },
+   "norway/nordkapps-kommun": {
+    "name": "Kamøyvær",
+    "category": "coast"
+   },
+   "norway/skarsvag-nordkaps-kommun": {
+    "name": "Skarsvåg",
+    "category": "coast"
+   },
+   "norway/hammerfest": {
+    "name": "Hammerfest",
+    "category": "settlement"
+   },
+   "norway/tromso/vervet-norrut": {
+    "name": "Tromsø – Vervet",
+    "category": "coast"
+   },
+   "norway/stavanger-tjuvholmen": {
+    "name": "Stavanger – Tjuvholmen",
+    "category": "settlement"
+   },
+   "norway/oslo/marka": {
+    "name": "Oslomarka",
+    "category": "nature"
+   },
+   "norway/oslo/oslo": {
+    "name": "Oslo",
+    "category": "settlement"
+   },
+   "norway/hemsedal/tindenheisen": {
+    "name": "Hemsedal – Tindenheisen",
+    "category": "ski"
+   },
+   "norway/hemsedal/base": {
+    "name": "Hemsedal – base area",
+    "category": "ski"
+   },
+   "norway/trysil/hoyfjellssenter": {
+    "name": "Trysil – Høyfjellssenter",
+    "category": "ski"
+   },
+   "norway/trysil/hogegga": {
+    "name": "Trysil – Høgegga",
+    "category": "ski"
+   }
+  },
+  "exclude_rule": "Pins not listed under include are not used. Excluded by rule: construction and timelapse pins, golf, camping and department stores, street-level squares, streets and parks, and duplicates of cameras already listed through CamStreamer or Panomax (Varberg, Falkenberg, Trelleborg, Liseberg, Björkliden, Rengsfallet, Store Mosse, Arvidsjaur, Stöten, Kristiansund, Måløy, Selje, Geiranger, Molde, Bud, Bodø, Harstad, Tømmerstø, Nordkapp) and Riddarfjärden (same position as DN-skrapan)."
+ },
+ "linked": [
+  {
+   "id": "henningsvaer",
+   "name": "Henningsvær, Lofoten",
+   "category": "coast",
+   "provider": "skylinewebcams",
+   "url": "https://www.skylinewebcams.com/en/webcam/norge/nordland/lofoten/henningsvaer.html",
+   "place": "Q1605649"
+  },
+  {
+   "id": "reinefjorden",
+   "name": "Reinefjorden, Lofoten",
+   "category": "fjord",
+   "provider": "skylinewebcams",
+   "url": "https://www.skylinewebcams.com/en/webcam/norge/nordland/lofoten/reine.html",
+   "place": "Q19386407"
+  },
+  {
+   "id": "hamnoy",
+   "name": "Hamnøy, Lofoten",
+   "category": "coast",
+   "provider": "skylinewebcams",
+   "url": "https://www.skylinewebcams.com/en/webcam/norge/nordland/lofoten/hamnoy.html",
+   "place": "Q1776894"
+  },
+  {
+   "id": "sorvagen",
+   "name": "Sørvågen, Lofoten",
+   "category": "coast",
+   "provider": "skylinewebcams",
+   "url": "https://www.skylinewebcams.com/en/webcam/norge/nordland/lofoten/sorvagen.html",
+   "place": "Q2298359"
+  },
+  {
+   "id": "saltstraumen",
+   "name": "Saltstraumen",
+   "category": "nature",
+   "provider": "skylinewebcams",
+   "url": "https://www.skylinewebcams.com/en/webcam/norge/nordland/bodo/saltstraumen.html",
+   "place": "Q3470260"
+  },
+  {
+   "id": "levanger",
+   "name": "Levanger",
+   "category": "settlement",
+   "provider": "skylinewebcams",
+   "url": "https://www.skylinewebcams.com/en/webcam/norge/northern-norway/levanger/panorama.html",
+   "place": "Q6534878"
+  },
+  {
+   "id": "silsand",
+   "name": "Silsand, Senja",
+   "category": "island",
+   "provider": "skylinewebcams",
+   "url": "https://www.skylinewebcams.com/en/webcam/norge/northern-norway/senja/silsand.html",
+   "place": "Q2312951"
+  },
+  {
+   "id": "honningsvag",
+   "name": "Honningsvåg",
+   "category": "coast",
+   "provider": "skylinewebcams",
+   "url": "https://www.skylinewebcams.com/en/webcam/norge/northern-norway/nordkapp/honningsvag.html",
+   "place": "Q493472"
+  },
+  {
+   "id": "bokfjorden",
+   "name": "Bøkfjorden, Kirkenes",
+   "category": "fjord",
+   "provider": "skylinewebcams",
+   "url": "https://www.skylinewebcams.com/en/webcam/norge/northern-norway/sor-varanger/kirkenes-bokfjorden.html",
+   "place": "Q2656917"
+  },
+  {
+   "id": "grytoya",
+   "name": "Grytøya, Harstad",
+   "category": "island",
+   "provider": "skylinewebcams",
+   "url": "https://www.skylinewebcams.com/en/webcam/norge/northern-norway/harstad/grytoya.html",
+   "place": "Q2561389"
+  },
+  {
+   "id": "sandefjord",
+   "name": "Sandefjord – Bjerggata",
+   "category": "settlement",
+   "provider": "skylinewebcams",
+   "url": "https://www.skylinewebcams.com/en/webcam/norge/vestfold/sandefjord/harbor-bjerggata.html",
+   "place": "Q13100072"
+  },
+  {
+   "id": "bergen",
+   "name": "Bergen",
+   "category": "settlement",
+   "provider": "skylinewebcams",
+   "url": "https://www.skylinewebcams.com/en/webcam/norge/western-norway/bergen/bergen.html",
+   "place": "Q26793"
+  },
+  {
+   "id": "myrkdalen",
+   "name": "Myrkdalen",
+   "category": "ski",
+   "provider": "skylinewebcams",
+   "url": "https://www.skylinewebcams.com/en/webcam/norge/western-norway/voss/myrkdalen.html",
+   "place": "Q12010113"
+  },
+  {
+   "id": "trondheim",
+   "name": "Trondheim",
+   "category": "settlement",
+   "provider": "skylinewebcams",
+   "url": "https://www.skylinewebcams.com/en/webcam/norge/trondelag/trondheim/trondheim.html",
+   "place": "Q25804"
+  },
+  {
+   "id": "beitostolen",
+   "name": "Beitostølen",
+   "category": "ski",
+   "provider": "skylinewebcams",
+   "url": "https://www.skylinewebcams.com/en/webcam/norge/eastern-norway/beitostolen/ski-area.html",
+   "place": "Q736910"
+  },
+  {
+   "id": "gaustabanen",
+   "name": "Gaustatoppen – Gaustabanen",
+   "category": "mountain",
+   "provider": "Gaustabanen",
+   "url": "https://gaustabanen.no/en/live-updates",
+   "place": "Q11971631"
+  },
+  {
+   "id": "skjervoy-port",
+   "name": "Skjervøy harbour",
+   "category": "coast",
+   "provider": "Port of Skjervøy",
+   "url": "https://portskjervoy.kystnor.no",
+   "place": "Q7536014"
+  },
+  {
+   "id": "abisko",
+   "name": "Abisko National Park – northern sky",
+   "category": "nature",
+   "provider": "skylinewebcams",
+   "url": "https://www.skylinewebcams.com/en/webcam/svezia/norrland/kiruna/northern-lights-over-lapland.html",
+   "place": "Q953092"
+  },
+  {
+   "id": "goteborg",
+   "name": "Gothenburg",
+   "category": "settlement",
+   "provider": "skylinewebcams",
+   "url": "https://www.skylinewebcams.com/en/webcam/svezia/gotaland/goteborg/goteborg.html",
+   "place": "Q25287"
+  },
+  {
+   "id": "skrea-bryggan",
+   "name": "Skrea strand – the jetty, Falkenberg",
+   "category": "coast",
+   "provider": "Falkenberg Energi",
+   "url": "https://www.falkenberg-energi.se/kundservice/webbkameror/",
+   "place": "Q106677606"
+  },
+  {
+   "id": "hvide-sande-vesterhavet",
+   "name": "Hvide Sande – North Sea beach",
+   "category": "coast",
+   "provider": "WestWind",
+   "url": "https://westwind.dk/en/pages/webcam/vesterhavet-hvide-sande",
+   "place": "Q734408"
+  }
+ ]
+}

@@ -1,0 +1,1770 @@
+{
+ "about": "Page checks for the reviewed camera uplinks: each provider's public viewing page was requested once (same-origin fetch from the provider's own site, or opened in a browser tab for other origins; tools/verify_uplinks.js). A check says the page answered as a working page on the provider's host on that date. It says nothing about whether the camera stream itself was live, and no stream, player or image was requested.",
+ "checked": "2026-11-27",
+ "results": {
+  "camstreamer:10166": {
+   "url": "https://camstreamer.com/live/stream/10166-harstad-port-norway",
+   "status": 200,
+   "final_url": "https://camstreamer.com/live/stream/10166-harstad-port-norway",
+   "title": "WATCH LIVE - Harstad port, Norway | Live gallery | CamStreamer",
+   "checked": "2026-11-27",
+   "ok": true,
+   "method": "same-origin fetch"
+  },
+  "camstreamer:11928": {
+   "url": "https://camstreamer.com/live/stream/11928-medview-kasa-strand-varberg",
+   "status": 200,
+   "final_url": "https://camstreamer.com/live/stream/11928-medview-kasa-strand-varberg",
+   "title": "WATCH LIVE - MEDview: Kåsa Strand, Varberg | Live gallery | CamStreamer",
+   "checked": "2026-11-27",
+   "ok": true,
+   "method": "same-origin fetch"
+  },
+  "camstreamer:1879": {
+   "url": "https://camstreamer.com/live/stream/1879-livestream-molostua",
+   "status": 200,
+   "final_url": "https://camstreamer.com/live/stream/1879-livestream-molostua",
+   "title": "WATCH LIVE - Livestream Molostua | Live gallery | CamStreamer",
+   "checked": "2026-11-27",
+   "ok": true,
+   "method": "same-origin fetch"
+  },
+  "camstreamer:192211280": {
+   "url": "https://camstreamer.com/live/stream/192211280-live-stoeten-i-saelen-world-cup-backen",
+   "status": 200,
+   "final_url": "https://camstreamer.com/live/stream/192211280-live-stoeten-i-saelen-world-cup-backen",
+   "title": "WATCH LIVE - LIVE – Stöten i Sälen, World-Cup-backen | Live gallery | CamStreamer",
+   "checked": "2026-11-27",
+   "ok": true,
+   "method": "same-origin fetch"
+  },
+  "camstreamer:1943": {
+   "url": "https://camstreamer.com/live/stream/1943-lyngvig-fyr",
+   "status": 200,
+   "final_url": "https://camstreamer.com/live/stream/1943-lyngvig-fyr",
+   "title": "WATCH LIVE - Lyngvig Fyr | Live gallery | CamStreamer",
+   "checked": "2026-11-27",
+   "ok": true,
+   "method": "same-origin fetch"
+  },
+  "camstreamer:20305": {
+   "url": "https://camstreamer.com/live/stream/20305-bud-og-hustadvika-live",
+   "status": 200,
+   "final_url": "https://camstreamer.com/live/stream/20305-bud-og-hustadvika-live",
+   "title": "WATCH LIVE - Bud og Hustadvika Live | Live gallery | CamStreamer",
+   "checked": "2026-11-27",
+   "ok": true,
+   "method": "same-origin fetch"
+  },
+  "camstreamer:204420247": {
+   "url": "https://camstreamer.com/live/stream/204420247-setertrekket-live",
+   "status": 200,
+   "final_url": "https://camstreamer.com/live/stream/204420247-setertrekket-live",
+   "title": "WATCH LIVE - Setertrekket - Live | Live gallery | CamStreamer",
+   "checked": "2026-11-27",
+   "ok": true,
+   "method": "same-origin fetch"
+  },
+  "camstreamer:22148": {
+   "url": "https://camstreamer.com/live/stream/22148-eide-live",
+   "status": 200,
+   "final_url": "https://camstreamer.com/live/stream/22148-eide-live",
+   "title": "WATCH LIVE - Eide live | Live gallery | CamStreamer",
+   "checked": "2026-11-27",
+   "ok": true,
+   "method": "same-origin fetch"
+  },
+  "camstreamer:234558907": {
+   "url": "https://camstreamer.com/live/stream/234558907-utsikt-oever-anafjaellet",
+   "status": 200,
+   "final_url": "https://camstreamer.com/live/stream/234558907-utsikt-oever-anafjaellet",
+   "title": "WATCH LIVE - Utsikt över Anåfjället | Live gallery | CamStreamer",
+   "checked": "2026-11-27",
+   "ok": true,
+   "method": "same-origin fetch"
+  },
+  "camstreamer:253181929": {
+   "url": "https://camstreamer.com/live/stream/253181929-hjorundfjorden-live",
+   "status": 200,
+   "final_url": "https://camstreamer.com/live/stream/253181929-hjorundfjorden-live",
+   "title": "WATCH LIVE - Hjørundfjorden Live | Live gallery | CamStreamer",
+   "checked": "2026-11-27",
+   "ok": true,
+   "method": "same-origin fetch"
+  },
+  "camstreamer:25689": {
+   "url": "https://camstreamer.com/live/stream/25689-webkamera-kristiansund-kongens-plass",
+   "status": 200,
+   "final_url": "https://camstreamer.com/live/stream/25689-webkamera-kristiansund-kongens-plass",
+   "title": "WATCH LIVE - Webkamera Kristiansund - Kongens Plass | Live gallery | CamStreamer",
+   "checked": "2026-11-27",
+   "ok": true,
+   "method": "same-origin fetch"
+  },
+  "camstreamer:27756": {
+   "url": "https://camstreamer.com/live/stream/27756-webkamera-tommersto-brygge",
+   "status": 200,
+   "final_url": "https://camstreamer.com/live/stream/27756-webkamera-tommersto-brygge",
+   "title": "WATCH LIVE - Webkamera Tømmerstø Brygge | Live gallery | CamStreamer",
+   "checked": "2026-11-27",
+   "ok": true,
+   "method": "same-origin fetch"
+  },
+  "camstreamer:27857184": {
+   "url": "https://camstreamer.com/live/stream/27857184-live-bjoerkliden-hotel-fjaellet-lapland",
+   "status": 200,
+   "final_url": "https://camstreamer.com/live/stream/27857184-live-bjoerkliden-hotel-fjaellet-lapland",
+   "title": "WATCH LIVE - Live Björkliden Hotel Fjället Lapland Resorts | Live gallery | CamStreamer",
+   "checked": "2026-11-27",
+   "ok": true,
+   "method": "same-origin fetch"
+  },
+  "camstreamer:2895": {
+   "url": "https://camstreamer.com/live/stream/2895-town-of-maloy-norway",
+   "status": 200,
+   "final_url": "https://camstreamer.com/live/stream/2895-town-of-maloy-norway",
+   "title": "WATCH LIVE - Town of Måløy, Norway | Live gallery | CamStreamer",
+   "checked": "2026-11-27",
+   "ok": true,
+   "method": "same-origin fetch"
+  },
+  "camstreamer:311287426": {
+   "url": "https://camstreamer.com/live/stream/311287426-vindoldalen-live",
+   "status": 200,
+   "final_url": "https://camstreamer.com/live/stream/311287426-vindoldalen-live",
+   "title": "WATCH LIVE - Vindøldalen Live | Live gallery | CamStreamer",
+   "checked": "2026-11-27",
+   "ok": true,
+   "method": "same-origin fetch"
+  },
+  "camstreamer:31304": {
+   "url": "https://camstreamer.com/live/stream/31304-dale",
+   "status": 200,
+   "final_url": "https://camstreamer.com/live/stream/31304-dale",
+   "title": "WATCH LIVE - Dale | Live gallery | CamStreamer",
+   "checked": "2026-11-27",
+   "ok": true,
+   "method": "same-origin fetch"
+  },
+  "camstreamer:3270": {
+   "url": "https://camstreamer.com/live/stream/3270-historical-fortress-in-varberg-sweden",
+   "status": 200,
+   "final_url": "https://camstreamer.com/live/stream/3270-historical-fortress-in-varberg-sweden",
+   "title": "WATCH LIVE - Historical fortress in Varberg, Sweden | Live gallery | CamStreamer",
+   "checked": "2026-11-27",
+   "ok": true,
+   "method": "same-origin fetch"
+  },
+  "camstreamer:34327316": {
+   "url": "https://camstreamer.com/live/stream/34327316-webcam-tallbergsgarden-hotel-view",
+   "status": 200,
+   "final_url": "https://camstreamer.com/live/stream/34327316-webcam-tallbergsgarden-hotel-view",
+   "title": "WATCH LIVE - Webcam Tallbergsgarden Hotel View | Live gallery | CamStreamer",
+   "checked": "2026-11-27",
+   "ok": true,
+   "method": "same-origin fetch"
+  },
+  "camstreamer:348756862": {
+   "url": "https://camstreamer.com/live/stream/348756862-live-camera-axis-p1375",
+   "status": 200,
+   "final_url": "https://camstreamer.com/live/stream/348756862-live-camera-axis-p1375",
+   "title": "WATCH LIVE - Live Camera Axis P1375 | Live gallery | CamStreamer",
+   "checked": "2026-11-27",
+   "ok": true,
+   "method": "same-origin fetch"
+  },
+  "camstreamer:34948": {
+   "url": "https://camstreamer.com/live/stream/34948-lifjell-vinterland-norway",
+   "status": 200,
+   "final_url": "https://camstreamer.com/live/stream/34948-lifjell-vinterland-norway",
+   "title": "WATCH LIVE - Lifjell Vinterland, Norway | Live gallery | CamStreamer",
+   "checked": "2026-11-27",
+   "ok": true,
+   "method": "same-origin fetch"
+  },
+  "camstreamer:37967": {
+   "url": "https://camstreamer.com/live/stream/37967-norway-sandoya-live-camera",
+   "status": 200,
+   "final_url": "https://camstreamer.com/live/stream/37967-norway-sandoya-live-camera",
+   "title": "WATCH LIVE - Norway - Sandøya Live Camera | Live gallery | CamStreamer",
+   "checked": "2026-11-27",
+   "ok": true,
+   "method": "same-origin fetch"
+  },
+  "camstreamer:384525310": {
+   "url": "https://camstreamer.com/live/stream/384525310-utsikt-over-vidden",
+   "status": 200,
+   "final_url": "https://camstreamer.com/live/stream/384525310-utsikt-over-vidden",
+   "title": "WATCH LIVE - Utsikt over Vidden | Live gallery | CamStreamer",
+   "checked": "2026-11-27",
+   "ok": true,
+   "method": "same-origin fetch"
+  },
+  "camstreamer:38455": {
+   "url": "https://camstreamer.com/live/stream/38455-medview-falkenberg-strandbad",
+   "status": 200,
+   "final_url": "https://camstreamer.com/live/stream/38455-medview-falkenberg-strandbad",
+   "title": "WATCH LIVE - MEDview: Falkenberg Strandbad | Live gallery | CamStreamer",
+   "checked": "2026-11-27",
+   "ok": true,
+   "method": "same-origin fetch"
+  },
+  "camstreamer:385333612": {
+   "url": "https://camstreamer.com/live/stream/385333612-eagle-cam-1-baron-blue-white",
+   "status": 200,
+   "final_url": "https://camstreamer.com/live/stream/385333612-eagle-cam-1-baron-blue-white",
+   "title": "WATCH LIVE - Eagle Cam #1 - Baron Blue - White Tailed Eagles Nest Live | Live gallery | CamStreamer",
+   "checked": "2026-11-27",
+   "ok": true,
+   "method": "same-origin fetch"
+  },
+  "camstreamer:38667": {
+   "url": "https://camstreamer.com/live/stream/38667-norway-jorpeland",
+   "status": 200,
+   "final_url": "https://camstreamer.com/live/stream/38667-norway-jorpeland",
+   "title": "WATCH LIVE - Norway - Jørpeland | Live gallery | CamStreamer",
+   "checked": "2026-11-27",
+   "ok": true,
+   "method": "same-origin fetch"
+  },
+  "camstreamer:389987629": {
+   "url": "https://camstreamer.com/live/stream/389987629-boeda-sand-live",
+   "status": 200,
+   "final_url": "https://camstreamer.com/live/stream/389987629-boeda-sand-live",
+   "title": "WATCH LIVE - Böda Sand LIVE | Live gallery | CamStreamer",
+   "checked": "2026-11-27",
+   "ok": true,
+   "method": "same-origin fetch"
+  },
+  "camstreamer:4006": {
+   "url": "https://camstreamer.com/live/stream/4006-fjord-ferie-holiday-residences-saebovik",
+   "status": 200,
+   "final_url": "https://camstreamer.com/live/stream/4006-fjord-ferie-holiday-residences-saebovik",
+   "title": "WATCH LIVE - Fjord Ferie Holiday Residences, Sæbøvik, Norway | Live gallery | CamStreamer",
+   "checked": "2026-11-27",
+   "ok": true,
+   "method": "same-origin fetch"
+  },
+  "camstreamer:40093061": {
+   "url": "https://camstreamer.com/live/stream/40093061-rengsfallet-valsjoebyn-live",
+   "status": 200,
+   "final_url": "https://camstreamer.com/live/stream/40093061-rengsfallet-valsjoebyn-live",
+   "title": "WATCH LIVE - Rengsfallet, Valsjöbyn – Live | Live gallery | CamStreamer",
+   "checked": "2026-11-27",
+   "ok": true,
+   "method": "same-origin fetch"
+  },
+  "camstreamer:40236": {
+   "url": "https://camstreamer.com/live/stream/40236-live-taenndalen",
+   "status": 200,
+   "final_url": "https://camstreamer.com/live/stream/40236-live-taenndalen",
+   "title": "WATCH LIVE - Live Tänndalen | Live gallery | CamStreamer",
+   "checked": "2026-11-27",
+   "ok": true,
+   "method": "same-origin fetch"
+  },
+  "camstreamer:406616538": {
+   "url": "https://camstreamer.com/live/stream/406616538-tobiasheisen-live",
+   "status": 200,
+   "final_url": "https://camstreamer.com/live/stream/406616538-tobiasheisen-live",
+   "title": "WATCH LIVE - Tobiasheisen - Live | Live gallery | CamStreamer",
+   "checked": "2026-11-27",
+   "ok": true,
+   "method": "same-origin fetch"
+  },
+  "camstreamer:425493061": {
+   "url": "https://camstreamer.com/live/stream/425493061-live-geirangerfjord-geiranger",
+   "status": 200,
+   "final_url": "https://camstreamer.com/live/stream/425493061-live-geirangerfjord-geiranger",
+   "title": "WATCH LIVE - Live Geirangerfjord - Geiranger | Live gallery | CamStreamer",
+   "checked": "2026-11-27",
+   "ok": true,
+   "method": "same-origin fetch"
+  },
+  "camstreamer:42900": {
+   "url": "https://camstreamer.com/live/stream/42900-bodo-havn-sjogata-1-live",
+   "status": 200,
+   "final_url": "https://camstreamer.com/live/stream/42900-bodo-havn-sjogata-1-live",
+   "title": "WATCH LIVE - Bodø Havn - Sjøgata 1 - Live | Live gallery | CamStreamer",
+   "checked": "2026-11-27",
+   "ok": true,
+   "method": "same-origin fetch"
+  },
+  "camstreamer:4412": {
+   "url": "https://camstreamer.com/live/stream/4412-harbour-in-the-town-of-drag-norway",
+   "status": 200,
+   "final_url": "https://camstreamer.com/live/stream/4412-harbour-in-the-town-of-drag-norway",
+   "title": "WATCH LIVE - Harbour in the town of Drag, Norway | Live gallery | CamStreamer",
+   "checked": "2026-11-27",
+   "ok": true,
+   "method": "same-origin fetch"
+  },
+  "camstreamer:44895": {
+   "url": "https://camstreamer.com/live/stream/44895-live-fran-naturum-getteroen",
+   "status": 200,
+   "final_url": "https://camstreamer.com/live/stream/44895-live-fran-naturum-getteroen",
+   "title": "WATCH LIVE - Live från Naturum, Getterön | Live gallery | CamStreamer",
+   "checked": "2026-11-27",
+   "ok": true,
+   "method": "same-origin fetch"
+  },
+  "camstreamer:450257317": {
+   "url": "https://camstreamer.com/live/stream/450257317-krakenes-fyr",
+   "status": 200,
+   "final_url": "https://camstreamer.com/live/stream/450257317-krakenes-fyr",
+   "title": "WATCH LIVE - Kråkenes Fyr | Live gallery | CamStreamer",
+   "checked": "2026-11-27",
+   "ok": true,
+   "method": "same-origin fetch"
+  },
+  "camstreamer:456906083": {
+   "url": "https://camstreamer.com/live/stream/456906083-harstad-kamera-live-brt",
+   "status": 200,
+   "final_url": "https://camstreamer.com/live/stream/456906083-harstad-kamera-live-brt",
+   "title": "WATCH LIVE - Harstad kamera Live - BRT | Live gallery | CamStreamer",
+   "checked": "2026-11-27",
+   "ok": true,
+   "method": "same-origin fetch"
+  },
+  "camstreamer:45759": {
+   "url": "https://camstreamer.com/live/stream/45759-trelleborg",
+   "status": 200,
+   "final_url": "https://camstreamer.com/live/stream/45759-trelleborg",
+   "title": "WATCH LIVE - Trelleborg | Live gallery | CamStreamer",
+   "checked": "2026-11-27",
+   "ok": true,
+   "method": "same-origin fetch"
+  },
+  "camstreamer:457999877": {
+   "url": "https://camstreamer.com/live/stream/457999877-isenvad-vejrstation-mod-vest",
+   "status": 200,
+   "final_url": "https://camstreamer.com/live/stream/457999877-isenvad-vejrstation-mod-vest",
+   "title": "WATCH LIVE - Isenvad Vejrstation mod Vest | Live gallery | CamStreamer",
+   "checked": "2026-11-27",
+   "ok": true,
+   "method": "same-origin fetch"
+  },
+  "camstreamer:464078330": {
+   "url": "https://camstreamer.com/live/stream/464078330-backvallen",
+   "status": 200,
+   "final_url": "https://camstreamer.com/live/stream/464078330-backvallen",
+   "title": "WATCH LIVE - Backvallen | Live gallery | CamStreamer",
+   "checked": "2026-11-27",
+   "ok": true,
+   "method": "same-origin fetch"
+  },
+  "camstreamer:466724539": {
+   "url": "https://camstreamer.com/live/stream/466724539-store-jyndevad-weather-station-south",
+   "status": 200,
+   "final_url": "https://camstreamer.com/live/stream/466724539-store-jyndevad-weather-station-south",
+   "title": "WATCH LIVE - Store Jyndevad Weather Station South | Live gallery | CamStreamer",
+   "checked": "2026-11-27",
+   "ok": true,
+   "method": "same-origin fetch"
+  },
+  "camstreamer:467280192": {
+   "url": "https://camstreamer.com/live/stream/467280192-assens-toro-weather-station-north-west",
+   "status": 200,
+   "final_url": "https://camstreamer.com/live/stream/467280192-assens-toro-weather-station-north-west",
+   "title": "WATCH LIVE - Assens/Torø Weather Station North West | Live gallery | CamStreamer",
+   "checked": "2026-11-27",
+   "ok": true,
+   "method": "same-origin fetch"
+  },
+  "camstreamer:476137240": {
+   "url": "https://camstreamer.com/live/stream/476137240-holbaek-flyveplads-weather-station-east",
+   "status": 200,
+   "final_url": "https://camstreamer.com/live/stream/476137240-holbaek-flyveplads-weather-station-east",
+   "title": "WATCH LIVE - Holbæk Flyveplads weather Station East | Live gallery | CamStreamer",
+   "checked": "2026-11-27",
+   "ok": true,
+   "method": "same-origin fetch"
+  },
+  "camstreamer:499146140": {
+   "url": "https://camstreamer.com/live/stream/499146140-rosenborg",
+   "status": 200,
+   "final_url": "https://camstreamer.com/live/stream/499146140-rosenborg",
+   "title": "WATCH LIVE - Rósenborg | Live gallery | CamStreamer",
+   "checked": "2026-11-27",
+   "ok": true,
+   "method": "same-origin fetch"
+  },
+  "camstreamer:503018648": {
+   "url": "https://camstreamer.com/live/stream/503018648-medview-dn-skrapan-stockholm",
+   "status": 200,
+   "final_url": "https://camstreamer.com/live/stream/503018648-medview-dn-skrapan-stockholm",
+   "title": "WATCH LIVE - MEDview: DN-Skrapan, Stockholm | Live gallery | CamStreamer",
+   "checked": "2026-11-27",
+   "ok": true,
+   "method": "same-origin fetch"
+  },
+  "camstreamer:5212": {
+   "url": "https://camstreamer.com/live/stream/5212-geirangerfjord-cruise-port-geiranger",
+   "status": 200,
+   "final_url": "https://camstreamer.com/live/stream/5212-geirangerfjord-cruise-port-geiranger",
+   "title": "WATCH LIVE - Geirangerfjord cruise port, Geiranger | Live gallery | CamStreamer",
+   "checked": "2026-11-27",
+   "ok": true,
+   "method": "same-origin fetch"
+  },
+  "camstreamer:528619846": {
+   "url": "https://camstreamer.com/live/stream/528619846-vindebaek-kyst-weather-station-south",
+   "status": 200,
+   "final_url": "https://camstreamer.com/live/stream/528619846-vindebaek-kyst-weather-station-south",
+   "title": "WATCH LIVE - Vindebæk Kyst Weather Station South | Live gallery | CamStreamer",
+   "checked": "2026-11-27",
+   "ok": true,
+   "method": "same-origin fetch"
+  },
+  "camstreamer:5386": {
+   "url": "https://camstreamer.com/live/stream/5386-molde-live",
+   "status": 200,
+   "final_url": "https://camstreamer.com/live/stream/5386-molde-live",
+   "title": "WATCH LIVE - Molde Live | Live gallery | CamStreamer",
+   "checked": "2026-11-27",
+   "ok": true,
+   "method": "same-origin fetch"
+  },
+  "camstreamer:54006346": {
+   "url": "https://camstreamer.com/live/stream/54006346-medview-liseberg-goeteborg",
+   "status": 200,
+   "final_url": "https://camstreamer.com/live/stream/54006346-medview-liseberg-goeteborg",
+   "title": "WATCH LIVE - MEDview - Liseberg, Göteborg | Live gallery | CamStreamer",
+   "checked": "2026-11-27",
+   "ok": true,
+   "method": "same-origin fetch"
+  },
+  "camstreamer:581358688": {
+   "url": "https://camstreamer.com/live/stream/581358688-kristiansund-livecam-nordlandet",
+   "status": 200,
+   "final_url": "https://camstreamer.com/live/stream/581358688-kristiansund-livecam-nordlandet",
+   "title": "WATCH LIVE - Kristiansund Livecam Nordlandet | Live gallery | CamStreamer",
+   "checked": "2026-11-27",
+   "ok": true,
+   "method": "same-origin fetch"
+  },
+  "camstreamer:6021": {
+   "url": "https://camstreamer.com/live/stream/6021-port-of-nordfjordeid",
+   "status": 200,
+   "final_url": "https://camstreamer.com/live/stream/6021-port-of-nordfjordeid",
+   "title": "WATCH LIVE - Port of Nordfjordeid | Live gallery | CamStreamer",
+   "checked": "2026-11-27",
+   "ok": true,
+   "method": "same-origin fetch"
+  },
+  "camstreamer:61969050": {
+   "url": "https://camstreamer.com/live/stream/61969050-nordfjordhjort-no-live",
+   "status": 200,
+   "final_url": "https://camstreamer.com/live/stream/61969050-nordfjordhjort-no-live",
+   "title": "WATCH LIVE - Nordfjordhjort.no Live | Live gallery | CamStreamer",
+   "checked": "2026-11-27",
+   "ok": true,
+   "method": "same-origin fetch"
+  },
+  "camstreamer:643095337": {
+   "url": "https://camstreamer.com/live/stream/643095337-koloys-hytteutleie-live-fra-halsnoy",
+   "status": 200,
+   "final_url": "https://camstreamer.com/live/stream/643095337-koloys-hytteutleie-live-fra-halsnoy",
+   "title": "WATCH LIVE - Koløys Hytteutleie - Live fra Halsnøy | Live gallery | CamStreamer",
+   "checked": "2026-11-27",
+   "ok": true,
+   "method": "same-origin fetch"
+  },
+  "camstreamer:657170571": {
+   "url": "https://camstreamer.com/live/stream/657170571-liva-vangslia-oppdal-skisenter",
+   "status": 200,
+   "final_url": "https://camstreamer.com/live/stream/657170571-liva-vangslia-oppdal-skisenter",
+   "title": "WATCH LIVE - Liva Vangslia Oppdal Skisenter | Live gallery | CamStreamer",
+   "checked": "2026-11-27",
+   "ok": true,
+   "method": "same-origin fetch"
+  },
+  "camstreamer:657399421": {
+   "url": "https://camstreamer.com/live/stream/657399421-skistar-saelen-lindvallen",
+   "status": 200,
+   "final_url": "https://camstreamer.com/live/stream/657399421-skistar-saelen-lindvallen",
+   "title": "WATCH LIVE - SkiStar Sälen - Lindvallen Gustavbackens topp | Live gallery | CamStreamer",
+   "checked": "2026-11-27",
+   "ok": true,
+   "method": "same-origin fetch"
+  },
+  "camstreamer:68505530": {
+   "url": "https://camstreamer.com/live/stream/68505530-smola-havfiskesenter",
+   "status": 200,
+   "final_url": "https://camstreamer.com/live/stream/68505530-smola-havfiskesenter",
+   "title": "WATCH LIVE - Smøla Havfiskesenter | Live gallery | CamStreamer",
+   "checked": "2026-11-27",
+   "ok": true,
+   "method": "same-origin fetch"
+  },
+  "camstreamer:692023311": {
+   "url": "https://camstreamer.com/live/stream/692023311-live-stolen-oppdal-skisenter",
+   "status": 200,
+   "final_url": "https://camstreamer.com/live/stream/692023311-live-stolen-oppdal-skisenter",
+   "title": "WATCH LIVE - Live Stølen Oppdal Skisenter | Live gallery | CamStreamer",
+   "checked": "2026-11-27",
+   "ok": true,
+   "method": "same-origin fetch"
+  },
+  "camstreamer:695264008": {
+   "url": "https://camstreamer.com/live/stream/695264008-stormhuset-apelviken-varberg-sweden",
+   "status": 200,
+   "final_url": "https://camstreamer.com/live/stream/695264008-stormhuset-apelviken-varberg-sweden",
+   "title": "WATCH LIVE - Stormhuset, Apelviken, Varberg Sweden | Live gallery | CamStreamer",
+   "checked": "2026-11-27",
+   "ok": true,
+   "method": "same-origin fetch"
+  },
+  "camstreamer:701055294": {
+   "url": "https://camstreamer.com/live/stream/701055294-eidsvatnet",
+   "status": 200,
+   "final_url": "https://camstreamer.com/live/stream/701055294-eidsvatnet",
+   "title": "WATCH LIVE - Eidsvatnet | Live gallery | CamStreamer",
+   "checked": "2026-11-27",
+   "ok": true,
+   "method": "same-origin fetch"
+  },
+  "camstreamer:708385140": {
+   "url": "https://camstreamer.com/live/stream/708385140-webbkamera-apelviken-varberg",
+   "status": 200,
+   "final_url": "https://camstreamer.com/live/stream/708385140-webbkamera-apelviken-varberg",
+   "title": "WATCH LIVE - Webbkamera: Apelviken, Varberg | Live gallery | CamStreamer",
+   "checked": "2026-11-27",
+   "ok": true,
+   "method": "same-origin fetch"
+  },
+  "camstreamer:716341146": {
+   "url": "https://camstreamer.com/live/stream/716341146-mehamn-net-webkamera",
+   "status": 200,
+   "final_url": "https://camstreamer.com/live/stream/716341146-mehamn-net-webkamera",
+   "title": "WATCH LIVE - Mehamn.net Webkamera | Live gallery | CamStreamer",
+   "checked": "2026-11-27",
+   "ok": true,
+   "method": "same-origin fetch"
+  },
+  "camstreamer:718228928": {
+   "url": "https://camstreamer.com/live/stream/718228928-selje-risnakken",
+   "status": 200,
+   "final_url": "https://camstreamer.com/live/stream/718228928-selje-risnakken",
+   "title": "WATCH LIVE - Selje, Risnakken | Live gallery | CamStreamer",
+   "checked": "2026-11-27",
+   "ok": true,
+   "method": "same-origin fetch"
+  },
+  "camstreamer:740212026": {
+   "url": "https://camstreamer.com/live/stream/740212026-pellestova-hotell",
+   "status": 200,
+   "final_url": "https://camstreamer.com/live/stream/740212026-pellestova-hotell",
+   "title": "WATCH LIVE - Pellestova Hotell | Live gallery | CamStreamer",
+   "checked": "2026-11-27",
+   "ok": true,
+   "method": "same-origin fetch"
+  },
+  "camstreamer:783403208": {
+   "url": "https://camstreamer.com/live/stream/783403208-medview-olofsbo-strand-falkenberg",
+   "status": 200,
+   "final_url": "https://camstreamer.com/live/stream/783403208-medview-olofsbo-strand-falkenberg",
+   "title": "WATCH LIVE - MEDview - Olofsbo Strand, Falkenberg | Live gallery | CamStreamer",
+   "checked": "2026-11-27",
+   "ok": true,
+   "method": "same-origin fetch"
+  },
+  "camstreamer:847741412": {
+   "url": "https://camstreamer.com/live/stream/847741412-gudvangen",
+   "status": 200,
+   "final_url": "https://camstreamer.com/live/stream/847741412-gudvangen",
+   "title": "WATCH LIVE - Gudvangen | Live gallery | CamStreamer",
+   "checked": "2026-11-27",
+   "ok": true,
+   "method": "same-origin fetch"
+  },
+  "camstreamer:871738375": {
+   "url": "https://camstreamer.com/live/stream/871738375-webbkamera-poolviken-varberg",
+   "status": 200,
+   "final_url": "https://camstreamer.com/live/stream/871738375-webbkamera-poolviken-varberg",
+   "title": "WATCH LIVE - Webbkamera: Poolviken, Varberg | Live gallery | CamStreamer",
+   "checked": "2026-11-27",
+   "ok": true,
+   "method": "same-origin fetch"
+  },
+  "camstreamer:878373272": {
+   "url": "https://camstreamer.com/live/stream/878373272-ilene-nature-reserve-tonsberg-norway",
+   "status": 200,
+   "final_url": "https://camstreamer.com/live/stream/878373272-ilene-nature-reserve-tonsberg-norway",
+   "title": "WATCH LIVE - Ilene nature reserve, Tønsberg Norway | Live gallery | CamStreamer",
+   "checked": "2026-11-27",
+   "ok": true,
+   "method": "same-origin fetch"
+  },
+  "camstreamer:895108667": {
+   "url": "https://camstreamer.com/live/stream/895108667-hertingforsen-falkenberg",
+   "status": 200,
+   "final_url": "https://camstreamer.com/live/stream/895108667-hertingforsen-falkenberg",
+   "title": "WATCH LIVE - Hertingforsen Falkenberg | Live gallery | CamStreamer",
+   "checked": "2026-11-27",
+   "ok": true,
+   "method": "same-origin fetch"
+  },
+  "camstreamer:90959039": {
+   "url": "https://camstreamer.com/live/stream/90959039-live-camera-arvidsjaur",
+   "status": 200,
+   "final_url": "https://camstreamer.com/live/stream/90959039-live-camera-arvidsjaur",
+   "title": "WATCH LIVE - Live Camera Arvidsjaur | Live gallery | CamStreamer",
+   "checked": "2026-11-27",
+   "ok": true,
+   "method": "same-origin fetch"
+  },
+  "camstreamer:930307404": {
+   "url": "https://camstreamer.com/live/stream/930307404-live-camera-turufjell-2026",
+   "status": 200,
+   "final_url": "https://camstreamer.com/live/stream/930307404-live-camera-turufjell-2026",
+   "title": "WATCH LIVE - Live Camera Turufjell_2026 | Live gallery | CamStreamer",
+   "checked": "2026-11-27",
+   "ok": true,
+   "method": "same-origin fetch"
+  },
+  "camstreamer:956939062": {
+   "url": "https://camstreamer.com/live/stream/956939062-utsikt-fra-toppen",
+   "status": 200,
+   "final_url": "https://camstreamer.com/live/stream/956939062-utsikt-fra-toppen",
+   "title": "WATCH LIVE - Utsikt fra toppen | Live gallery | CamStreamer",
+   "checked": "2026-11-27",
+   "ok": true,
+   "method": "same-origin fetch"
+  },
+  "camstreamer:960488448": {
+   "url": "https://camstreamer.com/live/stream/960488448-store-mosse-nationalpark-live",
+   "status": 200,
+   "final_url": "https://camstreamer.com/live/stream/960488448-store-mosse-nationalpark-live",
+   "title": "WATCH LIVE - Store Mosse nationalpark - Live | Live gallery | CamStreamer",
+   "checked": "2026-11-27",
+   "ok": true,
+   "method": "same-origin fetch"
+  },
+  "linked:abisko": {
+   "url": "https://www.skylinewebcams.com/en/webcam/svezia/norrland/kiruna/northern-lights-over-lapland.html",
+   "status": 200,
+   "final_url": "https://www.skylinewebcams.com/en/webcam/svezia/norrland/kiruna/northern-lights-over-lapland.html",
+   "title": "【LIVE】 Live Cam Northern Lights in Lapland | SkylineWebcams",
+   "checked": "2026-11-27",
+   "ok": true,
+   "method": "same-origin fetch"
+  },
+  "linked:beitostolen": {
+   "url": "https://www.skylinewebcams.com/en/webcam/norge/eastern-norway/beitostolen/ski-area.html",
+   "status": 200,
+   "final_url": "https://www.skylinewebcams.com/en/webcam/norge/eastern-norway/beitostolen/ski-area.html",
+   "title": "【LIVE】 Live Cam Beitostølen Ski Area - Norway | SkylineWebcams",
+   "checked": "2026-11-27",
+   "ok": true,
+   "method": "same-origin fetch"
+  },
+  "linked:bergen": {
+   "url": "https://www.skylinewebcams.com/en/webcam/norge/western-norway/bergen/bergen.html",
+   "status": 200,
+   "final_url": "https://www.skylinewebcams.com/en/webcam/norge/western-norway/bergen/bergen.html",
+   "title": "【LIVE】 Webcam Bergen | SkylineWebcams",
+   "checked": "2026-11-27",
+   "ok": true,
+   "method": "same-origin fetch"
+  },
+  "linked:bokfjorden": {
+   "url": "https://www.skylinewebcams.com/en/webcam/norge/northern-norway/sor-varanger/kirkenes-bokfjorden.html",
+   "status": 200,
+   "final_url": "https://www.skylinewebcams.com/en/webcam/norge/northern-norway/sor-varanger/kirkenes-bokfjorden.html",
+   "title": "【LIVE】 Live Cam Kirkenes - Bøkfjorden | SkylineWebcams",
+   "checked": "2026-11-27",
+   "ok": true,
+   "method": "same-origin fetch"
+  },
+  "linked:gaustabanen": {
+   "url": "https://gaustabanen.no/en/live-updates",
+   "status": null,
+   "final_url": "https://gaustabanen.no/en/live-updates",
+   "title": "Webcam & Live Updates – Weather and Snow at Gaustatoppen",
+   "checked": "2026-11-27",
+   "ok": true,
+   "method": "opened in a browser tab (cross-origin)"
+  },
+  "linked:goteborg": {
+   "url": "https://www.skylinewebcams.com/en/webcam/svezia/gotaland/goteborg/goteborg.html",
+   "status": 200,
+   "final_url": "https://www.skylinewebcams.com/en/webcam/svezia/gotaland/goteborg/goteborg.html",
+   "title": "【LIVE】 Live Cam Göteborg - Sweden | SkylineWebcams",
+   "checked": "2026-11-27",
+   "ok": true,
+   "method": "same-origin fetch"
+  },
+  "linked:grytoya": {
+   "url": "https://www.skylinewebcams.com/en/webcam/norge/northern-norway/harstad/grytoya.html",
+   "status": 200,
+   "final_url": "https://www.skylinewebcams.com/en/webcam/norge/northern-norway/harstad/grytoya.html",
+   "title": "【LIVE】 Live Cam Harstad - Grytøya | SkylineWebcams",
+   "checked": "2026-11-27",
+   "ok": true,
+   "method": "same-origin fetch"
+  },
+  "linked:hamnoy": {
+   "url": "https://www.skylinewebcams.com/en/webcam/norge/nordland/lofoten/hamnoy.html",
+   "status": 200,
+   "final_url": "https://www.skylinewebcams.com/en/webcam/norge/nordland/lofoten/hamnoy.html",
+   "title": "【LIVE】 Webcam Lofoten Islands - Hamnøy | SkylineWebcams",
+   "checked": "2026-11-27",
+   "ok": true,
+   "method": "same-origin fetch"
+  },
+  "linked:henningsvaer": {
+   "url": "https://www.skylinewebcams.com/en/webcam/norge/nordland/lofoten/henningsvaer.html",
+   "status": 200,
+   "final_url": "https://www.skylinewebcams.com/en/webcam/norge/nordland/lofoten/henningsvaer.html",
+   "title": "【LIVE】 Webcam Lofoten Islands - Henningsvær | SkylineWebcams",
+   "checked": "2026-11-27",
+   "ok": true,
+   "method": "same-origin fetch"
+  },
+  "linked:honningsvag": {
+   "url": "https://www.skylinewebcams.com/en/webcam/norge/northern-norway/nordkapp/honningsvag.html",
+   "status": 200,
+   "final_url": "https://www.skylinewebcams.com/en/webcam/norge/northern-norway/nordkapp/honningsvag.html",
+   "title": "【LIVE】 Live Cam Honningsvåg - Norway | SkylineWebcams",
+   "checked": "2026-11-27",
+   "ok": true,
+   "method": "same-origin fetch"
+  },
+  "linked:hvide-sande-vesterhavet": {
+   "url": "https://westwind.dk/en/pages/webcam/vesterhavet-hvide-sande",
+   "status": null,
+   "final_url": "https://westwind.dk/en/pages/webcam/vesterhavet-hvide-sande",
+   "title": "Webcam Hvide Sande – Live view of the North Sea – WestWind Surfshop",
+   "checked": "2026-11-27",
+   "ok": true,
+   "method": "opened in a browser tab (cross-origin)"
+  },
+  "linked:levanger": {
+   "url": "https://www.skylinewebcams.com/en/webcam/norge/northern-norway/levanger/panorama.html",
+   "status": 200,
+   "final_url": "https://www.skylinewebcams.com/en/webcam/norge/northern-norway/levanger/panorama.html",
+   "title": "【LIVE】 Live Cam Levanger - Norway | SkylineWebcams",
+   "checked": "2026-11-27",
+   "ok": true,
+   "method": "same-origin fetch"
+  },
+  "linked:myrkdalen": {
+   "url": "https://www.skylinewebcams.com/en/webcam/norge/western-norway/voss/myrkdalen.html",
+   "status": 200,
+   "final_url": "https://www.skylinewebcams.com/en/webcam/norge/western-norway/voss/myrkdalen.html",
+   "title": "【LIVE】 Live Cam Myrkdalen - Norway | SkylineWebcams",
+   "checked": "2026-11-27",
+   "ok": true,
+   "method": "same-origin fetch"
+  },
+  "linked:reinefjorden": {
+   "url": "https://www.skylinewebcams.com/en/webcam/norge/nordland/lofoten/reine.html",
+   "status": 200,
+   "final_url": "https://www.skylinewebcams.com/en/webcam/norge/nordland/lofoten/reine.html",
+   "title": "【LIVE】 Webcam Lofoten Islands - Reinefjord | SkylineWebcams",
+   "checked": "2026-11-27",
+   "ok": true,
+   "method": "same-origin fetch"
+  },
+  "linked:saltstraumen": {
+   "url": "https://www.skylinewebcams.com/en/webcam/norge/nordland/bodo/saltstraumen.html",
+   "status": 200,
+   "final_url": "https://www.skylinewebcams.com/en/webcam/norge/nordland/bodo/saltstraumen.html",
+   "title": "【LIVE】 Live Cam Strait of Saltstraumen - Norway | SkylineWebcams",
+   "checked": "2026-11-27",
+   "ok": true,
+   "method": "same-origin fetch"
+  },
+  "linked:sandefjord": {
+   "url": "https://www.skylinewebcams.com/en/webcam/norge/vestfold/sandefjord/harbor-bjerggata.html",
+   "status": 200,
+   "final_url": "https://www.skylinewebcams.com/en/webcam/norge/vestfold/sandefjord/harbor-bjerggata.html",
+   "title": "【LIVE】 Live Cam Bjerggata - Sandefjord | SkylineWebcams",
+   "checked": "2026-11-27",
+   "ok": true,
+   "method": "same-origin fetch"
+  },
+  "linked:silsand": {
+   "url": "https://www.skylinewebcams.com/en/webcam/norge/northern-norway/senja/silsand.html",
+   "status": 200,
+   "final_url": "https://www.skylinewebcams.com/en/webcam/norge/northern-norway/senja/silsand.html",
+   "title": "【LIVE】 Live Cam Silsand - Senja | SkylineWebcams",
+   "checked": "2026-11-27",
+   "ok": true,
+   "method": "same-origin fetch"
+  },
+  "linked:skjervoy-port": {
+   "url": "https://portskjervoy.kystnor.no",
+   "status": null,
+   "final_url": "https://portskjervoy.kystnor.no/",
+   "title": "BOREALIS LIVECAM PORT OF SKJERVOYSKJERVOY 360",
+   "checked": "2026-11-27",
+   "ok": true,
+   "method": "opened in a browser tab (cross-origin)"
+  },
+  "linked:skrea-bryggan": {
+   "url": "https://www.falkenberg-energi.se/kundservice/webbkameror/",
+   "status": null,
+   "final_url": "https://www.falkenberg-energi.se/kundservice/webbkameror/",
+   "title": "Webbkameror - Falkenberg Energi",
+   "checked": "2026-11-27",
+   "ok": true,
+   "method": "opened in a browser tab (cross-origin)"
+  },
+  "linked:sorvagen": {
+   "url": "https://www.skylinewebcams.com/en/webcam/norge/nordland/lofoten/sorvagen.html",
+   "status": 200,
+   "final_url": "https://www.skylinewebcams.com/en/webcam/norge/nordland/lofoten/sorvagen.html",
+   "title": "【LIVE】 Live Cam Lofoten Islands - Sørvågen | SkylineWebcams",
+   "checked": "2026-11-27",
+   "ok": true,
+   "method": "same-origin fetch"
+  },
+  "linked:trondheim": {
+   "url": "https://www.skylinewebcams.com/en/webcam/norge/trondelag/trondheim/trondheim.html",
+   "status": 200,
+   "final_url": "https://www.skylinewebcams.com/en/webcam/norge/trondelag/trondheim/trondheim.html",
+   "title": "【LIVE】 Live Cam Trondheim | SkylineWebcams",
+   "checked": "2026-11-27",
+   "ok": true,
+   "method": "same-origin fetch"
+  },
+  "panomax:1267069": {
+   "url": "https://1267069.panomax.com/",
+   "status": null,
+   "final_url": "https://nordkapp.panomax.com/",
+   "title": "Nordkapp - Day&Night - Webcam PANOMAX 360°",
+   "checked": "2026-11-27",
+   "ok": true,
+   "method": "opened in a browser tab (cross-origin)"
+  },
+  "panomax:1745821": {
+   "url": "https://1745821.panomax.com/",
+   "status": null,
+   "final_url": "https://storefjell.panomax.com/",
+   "title": "Storefjell - Webcam PANOMAX 360°",
+   "checked": "2026-11-27",
+   "ok": true,
+   "method": "opened in a browser tab (cross-origin)"
+  },
+  "panomax:1753845": {
+   "url": "https://1753845.panomax.com/",
+   "status": null,
+   "final_url": "https://storefjellstolen.panomax.com/farm",
+   "title": "Storefjellstølen Fjellandsby - Webcam PANOMAX 360°",
+   "checked": "2026-11-27",
+   "ok": true,
+   "method": "opened in a browser tab (cross-origin)"
+  },
+  "panomax:1763695": {
+   "url": "https://1763695.panomax.com/",
+   "status": null,
+   "final_url": "https://golsfjelletalpinsenter.panomax.com/bualie",
+   "title": "Webcam Golsfjellet Alpinsenter Bualie - Webcam PANOMAX 360°",
+   "checked": "2026-11-27",
+   "ok": true,
+   "method": "opened in a browser tab (cross-origin)"
+  },
+  "panomax:2614": {
+   "url": "https://2614.panomax.com/",
+   "status": null,
+   "final_url": "https://loenskylift.panomax.com/mt-hoven",
+   "title": "Webcam Loen Skylift - Hoven - PANOMAX 360°",
+   "checked": "2026-11-27",
+   "ok": true,
+   "method": "opened in a browser tab (cross-origin)"
+  },
+  "panomax:3058468": {
+   "url": "https://3058468.panomax.com/",
+   "status": null,
+   "final_url": "https://leirvassbu.panomax.com/",
+   "title": "Webcam Bøverdalen - Leirvassbu - PANOMAX 360°",
+   "checked": "2026-11-27",
+   "ok": true,
+   "method": "opened in a browser tab (cross-origin)"
+  },
+  "panomax:4053605": {
+   "url": "https://4053605.panomax.com/",
+   "status": null,
+   "final_url": "https://webcam.romsdalen.no/",
+   "title": "Webcam Romsdalsgondolen - PANOMAX 360°",
+   "checked": "2026-11-27",
+   "ok": true,
+   "method": "opened in a browser tab (cross-origin)"
+  },
+  "panomax:4055159": {
+   "url": "https://4055159.panomax.com/",
+   "status": null,
+   "final_url": "https://webcam.fjellheisen.no/",
+   "title": "Webcam Fjellheisen Tromsø - PANOMAX 360°",
+   "checked": "2026-11-27",
+   "ok": true,
+   "method": "opened in a browser tab (cross-origin)"
+  },
+  "webcamcollections:norway/hammerfest": {
+   "url": "https://webcamcollections.com/en/countries/norway/hammerfest",
+   "status": 200,
+   "final_url": "https://webcamcollections.com/en/countries/norway/hammerfest",
+   "title": "Hammerfest harbor - rotating Panorama camera / Live camera in northern Norway | WebcamCollections",
+   "checked": "2026-11-27",
+   "ok": true,
+   "method": "same-origin fetch"
+  },
+  "webcamcollections:norway/hellesylt": {
+   "url": "https://webcamcollections.com/en/countries/norway/hellesylt",
+   "status": 200,
+   "final_url": "https://webcamcollections.com/en/countries/norway/hellesylt",
+   "title": "Hellesylt, Geirangerfjord cruise port in Norway - Live streaming / Live camera | WebcamCollections",
+   "checked": "2026-11-27",
+   "ok": true,
+   "method": "same-origin fetch"
+  },
+  "webcamcollections:norway/hemsedal/base": {
+   "url": "https://webcamcollections.com/en/countries/norway/hemsedal/base",
+   "status": 200,
+   "final_url": "https://webcamcollections.com/en/countries/norway/hemsedal/base",
+   "title": "Webcam in the Base area, Hemsedal, Norway | WebcamCollections",
+   "checked": "2026-11-27",
+   "ok": true,
+   "method": "same-origin fetch"
+  },
+  "webcamcollections:norway/hemsedal/tindenheisen": {
+   "url": "https://webcamcollections.com/en/countries/norway/hemsedal/tindenheisen",
+   "status": 200,
+   "final_url": "https://webcamcollections.com/en/countries/norway/hemsedal/tindenheisen",
+   "title": "Webcam - Tindenheisen in Hemsedal, Norway | WebcamCollections",
+   "checked": "2026-11-27",
+   "ok": true,
+   "method": "same-origin fetch"
+  },
+  "webcamcollections:norway/kirkenes/lyngfjell-vy-mot-kirkenes-och-hamnen": {
+   "url": "https://webcamcollections.com/en/countries/norway/kirkenes/lyngfjell-vy-mot-kirkenes-och-hamnen",
+   "status": 200,
+   "final_url": "https://webcamcollections.com/en/countries/norway/kirkenes/lyngfjell-vy-mot-kirkenes-och-hamnen",
+   "title": "Lyngfjell northeast of Kirkenes, Norway. Live webcam / Live camera / Live streaming | WebcamCollections",
+   "checked": "2026-11-27",
+   "ok": true,
+   "method": "same-origin fetch"
+  },
+  "webcamcollections:norway/kirkenes/prestefjellet-vy-norrut-mot-kirkenes-centrum": {
+   "url": "https://webcamcollections.com/en/countries/norway/kirkenes/prestefjellet-vy-norrut-mot-kirkenes-centrum",
+   "status": 200,
+   "final_url": "https://webcamcollections.com/en/countries/norway/kirkenes/prestefjellet-vy-norrut-mot-kirkenes-centrum",
+   "title": "Prestefjellet south of Kirkenes, with a view of the center of Kirkenes, northeastern Norway. | WebcamCollections",
+   "checked": "2026-11-27",
+   "ok": true,
+   "method": "same-origin fetch"
+  },
+  "webcamcollections:norway/nordkapps-kommun": {
+   "url": "https://webcamcollections.com/en/countries/norway/nordkapps-kommun",
+   "status": 200,
+   "final_url": "https://webcamcollections.com/en/countries/norway/nordkapps-kommun",
+   "title": "Live streaming / Live camera - Kamøyvær near North Cape in North Cape Municipality, Northern Norway, Norway. | WebcamCollections",
+   "checked": "2026-11-27",
+   "ok": true,
+   "method": "same-origin fetch"
+  },
+  "webcamcollections:norway/oslo/marka": {
+   "url": "https://webcamcollections.com/en/countries/norway/oslo/marka",
+   "status": 200,
+   "final_url": "https://webcamcollections.com/en/countries/norway/oslo/marka",
+   "title": "Live webcams in Marka, around Oslo in Norway | WebcamCollections",
+   "checked": "2026-11-27",
+   "ok": true,
+   "method": "same-origin fetch"
+  },
+  "webcamcollections:norway/oslo/oslo": {
+   "url": "https://webcamcollections.com/en/countries/norway/oslo/oslo",
+   "status": 200,
+   "final_url": "https://webcamcollections.com/en/countries/norway/oslo/oslo",
+   "title": "Live / Livestreaming from Oslo - Holmenkollen, Ekebergrestaurant, Grefsenkollen restaurant, Norway | WebcamCollections",
+   "checked": "2026-11-27",
+   "ok": true,
+   "method": "same-origin fetch"
+  },
+  "webcamcollections:norway/skarsvag-nordkaps-kommun": {
+   "url": "https://webcamcollections.com/en/countries/norway/skarsvag-nordkaps-kommun",
+   "status": 200,
+   "final_url": "https://webcamcollections.com/en/countries/norway/skarsvag-nordkaps-kommun",
+   "title": "Skarsvåg on the island of Magerøya in Norway. Live / Live streaming / Live camera | WebcamCollections",
+   "checked": "2026-11-27",
+   "ok": true,
+   "method": "same-origin fetch"
+  },
+  "webcamcollections:norway/stavanger-tjuvholmen": {
+   "url": "https://webcamcollections.com/en/countries/norway/stavanger-tjuvholmen",
+   "status": 200,
+   "final_url": "https://webcamcollections.com/en/countries/norway/stavanger-tjuvholmen",
+   "title": "Stavanger, view from Tjuholmen towards the port of Stavanger, Norway. Live / Live streaming / Live camera / Weather / Temperature | WebcamCo",
+   "checked": "2026-11-27",
+   "ok": true,
+   "method": "same-origin fetch"
+  },
+  "webcamcollections:norway/tromso/vervet-norrut": {
+   "url": "https://webcamcollections.com/en/countries/norway/tromso/vervet-norrut",
+   "status": 200,
+   "final_url": "https://webcamcollections.com/en/countries/norway/tromso/vervet-norrut",
+   "title": "Tromsø - Live camera / Webcam 2(2) with a view north towards Vervet, Norway. | WebcamCollections",
+   "checked": "2026-11-27",
+   "ok": true,
+   "method": "same-origin fetch"
+  },
+  "webcamcollections:norway/trysil/hogegga": {
+   "url": "https://webcamcollections.com/en/countries/norway/trysil/hogegga",
+   "status": 200,
+   "final_url": "https://webcamcollections.com/en/countries/norway/trysil/hogegga",
+   "title": "Webcam - Høgegga Dal in Trysil, Norway | WebcamCollections",
+   "checked": "2026-11-27",
+   "ok": true,
+   "method": "same-origin fetch"
+  },
+  "webcamcollections:norway/trysil/hoyfjellssenter": {
+   "url": "https://webcamcollections.com/en/countries/norway/trysil/hoyfjellssenter",
+   "status": 200,
+   "final_url": "https://webcamcollections.com/en/countries/norway/trysil/hoyfjellssenter",
+   "title": "Webcam - Høyfjellssenter in Trysil, Norway | WebcamCollections",
+   "checked": "2026-11-27",
+   "ok": true,
+   "method": "same-origin fetch"
+  },
+  "webcamcollections:sweden/are/areskutan": {
+   "url": "https://webcamcollections.com/en/countries/sweden/are/areskutan",
+   "status": 200,
+   "final_url": "https://webcamcollections.com/en/countries/sweden/are/areskutan",
+   "title": "Webcam / Ski camera - Åreskutan, Renfjället, Åre, Jämtland, Sweden | WebcamCollections",
+   "checked": "2026-11-27",
+   "ok": true,
+   "method": "same-origin fetch"
+  },
+  "webcamcollections:sweden/are/cable-car-mountain-station": {
+   "url": "https://webcamcollections.com/en/countries/sweden/are/cable-car-mountain-station",
+   "status": 200,
+   "final_url": "https://webcamcollections.com/en/countries/sweden/are/cable-car-mountain-station",
+   "title": "Webcam / Ski camera - Cable car mountain station, Åre, Jämtland County, in Sweden | WebcamCollections",
+   "checked": "2026-11-27",
+   "ok": true,
+   "method": "same-origin fetch"
+  },
+  "webcamcollections:sweden/arjeplog/view-over-lake-hornavan": {
+   "url": "https://webcamcollections.com/en/countries/sweden/arjeplog/view-over-lake-hornavan",
+   "status": 200,
+   "final_url": "https://webcamcollections.com/en/countries/sweden/arjeplog/view-over-lake-hornavan",
+   "title": "Webcam - Lake Hornavan in Arjeplog, Sweden | WebcamCollections",
+   "checked": "2026-11-27",
+   "ok": true,
+   "method": "same-origin fetch"
+  },
+  "webcamcollections:sweden/bastad/hovs-hallar": {
+   "url": "https://webcamcollections.com/en/countries/sweden/bastad/hovs-hallar",
+   "status": 200,
+   "final_url": "https://webcamcollections.com/en/countries/sweden/bastad/hovs-hallar",
+   "title": "Live camera / Live streaming - Hovs Hallar, view towards Kattegat, Bjäre Peninsula, Skåne, Sweden | WebcamCollections",
+   "checked": "2026-11-27",
+   "ok": true,
+   "method": "same-origin fetch"
+  },
+  "webcamcollections:sweden/bjursas/southern-area": {
+   "url": "https://webcamcollections.com/en/countries/sweden/bjursas/southern-area",
+   "status": 200,
+   "final_url": "https://webcamcollections.com/en/countries/sweden/bjursas/southern-area",
+   "title": "Webcam - Bjursås, southern area, Sweden | WebcamCollections",
+   "checked": "2026-11-27",
+   "ok": true,
+   "method": "same-origin fetch"
+  },
+  "webcamcollections:sweden/boras/accumulator-tank-top": {
+   "url": "https://webcamcollections.com/en/countries/sweden/boras/accumulator-tank-top",
+   "status": 200,
+   "final_url": "https://webcamcollections.com/en/countries/sweden/boras/accumulator-tank-top",
+   "title": "Webcam - Borås, top of the accumulator tank, Sweden | WebcamCollections",
+   "checked": "2026-11-27",
+   "ok": true,
+   "method": "same-origin fetch"
+  },
+  "webcamcollections:sweden/borlange/romme-alpin/romme-alpin-romme-south": {
+   "url": "https://webcamcollections.com/en/countries/sweden/borlange/romme-alpin/romme-alpin-romme-south",
+   "status": 200,
+   "final_url": "https://webcamcollections.com/en/countries/sweden/borlange/romme-alpin/romme-alpin-romme-south",
+   "title": "Webcam / Ski camera - Romme Syd, Romme Alpin, Borlänge, Dalarna, Sweden | WebcamCollections",
+   "checked": "2026-11-27",
+   "ok": true,
+   "method": "same-origin fetch"
+  },
+  "webcamcollections:sweden/branas/snow-square-amundsbacken": {
+   "url": "https://webcamcollections.com/en/countries/sweden/branas/snow-square-amundsbacken",
+   "status": 200,
+   "final_url": "https://webcamcollections.com/en/countries/sweden/branas/snow-square-amundsbacken",
+   "title": "Webcam - Branäs, Gondoltorget / Gondola Square, Sweden | WebcamCollections",
+   "checked": "2026-11-27",
+   "ok": true,
+   "method": "same-origin fetch"
+  },
+  "webcamcollections:sweden/bydalen/bydalsfjallen": {
+   "url": "https://webcamcollections.com/en/countries/sweden/bydalen/bydalsfjallen",
+   "status": 200,
+   "final_url": "https://webcamcollections.com/en/countries/sweden/bydalen/bydalsfjallen",
+   "title": "Webcam - Bydalsfjällen, Bydalen, Sweden | WebcamCollections",
+   "checked": "2026-11-27",
+   "ok": true,
+   "method": "same-origin fetch"
+  },
+  "webcamcollections:sweden/falsterbo/falsterbokanalen-boat-club": {
+   "url": "https://webcamcollections.com/en/countries/sweden/falsterbo/falsterbokanalen-boat-club",
+   "status": 200,
+   "final_url": "https://webcamcollections.com/en/countries/sweden/falsterbo/falsterbokanalen-boat-club",
+   "title": "Webcam - Falsterbo Canal Boat Club, Falsterbo Canal in Skåne, Sweden. | WebcamCollections",
+   "checked": "2026-11-27",
+   "ok": true,
+   "method": "same-origin fetch"
+  },
+  "webcamcollections:sweden/fishing-skarsa": {
+   "url": "https://webcamcollections.com/en/countries/sweden/fishing-skarsa",
+   "status": 200,
+   "final_url": "https://webcamcollections.com/en/countries/sweden/fishing-skarsa",
+   "title": "Webcam - Fishing village in Skärså, Söderhamn, Hälsingland, Sweden | WebcamCollections",
+   "checked": "2026-11-27",
+   "ok": true,
+   "method": "same-origin fetch"
+  },
+  "webcamcollections:sweden/fjallbacka": {
+   "url": "https://webcamcollections.com/en/countries/sweden/fjallbacka",
+   "status": 200,
+   "final_url": "https://webcamcollections.com/en/countries/sweden/fjallbacka",
+   "title": "Webcam - Ingrid Bergmans torg, Fjällbacka, Sweden | WebcamCollections",
+   "checked": "2026-11-27",
+   "ok": true,
+   "method": "same-origin fetch"
+  },
+  "webcamcollections:sweden/funasfjallen/funasdalen/funasdalen-mountain": {
+   "url": "https://webcamcollections.com/en/countries/sweden/funasfjallen/funasdalen/funasdalen-mountain",
+   "status": 200,
+   "final_url": "https://webcamcollections.com/en/countries/sweden/funasfjallen/funasdalen/funasdalen-mountain",
+   "title": "Webcam - Mountain, Funäsdal mountain, Funäsdalen in Sweden | WebcamCollections",
+   "checked": "2026-11-27",
+   "ok": true,
+   "method": "same-origin fetch"
+  },
+  "webcamcollections:sweden/funasfjallen/ramundberget": {
+   "url": "https://webcamcollections.com/en/countries/sweden/funasfjallen/ramundberget",
+   "status": 200,
+   "final_url": "https://webcamcollections.com/en/countries/sweden/funasfjallen/ramundberget",
+   "title": "Ramundberget webcam live – Funäsfjällen, Sweden | WebcamCollections",
+   "checked": "2026-11-27",
+   "ok": true,
+   "method": "same-origin fetch"
+  },
+  "webcamcollections:sweden/funasfjallen/tanndalen/tanndalen-hamrafjallet-top": {
+   "url": "https://webcamcollections.com/en/countries/sweden/funasfjallen/tanndalen/tanndalen-hamrafjallet-top",
+   "status": 200,
+   "final_url": "https://webcamcollections.com/en/countries/sweden/funasfjallen/tanndalen/tanndalen-hamrafjallet-top",
+   "title": "Hamrafjället, Tänndalen – ski camera top Buskvallen | WebcamCollections",
+   "checked": "2026-11-27",
+   "ok": true,
+   "method": "same-origin fetch"
+  },
+  "webcamcollections:sweden/gallivare/dundret-toppstationen": {
+   "url": "https://webcamcollections.com/en/countries/sweden/gallivare/dundret-toppstationen",
+   "status": 200,
+   "final_url": "https://webcamcollections.com/en/countries/sweden/gallivare/dundret-toppstationen",
+   "title": "Dundret, Gällivare - the webcam at the top station, Sweden. | WebcamCollections",
+   "checked": "2026-11-27",
+   "ok": true,
+   "method": "same-origin fetch"
+  },
+  "webcamcollections:sweden/garpen": {
+   "url": "https://webcamcollections.com/en/countries/sweden/garpen",
+   "status": 200,
+   "final_url": "https://webcamcollections.com/en/countries/sweden/garpen",
+   "title": "Webcam - Garpen Lighthouse, Garpen, Kalmar Sound in Sweden | WebcamCollections",
+   "checked": "2026-11-27",
+   "ok": true,
+   "method": "same-origin fetch"
+  },
+  "webcamcollections:sweden/gothenburg/alafors-alebacken": {
+   "url": "https://webcamcollections.com/en/countries/sweden/gothenburg/alafors-alebacken",
+   "status": 200,
+   "final_url": "https://webcamcollections.com/en/countries/sweden/gothenburg/alafors-alebacken",
+   "title": "Webcam / Ski camera - Alebacken, Alafors in Sweden | WebcamCollections",
+   "checked": "2026-11-27",
+   "ok": true,
+   "method": "same-origin fetch"
+  },
+  "webcamcollections:sweden/gotland/farosund-harbour": {
+   "url": "https://webcamcollections.com/en/countries/sweden/gotland/farosund-harbour",
+   "status": 200,
+   "final_url": "https://webcamcollections.com/en/countries/sweden/gotland/farosund-harbour",
+   "title": "Webcam - Fishing Harbor / Guest Harbor, Fårösund, Gotland in Sweden | WebcamCollections",
+   "checked": "2026-11-27",
+   "ok": true,
+   "method": "same-origin fetch"
+  },
+  "webcamcollections:sweden/gotland/herrvik-harbour": {
+   "url": "https://webcamcollections.com/en/countries/sweden/gotland/herrvik-harbour",
+   "status": 200,
+   "final_url": "https://webcamcollections.com/en/countries/sweden/gotland/herrvik-harbour",
+   "title": "Webcam - Fishing harbor / Guest harbour, Herrvik, Gotland in Sweden | WebcamCollections",
+   "checked": "2026-11-27",
+   "ok": true,
+   "method": "same-origin fetch"
+  },
+  "webcamcollections:sweden/gotland/klintehamn-1": {
+   "url": "https://webcamcollections.com/en/countries/sweden/gotland/klintehamn-1",
+   "status": 200,
+   "final_url": "https://webcamcollections.com/en/countries/sweden/gotland/klintehamn-1",
+   "title": "Klintehamn Webcam Live – View East, Gotland | WebcamCollections",
+   "checked": "2026-11-27",
+   "ok": true,
+   "method": "same-origin fetch"
+  },
+  "webcamcollections:sweden/gotland/ronehamn-harbour": {
+   "url": "https://webcamcollections.com/en/countries/sweden/gotland/ronehamn-harbour",
+   "status": 200,
+   "final_url": "https://webcamcollections.com/en/countries/sweden/gotland/ronehamn-harbour",
+   "title": "Webcam - Fishing harbor / Guest harbor live, Ronehamn, Gotland in Sweden | WebcamCollections",
+   "checked": "2026-11-27",
+   "ok": true,
+   "method": "same-origin fetch"
+  },
+  "webcamcollections:sweden/gotland/slite-hamn": {
+   "url": "https://webcamcollections.com/en/countries/sweden/gotland/slite-hamn",
+   "status": 200,
+   "final_url": "https://webcamcollections.com/en/countries/sweden/gotland/slite-hamn",
+   "title": "Webcam live - fishing port / guest harbor, Slite, Gotland in Sweden | WebcamCollections",
+   "checked": "2026-11-27",
+   "ok": true,
+   "method": "same-origin fetch"
+  },
+  "webcamcollections:sweden/gotland/tofta-beach": {
+   "url": "https://webcamcollections.com/en/countries/sweden/gotland/tofta-beach",
+   "status": 200,
+   "final_url": "https://webcamcollections.com/en/countries/sweden/gotland/tofta-beach",
+   "title": "Webcam - Tofta Beach House, Tofta Strand, Gotland in Sweden | WebcamCollections",
+   "checked": "2026-11-27",
+   "ok": true,
+   "method": "same-origin fetch"
+  },
+  "webcamcollections:sweden/gotland/visby/visby-outer-harbour": {
+   "url": "https://webcamcollections.com/en/countries/sweden/gotland/visby/visby-outer-harbour",
+   "status": 200,
+   "final_url": "https://webcamcollections.com/en/countries/sweden/gotland/visby/visby-outer-harbour",
+   "title": "Visby Harbour Webcam – View of the Baltic Sea, Gotland | WebcamCollections",
+   "checked": "2026-11-27",
+   "ok": true,
+   "method": "same-origin fetch"
+  },
+  "webcamcollections:sweden/hassela/mountain-top": {
+   "url": "https://webcamcollections.com/en/countries/sweden/hassela/mountain-top",
+   "status": 200,
+   "final_url": "https://webcamcollections.com/en/countries/sweden/hassela/mountain-top",
+   "title": "Webcam - View from the top, Hassela in Sweden | WebcamCollections",
+   "checked": "2026-11-27",
+   "ok": true,
+   "method": "same-origin fetch"
+  },
+  "webcamcollections:sweden/helsingborg": {
+   "url": "https://webcamcollections.com/en/countries/sweden/helsingborg",
+   "status": 200,
+   "final_url": "https://webcamcollections.com/en/countries/sweden/helsingborg",
+   "title": "Webcam - Helsingborg, Port of Helsingborg, North Port in Sweden | WebcamCollections",
+   "checked": "2026-11-27",
+   "ok": true,
+   "method": "same-origin fetch"
+  },
+  "webcamcollections:sweden/hemavan/kungsliften-and-kungstoppen": {
+   "url": "https://webcamcollections.com/en/countries/sweden/hemavan/kungsliften-and-kungstoppen",
+   "status": 200,
+   "final_url": "https://webcamcollections.com/en/countries/sweden/hemavan/kungsliften-and-kungstoppen",
+   "title": "Live webcam - Kungsliften, Kungstoppen, Hemavan in Sweden | WebcamCollections",
+   "checked": "2026-11-27",
+   "ok": true,
+   "method": "same-origin fetch"
+  },
+  "webcamcollections:sweden/hono-klava": {
+   "url": "https://webcamcollections.com/en/countries/sweden/hono-klava",
+   "status": 200,
+   "final_url": "https://webcamcollections.com/en/countries/sweden/hono-klava",
+   "title": "Hönö Klåva - Webcam with a view of the guest and fishing harbor, the Vinga lighthouse in the background, Gothenburg in Sweden | WebcamCollec",
+   "checked": "2026-11-27",
+   "ok": true,
+   "method": "same-origin fetch"
+  },
+  "webcamcollections:sweden/hunnebostrand/vaderofjord": {
+   "url": "https://webcamcollections.com/en/countries/sweden/hunnebostrand/vaderofjord",
+   "status": 200,
+   "final_url": "https://webcamcollections.com/en/countries/sweden/hunnebostrand/vaderofjord",
+   "title": "Hunnebostrand - Webcam with view towards Väderöfjord, Väderö Islands, Skagerrak, Sweden. | WebcamCollections",
+   "checked": "2026-11-27",
+   "ok": true,
+   "method": "same-origin fetch"
+  },
+  "webcamcollections:sweden/idre/fjatervalen/fjatervalen": {
+   "url": "https://webcamcollections.com/en/countries/sweden/idre/fjatervalen/fjatervalen",
+   "status": 200,
+   "final_url": "https://webcamcollections.com/en/countries/sweden/idre/fjatervalen/fjatervalen",
+   "title": "Fjätervålen, Idre in Sweden - Live webcam with a view of the Örnen slope and the lift system from Fjätervålens Wärdshus | WebcamCollections",
+   "checked": "2026-11-27",
+   "ok": true,
+   "method": "same-origin fetch"
+  },
+  "webcamcollections:sweden/idre/idre-fjall/idre-top-station-east-6": {
+   "url": "https://webcamcollections.com/en/countries/sweden/idre/idre-fjall/idre-top-station-east-6",
+   "status": 200,
+   "final_url": "https://webcamcollections.com/en/countries/sweden/idre/idre-fjall/idre-top-station-east-6",
+   "title": "Idre mountain / Idre Fjäll, Idre in Sweden - Webcam with view towards top station east 6 | WebcamCollections",
+   "checked": "2026-11-27",
+   "ok": true,
+   "method": "same-origin fetch"
+  },
+  "webcamcollections:sweden/idre/idre-himmelsfjall/idre-himmelfjall-top-station": {
+   "url": "https://webcamcollections.com/en/countries/sweden/idre/idre-himmelsfjall/idre-himmelfjall-top-station",
+   "status": 200,
+   "final_url": "https://webcamcollections.com/en/countries/sweden/idre/idre-himmelsfjall/idre-himmelfjall-top-station",
+   "title": "Idre Himmelfjäll, Idre in Sweden - Webcam at the top station. | WebcamCollections",
+   "checked": "2026-11-27",
+   "ok": true,
+   "method": "same-origin fetch"
+  },
+  "webcamcollections:sweden/isaberg/mountain-top": {
+   "url": "https://webcamcollections.com/en/countries/sweden/isaberg/mountain-top",
+   "status": 200,
+   "final_url": "https://webcamcollections.com/en/countries/sweden/isaberg/mountain-top",
+   "title": "Isaberg in Sweden - Webcam at the top. See the weather in real time from the ski slope. | WebcamCollections",
+   "checked": "2026-11-27",
+   "ok": true,
+   "method": "same-origin fetch"
+  },
+  "webcamcollections:sweden/jarvso/jarvsobacken-top": {
+   "url": "https://webcamcollections.com/en/countries/sweden/jarvso/jarvsobacken-top",
+   "status": 200,
+   "final_url": "https://webcamcollections.com/en/countries/sweden/jarvso/jarvsobacken-top",
+   "title": "Järvsöbacken webcam – Live from the top of Öjeberget | WebcamCollections",
+   "checked": "2026-11-27",
+   "ok": true,
+   "method": "same-origin fetch"
+  },
+  "webcamcollections:sweden/jukkasjarvi": {
+   "url": "https://webcamcollections.com/en/countries/sweden/jukkasjarvi",
+   "status": 200,
+   "final_url": "https://webcamcollections.com/en/countries/sweden/jukkasjarvi",
+   "title": "Icehotel webcam live – Jukkasjärvi near Kiruna | WebcamCollections",
+   "checked": "2026-11-27",
+   "ok": true,
+   "method": "same-origin fetch"
+  },
+  "webcamcollections:sweden/kabdalis/view-from-mountain-top": {
+   "url": "https://webcamcollections.com/en/countries/sweden/kabdalis/view-from-mountain-top",
+   "status": 200,
+   "final_url": "https://webcamcollections.com/en/countries/sweden/kabdalis/view-from-mountain-top",
+   "title": "Webcam / Ski camera - Toppen/The top, Kåbdalis in Sweden | WebcamCollections",
+   "checked": "2026-11-27",
+   "ok": true,
+   "method": "same-origin fetch"
+  },
+  "webcamcollections:sweden/kallo-knippla/kallo-knippla-yttre-hamnen": {
+   "url": "https://webcamcollections.com/en/countries/sweden/kallo-knippla/kallo-knippla-yttre-hamnen",
+   "status": 200,
+   "final_url": "https://webcamcollections.com/en/countries/sweden/kallo-knippla/kallo-knippla-yttre-hamnen",
+   "title": "See Knippla guest harbor live – View of the outer harbor | WebcamCollections",
+   "checked": "2026-11-27",
+   "ok": true,
+   "method": "same-origin fetch"
+  },
+  "webcamcollections:sweden/kalmar/varvsholmen": {
+   "url": "https://webcamcollections.com/en/countries/sweden/kalmar/varvsholmen",
+   "status": 200,
+   "final_url": "https://webcamcollections.com/en/countries/sweden/kalmar/varvsholmen",
+   "title": "Webcam in Kalmar with a view of Kalmarsund, Öland Bridge, Varvsholmen in Sweden | WebcamCollections",
+   "checked": "2026-11-27",
+   "ok": true,
+   "method": "same-origin fetch"
+  },
+  "webcamcollections:sweden/karingon/karingon-1": {
+   "url": "https://webcamcollections.com/en/countries/sweden/karingon/karingon-1",
+   "status": 200,
+   "final_url": "https://webcamcollections.com/en/countries/sweden/karingon/karingon-1",
+   "title": "Webcam - The island Käringön in Sweden, Orust, Bohuslän. | WebcamCollections",
+   "checked": "2026-11-27",
+   "ok": true,
+   "method": "same-origin fetch"
+  },
+  "webcamcollections:sweden/karlskrona/water-tower": {
+   "url": "https://webcamcollections.com/en/countries/sweden/karlskrona/water-tower",
+   "status": 200,
+   "final_url": "https://webcamcollections.com/en/countries/sweden/karlskrona/water-tower",
+   "title": "Webcam - View from the water tower on Bryggareberget, Karlskrona in Sweden | WebcamCollections",
+   "checked": "2026-11-27",
+   "ok": true,
+   "method": "same-origin fetch"
+  },
+  "webcamcollections:sweden/kiruna-luossavaara-hill": {
+   "url": "https://webcamcollections.com/en/countries/sweden/kiruna-luossavaara-hill",
+   "status": 200,
+   "final_url": "https://webcamcollections.com/en/countries/sweden/kiruna-luossavaara-hill",
+   "title": "Kiruna webcam live – Luossavaara hill | WebcamCollections",
+   "checked": "2026-11-27",
+   "ok": true,
+   "method": "same-origin fetch"
+  },
+  "webcamcollections:sweden/kungsberget/kungs8-an": {
+   "url": "https://webcamcollections.com/en/countries/sweden/kungsberget/kungs8-an",
+   "status": 200,
+   "final_url": "https://webcamcollections.com/en/countries/sweden/kungsberget/kungs8-an",
+   "title": "Webcam - King's 8 / Kungs8:an, Kungsberget in Sweden | WebcamCollections",
+   "checked": "2026-11-27",
+   "ok": true,
+   "method": "same-origin fetch"
+  },
+  "webcamcollections:sweden/leksand/granberget/granberget-toppstationen": {
+   "url": "https://webcamcollections.com/en/countries/sweden/leksand/granberget/granberget-toppstationen",
+   "status": 200,
+   "final_url": "https://webcamcollections.com/en/countries/sweden/leksand/granberget/granberget-toppstationen",
+   "title": "Ski camera / Webcam at the top station of Granberget ski resort - Leksand, Granberget, Dalarna, in Sweden | WebcamCollections",
+   "checked": "2026-11-27",
+   "ok": true,
+   "method": "same-origin fetch"
+  },
+  "webcamcollections:sweden/lofsdalen": {
+   "url": "https://webcamcollections.com/en/countries/sweden/lofsdalen",
+   "status": 200,
+   "final_url": "https://webcamcollections.com/en/countries/sweden/lofsdalen",
+   "title": "Webcam / ski camera - Dalstationen / the valley station, Lofsdalen, southern Härjedalen, Jämtland, Sweden | WebcamCollections",
+   "checked": "2026-11-27",
+   "ok": true,
+   "method": "same-origin fetch"
+  },
+  "webcamcollections:sweden/ludvika/krafttanken": {
+   "url": "https://webcamcollections.com/en/countries/sweden/ludvika/krafttanken",
+   "status": 200,
+   "final_url": "https://webcamcollections.com/en/countries/sweden/ludvika/krafttanken",
+   "title": "Webcam / City/weather camera - The Power Tank /Krafttanken, Sockenstugeparken, Ludvika in Sweden | WebcamCollections",
+   "checked": "2026-11-27",
+   "ok": true,
+   "method": "same-origin fetch"
+  },
+  "webcamcollections:sweden/mora/mora-church": {
+   "url": "https://webcamcollections.com/en/countries/sweden/mora/mora-church",
+   "status": 200,
+   "final_url": "https://webcamcollections.com/en/countries/sweden/mora/mora-church",
+   "title": "Mora Webcam Live – View East from Mora Church, Dalarna | WebcamCollections",
+   "checked": "2026-11-27",
+   "ok": true,
+   "method": "same-origin fetch"
+  },
+  "webcamcollections:sweden/norrbystrommen-fly-fishing": {
+   "url": "https://webcamcollections.com/en/countries/sweden/norrbystrommen-fly-fishing",
+   "status": 200,
+   "final_url": "https://webcamcollections.com/en/countries/sweden/norrbystrommen-fly-fishing",
+   "title": "Webcam - Borensberg, Norrbyströmmen, fly fishing, trout, rainbow trout, in Sweden | WebcamCollections",
+   "checked": "2026-11-27",
+   "ok": true,
+   "method": "same-origin fetch"
+  },
+  "webcamcollections:sweden/oland/borgholm/port-view-from-strand-hotel-2": {
+   "url": "https://webcamcollections.com/en/countries/sweden/oland/borgholm/port-view-from-strand-hotel-2",
+   "status": 200,
+   "final_url": "https://webcamcollections.com/en/countries/sweden/oland/borgholm/port-view-from-strand-hotel-2",
+   "title": "Webcam / Weather camera - View from Strand hotel towards the harbor, Borgholm, Öland, Sweden | WebcamCollections",
+   "checked": "2026-11-27",
+   "ok": true,
+   "method": "same-origin fetch"
+  },
+  "webcamcollections:sweden/orsa/orsa-gronklitt-norrbacken": {
+   "url": "https://webcamcollections.com/en/countries/sweden/orsa/orsa-gronklitt-norrbacken",
+   "status": 200,
+   "final_url": "https://webcamcollections.com/en/countries/sweden/orsa/orsa-gronklitt-norrbacken",
+   "title": "Webcam / ski camera in Norrbacken ski slope, Orsa Grönklitt, Dalarna, Sweden. | WebcamCollections",
+   "checked": "2026-11-27",
+   "ok": true,
+   "method": "same-origin fetch"
+  },
+  "webcamcollections:sweden/oskarshamn/oskarshamn-harbor-entrance": {
+   "url": "https://webcamcollections.com/en/countries/sweden/oskarshamn/oskarshamn-harbor-entrance",
+   "status": 200,
+   "final_url": "https://webcamcollections.com/en/countries/sweden/oskarshamn/oskarshamn-harbor-entrance",
+   "title": "Webcam - Outer harbor, harbor entrance, view from Bockkranen, Oskarshamn, Kalmar County, Sweden | WebcamCollections",
+   "checked": "2026-11-27",
+   "ok": true,
+   "method": "same-origin fetch"
+  },
+  "webcamcollections:sweden/ostersund": {
+   "url": "https://webcamcollections.com/en/countries/sweden/ostersund",
+   "status": 200,
+   "final_url": "https://webcamcollections.com/en/countries/sweden/ostersund",
+   "title": "Östersund, Jämtlands Gymnasium Wargentin - webcam with view towards the Town Hall and Storsjön, Östersund, Sweden | WebcamCollections",
+   "checked": "2026-11-27",
+   "ok": true,
+   "method": "same-origin fetch"
+  },
+  "webcamcollections:sweden/pajala/sundial": {
+   "url": "https://webcamcollections.com/en/countries/sweden/pajala/sundial",
+   "status": 200,
+   "final_url": "https://webcamcollections.com/en/countries/sweden/pajala/sundial",
+   "title": "Webcam - Soluret, Pajala, Norrbotten, Sweden | WebcamCollections",
+   "checked": "2026-11-27",
+   "ok": true,
+   "method": "same-origin fetch"
+  },
+  "webcamcollections:sweden/roro": {
+   "url": "https://webcamcollections.com/en/countries/sweden/roro",
+   "status": 200,
+   "final_url": "https://webcamcollections.com/en/countries/sweden/roro",
+   "title": "Webcam - Rörö guest harbor, Gothenburg archipelago, Gothenburg in Sweden | WebcamCollections",
+   "checked": "2026-11-27",
+   "ok": true,
+   "method": "same-origin fetch"
+  },
+  "webcamcollections:sweden/safsen/vy-fran-toppen": {
+   "url": "https://webcamcollections.com/en/countries/sweden/safsen/vy-fran-toppen",
+   "status": 200,
+   "final_url": "https://webcamcollections.com/en/countries/sweden/safsen/vy-fran-toppen",
+   "title": "Säfsen Resort just outside Fredriksberg in Dalarna, in Ludvika municipality, Sweden. Live webcam. Weather and temperature. | WebcamCollectio",
+   "checked": "2026-11-27",
+   "ok": true,
+   "method": "same-origin fetch"
+  },
+  "webcamcollections:sweden/salen/hogfjallet": {
+   "url": "https://webcamcollections.com/en/countries/sweden/salen/hogfjallet",
+   "status": 200,
+   "final_url": "https://webcamcollections.com/en/countries/sweden/salen/hogfjallet",
+   "title": "Webcam / Ski camera - Högfjället, Sälen, Dalarna in Sweden | WebcamCollections",
+   "checked": "2026-11-27",
+   "ok": true,
+   "method": "same-origin fetch"
+  },
+  "webcamcollections:sweden/salen/hundfjallet/hundfjallet-toppen": {
+   "url": "https://webcamcollections.com/en/countries/sweden/salen/hundfjallet/hundfjallet-toppen",
+   "status": 200,
+   "final_url": "https://webcamcollections.com/en/countries/sweden/salen/hundfjallet/hundfjallet-toppen",
+   "title": "Webcam / Ski camera - Toppen, Hundfjället, Sälen, Dalarna, Sweden | WebcamCollections",
+   "checked": "2026-11-27",
+   "ok": true,
+   "method": "same-origin fetch"
+  },
+  "webcamcollections:sweden/salen/klappen/klappen-top-cabin": {
+   "url": "https://webcamcollections.com/en/countries/sweden/salen/klappen/klappen-top-cabin",
+   "status": 200,
+   "final_url": "https://webcamcollections.com/en/countries/sweden/salen/klappen/klappen-top-cabin",
+   "title": "Webcam / Ski camera live - Toppstugan, Kläppen, Sälen, Dalarna in Sweden | WebcamCollections",
+   "checked": "2026-11-27",
+   "ok": true,
+   "method": "same-origin fetch"
+  },
+  "webcamcollections:sweden/salen/tandadalen/tandadalen-top": {
+   "url": "https://webcamcollections.com/en/countries/sweden/salen/tandadalen/tandadalen-top",
+   "status": 200,
+   "final_url": "https://webcamcollections.com/en/countries/sweden/salen/tandadalen/tandadalen-top",
+   "title": "Webcam / Ski camera - Tandådalen, the top, Sälen, Dalarna in Sweden | WebcamCollections",
+   "checked": "2026-11-27",
+   "ok": true,
+   "method": "same-origin fetch"
+  },
+  "webcamcollections:sweden/skillingaryd-kyllasbacken": {
+   "url": "https://webcamcollections.com/en/countries/sweden/skillingaryd-kyllasbacken",
+   "status": 200,
+   "final_url": "https://webcamcollections.com/en/countries/sweden/skillingaryd-kyllasbacken",
+   "title": "Kyllåsbacken outside Skillingaryd in Vaggeryd municipality in Skåne, Sweden. Ski camera / Webcam. | WebcamCollections",
+   "checked": "2026-11-27",
+   "ok": true,
+   "method": "same-origin fetch"
+  },
+  "webcamcollections:sweden/smedjebacken-uvbergsbacken": {
+   "url": "https://webcamcollections.com/en/countries/sweden/smedjebacken-uvbergsbacken",
+   "status": 200,
+   "final_url": "https://webcamcollections.com/en/countries/sweden/smedjebacken-uvbergsbacken",
+   "title": "Uvbergsbacken, Smedjebacken, Dalarna, Sweden. Live webcam | WebcamCollections",
+   "checked": "2026-11-27",
+   "ok": true,
+   "method": "same-origin fetch"
+  },
+  "webcamcollections:sweden/sorsele": {
+   "url": "https://webcamcollections.com/en/countries/sweden/sorsele",
+   "status": 200,
+   "final_url": "https://webcamcollections.com/en/countries/sweden/sorsele",
+   "title": "Webcam - Vindelälven, Sorsele, Västerbotten County in the province of Lapland, in Sweden | WebcamCollections",
+   "checked": "2026-11-27",
+   "ok": true,
+   "method": "same-origin fetch"
+  },
+  "webcamcollections:sweden/stockholm/flottsbro": {
+   "url": "https://webcamcollections.com/en/countries/sweden/stockholm/flottsbro",
+   "status": 200,
+   "final_url": "https://webcamcollections.com/en/countries/sweden/stockholm/flottsbro",
+   "title": "Live camera / Webcam - Flottsbro outdoor facility and camping, Albysjön, Huddinge, Stockholm, Sweden. | WebcamCollections",
+   "checked": "2026-11-27",
+   "ok": true,
+   "method": "same-origin fetch"
+  },
+  "webcamcollections:sweden/stockholm/landsort/landsort-lighthouse-south": {
+   "url": "https://webcamcollections.com/en/countries/sweden/stockholm/landsort/landsort-lighthouse-south",
+   "status": 200,
+   "final_url": "https://webcamcollections.com/en/countries/sweden/stockholm/landsort/landsort-lighthouse-south",
+   "title": "Webcam / Live camera - View from the Pilot Tower on Öja, Landsort Lighthouse, Landsort, Stockholm, Sweden | WebcamCollections",
+   "checked": "2026-11-27",
+   "ok": true,
+   "method": "same-origin fetch"
+  },
+  "webcamcollections:sweden/stockholm/sandhamn/sandhamn-1": {
+   "url": "https://webcamcollections.com/en/countries/sweden/stockholm/sandhamn/sandhamn-1",
+   "status": 200,
+   "final_url": "https://webcamcollections.com/en/countries/sweden/stockholm/sandhamn/sandhamn-1",
+   "title": "Webcam / Weather Camera / Live 1 (2) - Sandhamn, Stockholm archipelago, Stockholm, Sweden | WebcamCollections",
+   "checked": "2026-11-27",
+   "ok": true,
+   "method": "same-origin fetch"
+  },
+  "webcamcollections:sweden/stockholm/stockholms-inlopp/danvikshem": {
+   "url": "https://webcamcollections.com/en/countries/sweden/stockholm/stockholms-inlopp/danvikshem",
+   "status": 200,
+   "final_url": "https://webcamcollections.com/en/countries/sweden/stockholm/stockholms-inlopp/danvikshem",
+   "title": "Webcam - Stockholm inlet, Gamla Stan, Stadsgården, Danvikshem, Stockholm in Sweden | WebcamCollections",
+   "checked": "2026-11-27",
+   "ok": true,
+   "method": "same-origin fetch"
+  },
+  "webcamcollections:sweden/storuman": {
+   "url": "https://webcamcollections.com/en/countries/sweden/storuman",
+   "status": 200,
+   "final_url": "https://webcamcollections.com/en/countries/sweden/storuman",
+   "title": "Webcam - Torget, Storuman, Västerbotten County in the province of Lapland, in Sweden | WebcamCollections",
+   "checked": "2026-11-27",
+   "ok": true,
+   "method": "same-origin fetch"
+  },
+  "webcamcollections:sweden/tarnaby": {
+   "url": "https://webcamcollections.com/en/countries/sweden/tarnaby",
+   "status": 200,
+   "final_url": "https://webcamcollections.com/en/countries/sweden/tarnaby",
+   "title": "Webcam / Weather camera - View towards Tärna church, Tärnaby, Storuman, Västerbotten county in Sweden | WebcamCollections",
+   "checked": "2026-11-27",
+   "ok": true,
+   "method": "same-origin fetch"
+  },
+  "webcamcollections:sweden/tarnaby-alpint": {
+   "url": "https://webcamcollections.com/en/countries/sweden/tarnaby-alpint",
+   "status": 200,
+   "final_url": "https://webcamcollections.com/en/countries/sweden/tarnaby-alpint",
+   "title": "Webcam / Ski camera in Ingemarbacken with view from Café Tärningen, Storuman, Sweden. | WebcamCollections",
+   "checked": "2026-11-27",
+   "ok": true,
+   "method": "same-origin fetch"
+  },
+  "webcamcollections:sweden/the-stork-project": {
+   "url": "https://webcamcollections.com/en/countries/sweden/the-stork-project",
+   "status": 200,
+   "final_url": "https://webcamcollections.com/en/countries/sweden/the-stork-project",
+   "title": "Live with audio and live streaming - Storks, Stork project, Fulltofta stork enclosure, Hörby in Skåne, Sweden | WebcamCollections",
+   "checked": "2026-11-27",
+   "ok": true,
+   "method": "same-origin fetch"
+  },
+  "webcamcollections:sweden/tjorn/tjornbron-west-pylon-west": {
+   "url": "https://webcamcollections.com/en/countries/sweden/tjorn/tjornbron-west-pylon-west",
+   "status": 200,
+   "final_url": "https://webcamcollections.com/en/countries/sweden/tjorn/tjornbron-west-pylon-west",
+   "title": "Webcam / Traffic camera - Western pylon, Tjörnbron, Tjörn, Bohuslän in Sweden | WebcamCollections",
+   "checked": "2026-11-27",
+   "ok": true,
+   "method": "same-origin fetch"
+  },
+  "webcamcollections:sweden/ulvon": {
+   "url": "https://webcamcollections.com/en/countries/sweden/ulvon",
+   "status": 200,
+   "final_url": "https://webcamcollections.com/en/countries/sweden/ulvon",
+   "title": "Webcam / Weather camera - Ulvöhamn, Ulvön, Ullånger in Sweden | WebcamCollections",
+   "checked": "2026-11-27",
+   "ok": true,
+   "method": "same-origin fetch"
+  },
+  "webcamcollections:sweden/vadstena/vadstena-ombergsliden-toppen": {
+   "url": "https://webcamcollections.com/en/countries/sweden/vadstena/vadstena-ombergsliden-toppen",
+   "status": 200,
+   "final_url": "https://webcamcollections.com/en/countries/sweden/vadstena/vadstena-ombergsliden-toppen",
+   "title": "Webcam - View towards the top of Ombergsliden, Vadstena in Sweden | WebcamCollections",
+   "checked": "2026-11-27",
+   "ok": true,
+   "method": "same-origin fetch"
+  },
+  "webcamcollections:sweden/valdemarsvik/fyrudden-1": {
+   "url": "https://webcamcollections.com/en/countries/sweden/valdemarsvik/fyrudden-1",
+   "status": 200,
+   "final_url": "https://webcamcollections.com/en/countries/sweden/valdemarsvik/fyrudden-1",
+   "title": "Webcam / Weather camera - Fyrudden 1(2), Gryt archipelago, Gryt, Valdermarsvik in Sweden | WebcamCollections",
+   "checked": "2026-11-27",
+   "ok": true,
+   "method": "same-origin fetch"
+  },
+  "webcamcollections:sweden/valdemarsvik/gryts-archipelago-1": {
+   "url": "https://webcamcollections.com/en/countries/sweden/valdemarsvik/gryts-archipelago-1",
+   "status": 200,
+   "final_url": "https://webcamcollections.com/en/countries/sweden/valdemarsvik/gryts-archipelago-1",
+   "title": "Weather camera / Webcam - Häradskär 2(2), Häradskär lighthouse, Gryt archipelago, Gryt, Valdermarsvik in Sweden | WebcamCollections",
+   "checked": "2026-11-27",
+   "ok": true,
+   "method": "same-origin fetch"
+  },
+  "webcamcollections:sweden/vasteras/city-hall-against-malaren": {
+   "url": "https://webcamcollections.com/en/countries/sweden/vasteras/city-hall-against-malaren",
+   "status": 200,
+   "final_url": "https://webcamcollections.com/en/countries/sweden/vasteras/city-hall-against-malaren",
+   "title": "Webcam / Weather Camera - View from Västerås City Hall, Lake Mälaren, Västerås in Sweden | WebcamCollections",
+   "checked": "2026-11-27",
+   "ok": true,
+   "method": "same-origin fetch"
+  },
+  "webcamcollections:sweden/vasteras/vedbobacken": {
+   "url": "https://webcamcollections.com/en/countries/sweden/vasteras/vedbobacken",
+   "status": 200,
+   "final_url": "https://webcamcollections.com/en/countries/sweden/vasteras/vedbobacken",
+   "title": "Webcam / Ski camera - Vedbobacken, Västerås in Sweden | WebcamCollections",
+   "checked": "2026-11-27",
+   "ok": true,
+   "method": "same-origin fetch"
+  },
+  "webcamcollections:sweden/vastervik/slottsholmen-gamlebyviken": {
+   "url": "https://webcamcollections.com/en/countries/sweden/vastervik/slottsholmen-gamlebyviken",
+   "status": 200,
+   "final_url": "https://webcamcollections.com/en/countries/sweden/vastervik/slottsholmen-gamlebyviken",
+   "title": "Webcam - Uno's Tower, Kulbacken, Västervik Museum, Castle Ruins, Gamlebyviken, Västervik, Småland, Sweden | WebcamCollections",
+   "checked": "2026-11-27",
+   "ok": true,
+   "method": "same-origin fetch"
+  },
+  "webcamcollections:sweden/vemdalen/bjornrike-grahogna-solliften": {
+   "url": "https://webcamcollections.com/en/countries/sweden/vemdalen/bjornrike-grahogna-solliften",
+   "status": 200,
+   "final_url": "https://webcamcollections.com/en/countries/sweden/vemdalen/bjornrike-grahogna-solliften",
+   "title": "Björnrike in Vemdalen. Webcam / Ski camera with view in Solliften, Härjedalen, Sweden. | WebcamCollections",
+   "checked": "2026-11-27",
+   "ok": true,
+   "method": "same-origin fetch"
+  },
+  "webcamcollections:sweden/vemdalen/klovsjo-klovsjo-express": {
+   "url": "https://webcamcollections.com/en/countries/sweden/vemdalen/klovsjo-klovsjo-express",
+   "status": 200,
+   "final_url": "https://webcamcollections.com/en/countries/sweden/vemdalen/klovsjo-klovsjo-express",
+   "title": "Klövsjö/Storhogna in Vemdalen. Webcam / Ski camera with a view of Klövsjö Express mountain, Härjedalen, Sweden. | WebcamCollections",
+   "checked": "2026-11-27",
+   "ok": true,
+   "method": "same-origin fetch"
+  },
+  "webcamcollections:sweden/vemdalen/vemdalsskalet-skalspasset": {
+   "url": "https://webcamcollections.com/en/countries/sweden/vemdalen/vemdalsskalet-skalspasset",
+   "status": 200,
+   "final_url": "https://webcamcollections.com/en/countries/sweden/vemdalen/vemdalsskalet-skalspasset",
+   "title": "Vemdalen, Vemdalsskalet with view from Skalspasset, Härjedalen, Jämtland County, Sweden. Webcam / Ski camera in real time. | WebcamCollectio",
+   "checked": "2026-11-27",
+   "ok": true,
+   "method": "same-origin fetch"
+  },
+  "webcamcollections:sweden/vrango": {
+   "url": "https://webcamcollections.com/en/countries/sweden/vrango",
+   "status": 200,
+   "final_url": "https://webcamcollections.com/en/countries/sweden/vrango",
+   "title": "Live webcam - Norra Varskär, Lökholmen and Måvholmen, Vrångö, Gothenburg in Sweden | WebcamCollections",
+   "checked": "2026-11-27",
+   "ok": true,
+   "method": "same-origin fetch"
+  }
+ }
+}
