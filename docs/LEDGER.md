@@ -1,7 +1,27 @@
 # NordicCiv — requirements and evidence ledger
 
 Status: ✅ done and verified · 🟡 done, verification pending or partial · ⏳ open · ➖ out of scope. "Evidence" names the
-check, test or file that verifies the item. v0.4 items first; the v0.3 and v0.2 tables follow unchanged.
+check, test or file that verifies the item. v0.5 items first; the v0.4, v0.3 and v0.2 tables follow unchanged.
+
+## v0.5 — public camera uplinks
+
+| ID | Requirement | Status | Implementation | Evidence |
+|---|---|---|---|---|
+| NC-C01 | Investigate OSIRIS catalogue, acquisition and licence | ✅ (nothing imported) | code MIT; generated lists scraped from third-party catalogues (database rights not grantable by MIT); sample positions wrong by geocoding | METHODOLOGY "Camera uplinks"; SOURCES v0.5 |
+| NC-C02 | NO/SE/DK coverage of intentionally public cameras across settlements, mountains, fjords, coasts, islands, destinations, ski, weather, nature, viewpoints | ✅ / 🟡 Denmark thin | 196 reviewed cameras (NO 80, SE 108, DK 8), 120 municipalities, all 10 categories | check `uplinks:*` NOTE; unit `test_coverage_spans_the_three_countries_and_landscapes` |
+| NC-C03 | Exclusions: private, exposed, restricted, unpublished, traffic | ✅ | reviewed include lists; reasons for every CamStreamer exclusion; road cameras excluded by policy; no scanning | catalogue; check "exactly the reviewed catalogue … no excluded camera published" |
+| NC-C04 | Lightweight catalogue in the pipeline with only necessary metadata | ✅ | `pipeline/sources/uplinks.py` (`camera_uplinks`, relay-capable), `pipeline/build/uplinks.py` → `web/data/uplinks.json` (80 kB) | check "only the necessary metadata"; unit `test_links_only` |
+| NC-C05 | Original provider page as destination; URLs validated, protocols restricted | ✅ | https only, provider host allowlist, no credentials/ports/IPs/tokens/stream or image paths, operator pages exactly as reviewed; checked in build, gate, unit test and again in the browser before a link is drawn | unit `UrlRules`; journey 29 (probes refused) |
+| NC-C06 | Source provenance, attribution, reuse conditions | ✅ | raw listings with manifest (URL, SHA-256, retrieval, via relay); attribution in data, card, Almanac | source check "every published position equals the provider's cached listing" (175 of 175) |
+| NC-C07 | Coordinates verified; duplicates detected | ✅ | PROJ round trip (0.8 m); shipped outlines; 3 mis-placed listings excluded; duplicate rule in build + gate + test | check; unit `test_positions_and_municipalities`, `test_no_duplicates` |
+| NC-C08 | Last verification date; valid public destinations | ✅ | 196 pages checked 2026-11-27 (`tools/verify_uplinks.js`), stale > 120 days dropped | `camera_uplinks_verification.json`; unit `test_every_reviewed_page_was_checked…`; check |
+| NC-C09 | Native artwork from the existing visual grammar | 🟡 (visual judgement; no user test) | spyglass on a stone lookout (plinth perspective, ink, top-left light, shadow, unit-capped lines at small sizes); group = second spyglass + count tab; Map-menu icon `c-uplink` | `docs/visual/v05/` (states 32–39) |
+| NC-C10 | Optional layer via existing layer management, off by default; LOD, collisions, subordinate | ✅ | static layer z 63; hidden < 4.5 px/hex; grouping without displacement; fades under lenses | journey 27 |
+| NC-C11 | Compact card; outbound link in a new tab; no media, no live claim | ✅ | `#uplink-card`; `target=_blank`, `rel=noopener noreferrer`, `referrerpolicy=no-referrer` | journey 28 |
+| NC-C12 | No third-party resources, cookies or tracking because a camera is visible or selected | ✅ | no media elements or remote fetches in the layer code | journey 29 (0 foreign requests; the click is the only outbound request); unit `NoProviderLoads` |
+| NC-C13 | Municipality profile and Discover integration without new navigation | ✅ | Overview section with "Explore N camera uplinks"; 12 Discover entries; Almanac page | journeys 30–31 |
+| NC-C14 | Desktop and mobile | ✅ | card as bottom sheet on phones | journey 32; state 39 |
+| NC-C15 | Existing functionality and rendering performance preserved | ✅ | layer off: states 01, 02, 11, 25, 27 pixel-identical to v0.4.0; journeys 0–26 pass | VERIFICATION; `docs/perf/v04_v05_desktop.json` |
 
 ## v0.4 — civil preparedness: public shelters
 

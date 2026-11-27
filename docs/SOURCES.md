@@ -19,6 +19,7 @@ Generated from `web/data/sources.json` (the same list the Almanac shows). Each s
 | `sodir` | Norwegian Offshore Directorate FactPages and FactMaps: oil and gas fields and production | Sokkeldirektoratet (Norwegian Offshore Directorate) | NLOD 2.0 (Norwegian Licence for Open Government Data) | oil and gas resources, petroleum production | 3 |
 | `sgu` | SGU Mineral resources database (mines, quarries and deposits) | Sveriges geologiska undersökning (Geological Survey of Sweden) | CC0 1.0 (SGU open data) | mines and mineral deposits | 2 |
 | `links` | Fixed links (Wikidata) and main-port freight (Eurostat) | Wikidata contributors; Eurostat | CC0 1.0 (Wikidata); CC BY 4.0 (Eurostat) | engineering wonders, port size | 2 |
+| `camera_uplinks` | Public camera uplinks (links to providers' public webcam pages) | CamStreamer (public camera map), Panomax (public camera search), WebcamCollections (public webcam map), SkylineWebcams and operators' own pages (links only), Wikidata (place coordinates); selection by NordicCiv | Facts and links only (names, positions, page addresses as published, with attribution); Wikidata CC0. No camera images or streams are copied. | Camera uplinks layer, municipality panel, Discover | 7 |
 | `dsb_shelters` | Tilfluktsrom – Offentlige (public shelters) | Direktoratet for samfunnssikkerhet og beredskap (DSB); WFS hosted by Kartverket (Geonorge) | NLOD 1.0 (Norwegian Licence for Open Government Data) | public shelters layer, municipal shelter summary, Council: civil preparedness notes | 4 |
 
 ### Added in v0.2
@@ -42,3 +43,21 @@ Attribution: contains data from Statistics Norway, Statistics Sweden, Statistics
 - Investigated, not used: Sweden (Myndigheten för civilt försvar skyddsrumskarta — no openly licensed dataset found),
   Denmark (no published national dataset), Beredskap101's static snapshot (superseded by the official register; see METHODOLOGY).
 
+
+### Added in v0.5
+- `camera_uplinks/camstreamer_{NO,SE,DK}.json` — CamStreamer's public map listing per country
+  (`/live/update-search-map?country[0]=…`, the request the map page itself makes); `panomax_search.json` — Panomax's
+  public camera search; `webcamcollections_map.html` — WebcamCollections' public map page (its embedded map pins);
+  `wikidata_webcams.json` — Wikidata items with *webcam page URL* (P4238) in NO/SE/DK; `wikidata_places.json` —
+  coordinates of the 21 places shown by pages without coordinates. Retrieved 2026-11-27 through the browser relay
+  (same URLs, each fetched same-origin from the provider's own site because the build sandbox refuses those hosts).
+- Tracked in the repository: `pipeline/catalogue/camera_uplinks.json` (the reviewed selection, exclusions with reasons,
+  categories, provider notes) and `pipeline/catalogue/camera_uplinks_verification.json` (page checks).
+- Attribution (in the data, the card and the Almanac): camera names, positions and pages as published by CamStreamer
+  and the camera owners, Panomax, WebcamCollections, SkylineWebcams and the operators named on each camera; place
+  coordinates from Wikidata (CC0). Pictures belong to their publishers and are not reproduced.
+- Terms: none of the providers' pages publishes terms that restrict linking to its public camera pages; NordicCiv only
+  links (no framing, embedding, hot-linking or copying of images or streams) and uses a reviewed subset of each
+  listing, never a provider's catalogue as a whole. WebcamCollections publishes no terms of use; Panomax and CamStreamer
+  pages are their public galleries.
+- Reference only (nothing used): OSIRIS <https://github.com/simplifaisoul/osiris> (MIT; see METHODOLOGY "Camera uplinks").

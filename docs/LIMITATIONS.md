@@ -23,6 +23,20 @@
 - **Not an emergency service.** The app is educational. In an emergency, follow current instructions from the
   authorities; DSB's own map is linked from every card.
 
+## Camera uplinks (v0.5)
+
+- **A reviewed selection, not a census.** 196 cameras (Norway 80, Sweden 108, Denmark 8). Many public webcams exist
+  that are not here: road and traffic cameras by policy; others because no provider listing with a stable page and a
+  position was found, or they were not reviewed yet. A municipality with no uplink is not one without cameras.
+- **Denmark is thin.** Few intentionally public landscape webcams with stable pages were found; five of eight are
+  weather-station cameras.
+- **Listed is not live.** Cameras go offline, move or change what they show; the app never claims a camera works, and a
+  page check (2026-11-27) concerns the page, not the stream. Checks older than 120 days drop the camera at the next build.
+- **Positions.** Published positions are the providers' (a few owners round theirs); 21 page-only cameras stand at the
+  place they show, not at the camera. Ten coastal cameras are assigned to the nearest municipality outline (≤ 882 m).
+- **The provider's page is a third-party site** with its own cookies, advertising and terms; NordicCiv sends no
+  referrer and opens it in a separate tab, but cannot vouch for it.
+
 ## Known caveats
 
 - **Below 1 km the landscape only interpolates.** The relief image is painted from 1 km CORINE, EU-DEM and tree-cover
@@ -110,3 +124,8 @@
 19. **Public shelters (v0.4) as an optional infrastructure layer, not a workspace.** One Map-menu switch (off by default),
     a card, a Society-tab section, Council notes under Resilience, an Almanac page and one lens; no new top-bar button,
     no score. Grouping instead of displacement, so no symbol stands anywhere a record is not.
+20. **Camera uplinks (v0.5) as links, not a viewer.** One Map-menu switch (off by default), a card with one outbound link,
+    a short Overview section where a municipality has uplinks, Discover entries and an Almanac page; no media panel,
+    monitoring workspace or new top-level navigation. Road and traffic cameras excluded on principle. Reviewed include
+    lists instead of whole provider catalogues, so a provider's new cameras never appear unreviewed. OSIRIS studied,
+    nothing imported (licence of its generated lists unclear, positions unreliable).

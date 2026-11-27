@@ -1,3 +1,60 @@
+# Verification record — NordicCiv 0.5.0 (public camera uplinks)
+
+Executed on the build machine (Linux, 2 CPUs, Python 3.13, headless Chrome 153 with a software GPU, SwiftShader) on a
+feature branch. The 0.4.0 and 0.3.0 records follow unchanged below this section.
+
+## Gates (working tree of the branch)
+
+| Gate | Outcome |
+|---|---|
+| Unit tests | 48 run, 0 failed, 0 skipped (11 new in `tests/test_uplinks.py`: URL rules, duplicate rule, catalogue consistency, page checks, links-only fields, positions and municipalities against the shipped outlines, no duplicates, coverage, and a static guard that the layer code creates no media elements and makes no remote requests) |
+| Browser journeys | 33 mandatory (0–32) PASS, incl. the axe accessibility journeys 17 and 21; 27–32 are new: layer default/scale/grouping/z-order, hover and card with one safe outbound link, **no request to any third party while the layer is on, hovered and selected** (the click is the only outbound request; blocked in the test), municipality panel, Discover and Almanac, phone |
+| `check --mode built` | 125 pass, 8 note, 0 warn, 0 fail (14 new `uplinks:*` lines) |
+| `check --mode source` (uplinks part) | every published position equals the provider's cached listing, read independently of the build (175 of 175); the other sources' raw caches are not in this build environment, so their source reconciliation was not re-run here (unchanged data) |
+| Release run | `python -m pipeline release` must be run where all raw caches are present (it reconciles every source); until it passes, `dist/release/` keeps 0.4.0 |
+
+## Data integrity (camera uplinks)
+
+- 196 reviewed cameras published, 0 left out by page checks: Norway 80, Sweden 108, Denmark 8; 120 municipalities;
+  all 10 categories; 175 at positions published by the provider, 21 at Wikidata place positions.
+- Every destination is an https page on the provider's own host (or the operator's reviewed page); no credentials,
+  tokens, stream or image addresses; 196 distinct pages, each checked on 2026-11-27 (status, final address, title).
+- Positions transform back within 0.8 m; every camera lies in its listed country and in, or ≤ 882 m from, its
+  municipality's shipped outline (10 assigned to the nearest, distance kept).
+- Reviewed out: 35 CamStreamer listings with reasons (golf, demonstrations, test/copy listings, people-focused cameras,
+  airfield, motorsport, duplicates, unclear content and five listings whose published positions contradict the place
+  they name); WebcamCollections construction, timelapse, golf, camping, street-level and duplicate pins; road cameras.
+
+## Five review perspectives (developer reviews, not user evidence)
+
+1. **Privacy and security.** No media, scripts, frames, fonts or cookies from providers; links open in a new tab with
+   no opener and no referrer; outbound addresses checked in the build, the gate, a unit test and again in the browser
+   before a link is drawn (javascript:, http:, look-alike hosts, credentials and odd ports refused — journey 29). No
+   camera aimed at people, no traffic cameras, no scanning, no footage analysis.
+2. **Data honesty.** Nothing claims a camera is live; place positions are labelled; absence is "not found or not
+   reviewed"; provider positions kept as published, mis-placed listings excluded rather than "corrected".
+3. **Visual identity.** One symbol family with the sites (plinth perspective, ink outline, top-left light, ground
+   shadow), smaller and plainer than wonders, hidden far out, fading under lenses; no pins, dots, radar or camera
+   bodies. A first draft read as a dark barrel at 14 px; line widths are now capped in art units. Judged native in
+   states 33–38 — by the developer only.
+4. **Accessibility.** Card: labelled live region, close button, Escape, focus on the link; every uplink reachable
+   without the canvas through the municipality panel's buttons; axe journeys pass.
+5. **Performance.** Static layer in the cached map, items cached per zoom bucket, one 80 kB JSON after the first frame.
+
+## Performance (`docs/perf/v04_v05_desktop.json`; 2 alternating runs, unthrottled, software GPU)
+
+| Measure | v0.4.0 | v0.5.0 (layer off by default) |
+|---|---|---|
+| Data ready, median | 1,115 ms | 1,099 ms |
+| Relief ready, median | 1,683 ms | 1,777 ms |
+| Pan frames, median / worst | 16.7 / 117 ms | 16.7 / 100 ms |
+| Zoom frames, long frames > 50 ms | 13 | 15 |
+| Lens switch, median / worst | 153 / 256 ms | 133 / 258 ms |
+
+Static redraw with the layer switched on, same four views × 3 (median): 58.5 ms on vs 64.4 ms off — within noise.
+Read: no measurable cost; differences are run-to-run noise on a 2-CPU software-rendered machine. Not measured: a
+4×-throttled CPU and a real phone.
+
 # Verification record — NordicCiv 0.4.0 (public shelters)
 
 Executed on the build machine (Linux, 2 CPUs, Python 3.13, headless Chrome with a software GPU, SwiftShader). The

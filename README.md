@@ -1,6 +1,6 @@
 # NordicCiv — Scandinavia as a strategy game, built from real data
 
-**Version 0.4.0** (see `VERSION`, `docs/VERIFICATION.md` for this release's evidence, `docs/LEDGER.md` for the
+**Version 0.5.0** (see `VERSION`, `docs/VERIFICATION.md` for this release's evidence, `docs/LEDGER.md` for the
 requirement-by-requirement status).
 
 Norway, Sweden and Denmark drawn like a turn-based 4X strategy map. Every hex, municipality, yield, resource and
@@ -43,6 +43,12 @@ towns, Danish farmland or the Øresund.
   Council's Resilience advisor, an Almanac page and a lens. Public shelters only (private shelters are not published);
   registered places are capacity on record, not availability; Sweden and Denmark are "not integrated", never zero.
   Educational only — in an emergency, follow the authorities' instructions.
+- **Camera uplinks (v0.5).** 196 public webcams their operators publish — towns, mountains, fjords, coasts, islands,
+  ski resorts, weather stations — as an optional layer in the Map menu (off by default; hidden at the scale of the whole
+  of Scandinavia). Selecting one opens a small card with one link, **Open camera uplink**, to the provider's own page in
+  a new tab. NordicCiv loads nothing from the providers — no pictures, players, scripts or cookies — and never claims a
+  camera is live. Reviewed from CamStreamer, Panomax, WebcamCollections, SkylineWebcams and operators' pages; road and
+  people-facing cameras excluded. Municipality panels list their uplinks; Discover visits some of them.
 - **Wonders by rule.** All 32 UNESCO World Heritage Sites, national parks ≥ 1,000 km², large/old universities, bridges
   ≥ 6 km and tunnels ≥ 11 km.
 - **23 lenses** in four groups (people, economy, welfare & access, land), each labelled hex / municipality / region /
@@ -84,8 +90,8 @@ python -m pipeline process --strict # raw → data/interim/<source>.json (a miss
 python -m pipeline build            # interim → web/data/*.json; validated, and restored if anything fails
 python -m pipeline check --mode built|source|release   # gates; reports in docs/CHECK_REPORT*.txt
 python -m unittest discover -s tests
-python tests/smoke_browser.py       # 20 real-browser journeys (site served on :8765); writes tests/results/browser.json
-python tests/visual_states.py URL OUT   # the 14 standard screenshots at fixed cameras (visual regression)
+python tests/smoke_browser.py       # 33 real-browser journeys (0–32) (site served on :8765); writes tests/results/browser.json
+python tests/visual_states.py URL OUT   # the 39 standard screenshots at fixed cameras (visual regression)
 python tests/perf.py OUT.json now=URL   # laboratory performance (frame times, LCP, CLS, lens switch)
 python -m pipeline release          # stage, gate (unit + browser + data evidence for this candidate), package, verify, promote
 python -m pipeline all              # fetch + process (strict) + build
@@ -108,7 +114,8 @@ pipeline/
   build/     world (hexes, terrain, water, municipalities, dasymetric population), regions (cities, regions, nation,
              yields, GDP), resources, infrastructure, wonders, lenses, catalog (Almanac bibliography)
   build/     … also history (observation status, boundary breaks), gva (sector-weighted output keys), munis (polygons,
-             borders), relief (landscape and sea images, shore lines)
+             borders), relief (landscape and sea images, shore lines), shelters, uplinks (camera uplinks)
+  catalogue/ reviewed selections tracked in git: camera_uplinks.json (+ page checks, tools/verify_uplinks.js)
   check.py   validation gates in three modes; candidate.py content identity of a release candidate; release.py stages,
              verifies and only then promotes a release (dist/release/, previous in dist/previous/)
 web/          the static app (engine adapted from usaciv; ext/nordic adds the Council, Compare, Explorer, Timeline, ferries;
