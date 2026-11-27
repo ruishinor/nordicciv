@@ -41,7 +41,7 @@ URL = _pos[0] if _pos else "http://127.0.0.1:8765/"
 CANDIDATE = Path(_arg("--candidate", str(ROOT))).resolve()
 OUT = Path(_arg("--out", str(ROOT / "tests" / "results"))).resolve()
 # every journey must run and pass for a release (journey ids are the leading numbers of the names below)
-MANDATORY = [str(i) for i in range(0, 21)]
+MANDATORY = [str(i) for i in range(0, 22)]
 AXE = ROOT / "tests" / ".node" / "node_modules" / "axe-core" / "axe.min.js"
 AXE_ALT = Path(os.environ.get("NORDICCIV_AXE", "/nonexistent"))
 
@@ -372,6 +372,41 @@ async def main():
         await pg.wait_for_timeout(2500)
         tiles = await pg.evaluate("import('./js/render/art/relief.js').then(m => [...m.reliefState().tiles.values()].filter(t => t._ok).length)")
         ok("19 close zoom loads 0.5 km relief tiles", tiles >= 1, f"{tiles} tiles decoded")
+
+        # 21. discovery: first-run hint, Discover opens a computed fact about a real place, "what stands out" links
+        pg3 = await ctx.new_page()
+        pg3.on("pageerror", lambda e: errors.append("discovery: " + str(e)))
+        await pg3.goto(URL, wait_until="networkidle")
+        await pg3.evaluate("localStorage.removeItem('nc-intro')")
+        await pg3.reload(wait_until="networkidle")
+        await pg3.wait_for_function("window.__app && __app.explore", timeout=30000)
+        intro = await pg3.evaluate("!!document.getElementById('intro')")
+        axe3 = AXE if AXE.exists() else AXE_ALT if AXE_ALT.exists() else None
+        a11y = []
+        scan3 = "axe.run(document, {runOnly: ['wcag2a','wcag2aa','wcag21aa','wcag22aa']}).then(r => r.violations.filter(v => ['serious','critical'].includes(v.impact)).map(v => v.id))"
+        if axe3:
+            await pg3.add_script_tag(path=str(axe3))
+            a11y += await pg3.evaluate(scan3)
+        await pg3.click("#intro [data-i='go']")
+        await pg3.wait_for_timeout(1500)
+        if axe3:
+            a11y += await pg3.evaluate(scan3)
+        disc = await pg3.evaluate("""(() => { const c = document.getElementById('discovery'); const sel = __app.state.selectedCity;
+            return { shown: !c.hidden, text: c.querySelector('.disc-t')?.innerText || '', city: sel?.name || null }; })()""")
+        await pg3.reload(wait_until="networkidle")
+        await pg3.wait_for_function("window.__app && __app.explore", timeout=30000)
+        intro_after = await pg3.evaluate("!!document.getElementById('intro')")
+        await pg3.evaluate("__app.selectCity('NO-1856', {fly: false})")
+        await pg3.wait_for_timeout(600)
+        st = await pg3.evaluate("document.querySelector('#city-panel .standout')?.innerText || ''")
+        await pg3.click("#city-panel .standout [data-facet='growth']")
+        await pg3.wait_for_timeout(300)
+        lens_after = await pg3.evaluate("__app.state.lens?.id || null")
+        await pg3.close()
+        ok("21 discovery: first-run hint, Discover names a real place and opens it, hint stays dismissed, 'what stands out' links to a lens",
+           intro and disc["shown"] and disc["city"] and disc["city"] in disc["text"] and not intro_after and "fastest-shrinking" in st and lens_after == "growth"
+           and axe3 is not None and not a11y,
+           f"intro={intro} card={disc} introAfterReload={intro_after} lens={lens_after} axe(hint, card)={a11y if axe3 else 'not installed'} standout={st[:60]!r}")
 
         ok("20 no console errors", not errors, errors[:3])
         await b.close()

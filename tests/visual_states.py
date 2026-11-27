@@ -56,6 +56,9 @@ STATES = [
     ("19-jutland-mid", DESKTOP, at_city("Herning", 3.5), 0),
     ("20-telemark-very-close", DESKTOP, at_city("Tinn", 18), 0),
     ("21-mobile-lofoten", MOBILE, at_city("Vågan", 4), 0),
+    ("22-first-run", DESKTOP, "", 0),
+    ("23-what-stands-out", DESKTOP, select("Røst", 6), 0),
+    ("24-discovery-card", DESKTOP, "__app.explore.show(__app.explore.discoveries[0]);", 0),
 ]
 
 
@@ -73,6 +76,8 @@ async def main():
                 continue
             ctx = await b.new_context(viewport=vp, device_scale_factor=1, is_mobile=vp is MOBILE, has_touch=vp is MOBILE)
             pg = await ctx.new_page()
+            if "first-run" not in name:  # the one-time hint would otherwise cover every after-state
+                await pg.add_init_script("try { localStorage.setItem('nc-intro', '1'); } catch (e) {}")
             errs = []
             pg.on("pageerror", lambda e: errs.append(str(e)))
             t0 = time.time()

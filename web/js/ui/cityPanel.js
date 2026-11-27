@@ -6,6 +6,7 @@ import { icon, glyph } from "./icon.js";
 import { DISTRICT_ICON, showPanel, hidePanel } from "./infoPanel.js";
 import { industryIcon } from "./yieldReport.js";
 import { popChart, breakNotes, rankText, isPartial } from "../stats.js";
+import { distinctiveHtml } from "../explore.js";
 
 const COUNTRY = { NO: "Norway", SE: "Sweden", DK: "Denmark" };
 const FLAG = { NO: "🇳🇴", SE: "🇸🇪", DK: "🇩🇰" };
@@ -201,6 +202,7 @@ export function openCityPanel(city, ctx) {
       <button class="chip" data-compare="${esc(city.id)}" title="Compare this municipality with others">Compare ⇄</button></div>`,
     headExtra: head,
     sections: [
+      { tab: "Overview", title: "What stands out", html: distinctiveHtml(city, ctx.cities || []) },
       { tab: "Overview", title: `Yields · what each measures · rank among ${count}`, html: `<div class="yield-grid">${yieldTiles(nation, city, nation.rank_of?.municipalities || count)}</div>
         <p class="muted small">Yields are game names for real figures: five count jobs at the place of work (2024), Gold is economic output (estimate). They are not production, research output or welfare quality. <a href="#" data-pedia-yields>What each yield measures ›</a></p>` },
       { tab: "Overview", title: "Economic profile", html: specSummary },
@@ -226,6 +228,7 @@ export function openCityPanel(city, ctx) {
       }));
       panel.querySelectorAll("[data-compare]").forEach((b) => (b.onclick = () => window.__app?.emit?.("compare", { add: city.id })));
       panel.querySelectorAll("[data-spec]").forEach((b) => (b.onclick = () => window.__app?.emit?.("focus-industry", { group: b.dataset.spec, from: city.id })));
+      panel.querySelectorAll("[data-facet]").forEach((b) => (b.onclick = () => window.__app?.emit?.("explore-facet", { facet: b.dataset.facet, city: city.id })));
       panel.querySelectorAll("[data-act]").forEach((b) => (b.onclick = () => window.__app?.emit?.("discover", { act: b.dataset.act, city: city.id })));
       panel.querySelectorAll("[data-cptab-go]").forEach((b) => (b.onclick = () => panel.querySelector(`[data-cptab="${b.dataset.cptabGo}"]`)?.click()));
       panel.querySelector("[data-pedia-yields]")?.addEventListener("click", (e) => { e.preventDefault(); ctx.onPedia?.("yields"); });
