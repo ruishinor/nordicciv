@@ -92,7 +92,9 @@ export class Camera {
     this.zoomTarget = null;
     const s1 = this.clampScale(scale);
     const path = zoomPath(this.x, this.y, this.w / this.scale, x, y, this.w / s1);
-    const dur = Math.min(Math.max(ms, 2400), Math.max(ms, path.S * 520));
+    let dur = Math.min(Math.max(ms, 2400), Math.max(ms, path.S * 520));
+    // prefers-reduced-motion: a short cross-cut instead of a long zooming flight (WCAG 2.3.3)
+    if (typeof matchMedia === "function" && matchMedia("(prefers-reduced-motion: reduce)").matches) dur = 1;
     this.flight = { path, x1: x, y1: y, s1, t: 0, ms: Math.max(1, dur) };
   }
 

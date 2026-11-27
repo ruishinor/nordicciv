@@ -1,0 +1,83 @@
+{
+ "conditions": {
+  "viewport": {
+   "width": 1440,
+   "height": 900
+  },
+  "cpu_throttle": 4,
+  "machine": "Linux-6.18.44-fc-v880-x86_64-with-glibc2.39",
+  "cpus": 2,
+  "note": "headless Chromium with SwiftShader (software GPU) unless a real GPU is available; laboratory data",
+  "browser": "153.0.8010.12"
+ },
+ "before": {
+  "data_ready_ms": 3648,
+  "relief_ready_ms": null,
+  "lcp_ms": 184,
+  "cls": 0.0907,
+  "pan": {
+   "frames": 414,
+   "median_ms": 16.7,
+   "p95_ms": 49.9,
+   "fps_median": 59.9,
+   "long_frames_over_50ms": 14
+  },
+  "zoom": {
+   "frames": 131,
+   "median_ms": 16.7,
+   "p95_ms": 816.6,
+   "fps_median": 59.9,
+   "long_frames_over_50ms": 14
+  },
+  "select_event_ms_max": 56,
+  "lens_switch_ms": [
+   744.3,
+   784.3,
+   842.2,
+   821,
+   1281.5,
+   740.2
+  ],
+  "lens_switch_cached_ms": 740.2,
+  "heap_mb": 31.6,
+  "app_perf": null
+ },
+ "after": {
+  "data_ready_ms": 3398,
+  "relief_ready_ms": 6141,
+  "lcp_ms": 200,
+  "cls": 0.0794,
+  "pan": {
+   "frames": 415,
+   "median_ms": 16.7,
+   "p95_ms": 49.9,
+   "fps_median": 59.9,
+   "long_frames_over_50ms": 14
+  },
+  "zoom": {
+   "frames": 122,
+   "median_ms": 16.7,
+   "p95_ms": 233.4,
+   "fps_median": 59.9,
+   "long_frames_over_50ms": 20
+  },
+  "select_event_ms_max": 32,
+  "lens_switch_ms": [
+   868.7,
+   627.1,
+   635.1,
+   589.6,
+   544.3,
+   562
+  ],
+  "lens_switch_cached_ms": 562,
+  "heap_mb": 55.1,
+  "app_perf": {
+   "static_ms": 152.2,
+   "frame_ms": 3.2,
+   "warm_ms": 0.8,
+   "static_n": 42,
+   "frame_n": 60
+  }
+ }
+}

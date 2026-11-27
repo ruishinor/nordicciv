@@ -70,7 +70,8 @@ async def main():
 
     async with async_playwright() as p:
         b, browser_name = await launch(p)
-        ctx = await b.new_context(viewport={"width": 1440, "height": 900}, accept_downloads=True)
+        # bypass_csp only so axe-core can be injected for the accessibility journey; the app itself runs under its CSP
+        ctx = await b.new_context(viewport={"width": 1440, "height": 900}, accept_downloads=True, bypass_csp=True)
         pg = await ctx.new_page()
         pg.on("console", lambda m: errors.append(m.text) if m.type == "error" else None)
         pg.on("pageerror", lambda e: errors.append(str(e)))
@@ -284,6 +285,8 @@ async def main():
         m = await b.new_context(viewport={"width": 390, "height": 844}, is_mobile=True, has_touch=True, device_scale_factor=2)
         mp = await m.new_page()
         mp.on("pageerror", lambda e: errors.append("mobile: " + str(e)))
+        # this context enforces the page's Content-Security-Policy: any violation is a console error and fails journey 20
+        mp.on("console", lambda msg: errors.append("mobile: " + msg.text) if msg.type == "error" else None)
         await mp.goto(URL, wait_until="networkidle")
         await mp.wait_for_function("window.__app && __app.data && __app.data.cities", timeout=30000)
         await mp.wait_for_timeout(1500)

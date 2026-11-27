@@ -2,6 +2,9 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
+  <!-- Static app: everything is served from this origin; no third-party scripts, fonts, trackers or APIs. -->
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'">
+  <meta name="referrer" content="no-referrer">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>NordicCiv — Scandinavia as a strategy game</title>
   <meta name="description" content="Norway, Sweden and Denmark drawn like a 4X strategy map: hex terrain from EU-DEM and CORINE, every municipality as a city with yields from SSB, SCB and Statistics Denmark, resources, wonders and lenses — all from public data.">
