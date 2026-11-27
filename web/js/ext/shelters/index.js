@@ -250,7 +250,7 @@ export function install(app) {
     const guide = `<a class="chip" href="${esc(data.source.guidance_url)}" target="_blank" rel="noopener">About shelters (DSB) ↗</a><button class="chip" data-shelter-pedia>About public shelters</button>`;
     if (!list.length) {
       return [{ tab: "Society", title: "Civil preparedness · public shelters", html: `<p>DSB's register lists <b>no public shelter</b> in ${esc(city.name)}.</p>
-        <p class="muted small">The register covers public shelters. Private shelters in homes, schools and workplaces are outside its coverage.</p>
+        <p class="muted small">Private shelters in homes, schools and workplaces are not shown.</p>
         <div class="chips">${guide}</div>${src}` }];
     }
     const top = [...list].sort((p, q) => (q.places ?? -1) - (p.places ?? -1)).slice(0, 3);
@@ -297,13 +297,13 @@ export function install(app) {
     const src = `DSB public shelter register, extracted ${data.source.extracted}`;
     const btn = (id) => `<button class="chip" data-shelter-show="${esc(id || "")}">Show public shelters</button>`;
     if (c) {
-      if (c.country !== "NO") return [obs(`Public shelter data is <b>unavailable</b> for ${COUNTRY[c.country]}.`, { source: "coverage note" })];
+      if (c.country !== "NO") return [obs(`Public shelter data is <b>unavailable</b> for ${COUNTRY[c.country]}.`, {})];
       const a = data.munis[c.id];
-      if (!a) return [obs(`DSB's register lists no public shelter in ${esc(c.name)}. The register covers public shelters; private shelters and other protective spaces are outside its coverage.`, { source: src })];
-      return [obs(`DSB's register lists <b>${int(a.n)} public shelter${a.n === 1 ? "" : "s"}</b> in ${esc(c.name)} with <b>${int(a.places)}</b> registered places. Public shelters serve whoever is nearby; private shelters are not published, so this is part of the municipality's shelter provision, not all of it. ${btn(c.id)}`, { source: src })];
+      if (!a) return [obs(`DSB's register lists no public shelter in ${esc(c.name)}. Private shelters and other protective spaces are not shown.`, { source: src })];
+      return [obs(`DSB's register lists <b>${int(a.n)} public shelter${a.n === 1 ? "" : "s"}</b> in ${esc(c.name)} with <b>${int(a.places)}</b> registered places. Anyone nearby can use a public shelter. Private shelters are not shown. ${btn(c.id)}`, { source: src })];
     }
     if (r) {
-      if (r.country !== "NO") return [obs(`Public shelter data is <b>unavailable</b> for ${COUNTRY[r.country]}.`, { source: "coverage note" })];
+      if (r.country !== "NO") return [obs(`Public shelter data is <b>unavailable</b> for ${COUNTRY[r.country]}.`, {})];
       const a = data.regions[r.fips];
       const total = app.data.cities.filter((x) => x.states[0] === r.fips).length;
       if (!a) return [obs(`DSB's register lists no public shelter in ${esc(r.name)}.`, { source: src })];

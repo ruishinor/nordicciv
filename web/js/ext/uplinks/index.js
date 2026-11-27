@@ -189,7 +189,7 @@ export function install(app) {
 
   function linkHtml(c, label = "Open uplink") {
     const href = safeUrl(c, data.operatorHosts);
-    if (!href) return `<span class="muted small">Link withheld: the address did not pass the link check.</span>`;
+    if (!href) return `<span class="muted small">Camera link unavailable.</span>`;
     return `<a class="chip uplink-open" data-uplink-out="${esc(c.id)}" href="${esc(href)}" target="_blank" rel="noopener noreferrer external" referrerpolicy="no-referrer">${esc(label)} ↗</a>`;
   }
   function openCard(c) {

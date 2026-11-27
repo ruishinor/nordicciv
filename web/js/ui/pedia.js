@@ -66,12 +66,8 @@ export function initPedia(data) {
       share in Norway, Sweden and Denmark combined — of at least ${data.nation.lq_rule?.min_lq} with at least ${data.nation.lq_rule?.min_jobs}
       jobs. Several groups can qualify; the panel lists them all. Sweden publishes mining together with manufacturing, so a
       Swedish mining town reads as "Industrial"; its mines appear as resources.</p>
-      <h4>Suppressed values</h4>
-      <p>Statistics Norway suppresses very small cells for confidentiality, and from 2025 Statistics Sweden adds small random
-      noise to protect individuals. A yield with a suppressed component is shown as a lower bound (≥). Because the
-      municipality's total jobs are published, the suppressed cells can add at most the unallocated remainder: the panel
-      and CSV give that upper bound, and where it makes the order uncertain a rank is shown as an interval (#10–14).
-      National figures for Norway come from SSB's national table, which has no suppression.</p>
+      <h4>When some job counts are missing</h4>
+      <p>Statistics Norway withholds very small job counts to protect privacy. Statistics Sweden has added small random adjustments to its figures since 2025. A number marked ≥ includes the published jobs, and there may be more. The total number of jobs tells us how many could be missing. The municipality panel and CSV show that maximum, and ranks can appear as a range, such as #10–14. Norway’s national totals come from SSB’s national table, where these counts are published.</p>
       <h4>Ranks</h4>
       <p>${esc(data.nation.ranking || "")} The interval uses only each area's own published bounds; the bounds do not use the
       agencies' disclosure thresholds or national totals, so the true range can be narrower. "Rank uncertain" means the
@@ -91,16 +87,14 @@ export function initPedia(data) {
       average exchange rates (NOK ${data.nation.fx?.NOK?.toFixed?.(3)}, SEK ${data.nation.fx?.SEK?.toFixed?.(3)}, DKK ${data.nation.fx?.DKK?.toFixed?.(3)} per euro)
       and, for per-person comparisons, to purchasing power standards with Eurostat GDP PPPs.</p>`,
     Methodology: () => `
-      ${h2("pedia", "📖", "Methodology")}
-      <h4>Pipeline</h4>
-      <p>A reproducible Python pipeline downloads every source (with a manifest of URL, SHA-256, size and retrieval date),
-      turns each into tidy interim data, and builds the files this page loads. The same commands rebuild the world when a
-      source updates; the browser never calls an external API.</p>
-      <h4>Harmonisation</h4>
+      ${h2("pedia", "📖", "How the map works")}
+      <h4>Where the map data comes from</h4>
+      <p>NordicCiv downloads figures and maps from public sources and combines them into the files used by the map. See Sources for the datasets and dates.</p>
+      <h4>Comparing places</h4>
       <ul>
         <li><b>Boundaries</b>: municipalities as of 2024–2026 (Norway's 357, Sweden's 290, Denmark's 98). Norway's series use
         SSB's aggregated series for today's municipalities. Where SSB could not reconstruct a municipality (it publishes 0),
-        the years are shown as not available, never as zero population; where a municipality's series describes a
+        those years appear as unavailable; where a municipality's series describes a
         different territory (Ålesund 2020–23 included Haram) or a part of a divided municipality moved (SSB's classification
         131), the years before the change are marked as another territory. Growth, rankings, the Timeline and exports only
         compare years on the same territory. Sweden and Denmark had no municipal reforms in the period.</li>
@@ -116,7 +110,7 @@ export function initPedia(data) {
         so income is shown only relative to the country's own figure for the same statistic. Values are nominal, not
         adjusted for prices or purchasing power; read them within one country.</li>
       </ul>
-      <h4>Spatial allocation</h4>
+      <h4>How population is shown on the map</h4>
       <p>Every 1 km grid cell is assigned to the municipality polygon containing its centre (cells in the coastal fringe
       outside simplified polygons go to the nearest municipality). A hex belongs to the municipality holding most of its land
       cells. Hex population = Σ municipality population × that municipality's share of GEOSTAT 2018 grid population falling in
@@ -133,12 +127,8 @@ export function initPedia(data) {
       CORINE class masks (forest weighted by tree-cover density). They show what covers the ground in that square kilometre
       — forest, farmland, bare rock, built-up land — not where any real tree, field or house stands, and their colours (crop
       tones, roof colours) are illustrative. The analysis view (any lens) drops them so the data colours stay legible.</p>
-      <h4>Validation</h4>
-      <p><code>python -m pipeline check --mode built|source|release</code>. <i>built</i> checks the shipped files on their own;
-      <i>source</i> reconciles them with the original downloads read independently (for example: for every year 2008–2026,
-      Norway's municipalities plus SSB's "divided municipalities" bucket equal the national total) and verifies every
-      cached download against its SHA-256 and request; <i>release</i> also requires the browser journeys to have passed on
-      the same data files. A skipped check never counts as passed.</p>`,
+      <h4>For developers</h4>
+      <p>See the <a href="https://github.com/ruishinor/nordicciv" target="_blank" rel="noopener noreferrer">NordicCiv source code</a> for data processing, test commands and release checks.</p>`,
     Terrain: () => {
       const t = data.w?.tables || resolveTables(data.world.tables);
       const hasCover = Array.isArray(data.world.cover);
@@ -209,7 +199,7 @@ export function initPedia(data) {
         <p class="muted">${wd.wonders.filter((x) => x.rule === r.id).map((x) => esc(x.name)).join(" · ")}</p>`).join("")}`;
     },
     Limitations: () => `
-      ${h2("pedia", "📖", "Limitations")}
+      ${h2("pedia", "📖", "What’s not on the map")}
       <ul>
         <li>Finland, Iceland, Åland, the Faroes, Greenland and Svalbard are not on this map.</li>
         <li>Norwegian mines (NGU), Danish North Sea fields, fisheries and aquaculture, wind turbines below 50 MW, electricity
@@ -243,7 +233,7 @@ export function initPedia(data) {
     });
   };
   const renderNav = () => {
-    nav.innerHTML = `<div class="hd">Almanac</div>` + Object.keys(pages).map((p) => `<button data-page="${esc(p)}">${esc(p)}</button>`).join("");
+    nav.innerHTML = `<div class="hd">Almanac</div>` + Object.keys(pages).map((p) => `<button data-page="${esc(p)}">${esc(p === "Methodology" ? "How the map works" : p === "Limitations" ? "What’s not on the map" : p)}</button>`).join("");
   };
   renderNav();
   nav.onclick = (e) => {

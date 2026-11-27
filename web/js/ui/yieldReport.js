@@ -63,8 +63,8 @@ export function statDefs(nation, scope = "") {
   const yields = (nation?.yields || []).map((y) => {
     const pub = n.yields_published?.[y.key];
     const partial = pub == null && (n.yields_partial || []).includes(y.key);
-    const status = y.key === "gold" ? (scope ? "sum of published regional output" : "combined regional output, mixed concepts (not harmonised GDP)")
-      : partial ? "lower bound: suppressed cells" : "observed";
+    const status = y.key === "gold" ? (scope ? "sum of published regional output" : "combined regional output (GDP and value added)")
+      : partial ? "at least this many jobs" : "published figures";
     return {
       key: y.key, label: y.label, name: y.label, color: y.color, yield: y, unit: y.unit, measure: y.measure,
       description: `${where}: ${y.measure}. ${y.description}`, status, partial,
@@ -77,7 +77,7 @@ export function statDefs(nation, scope = "") {
     {
       key: "population", label: "Population", name: "Population", color: "#e8dcc0", iconId: "pop", emoji: "👥", unit: "people", measure: "residents, 1 Jan 2026",
       description: `${where}: registered residents on 1 January 2026 — ${n.pop_series_source || "SSB 07459, SCB TAB628, DST FOLK1A"}.`,
-      status: "observed", source: nation?.vintage || "", value: pubPop,
+      status: "published figures", source: nation?.vintage || "", value: pubPop,
     },
     ...yields,
   ];
@@ -116,7 +116,7 @@ function rank(list, valueOf, { asc = false, min = 0, fmt = count3, exact = int, 
     .map(({ x: r, v, rank: rk, range }) => {
       const h = hiOf ? hiOf(r.o) : null;
       const lb = fin(h) && h > v;
-      const sub = (subOf ? subOf(r.o) : r.sub) + (lb ? " · lower bound (suppressed cells)" : "");
+      const sub = (subOf ? subOf(r.o) : r.sub) + (lb ? " · some job counts are not published" : "");
       return { rank: range ? `${range[0]}–${range[1]}` : rk, approx: !!range, kind: r.kind, ref: r.ref, name: r.name, sub, value: v,
         text: (lb ? "≥" : "") + fmt(v), exact: exact ? exact(v) : "" };
     });
@@ -314,7 +314,7 @@ function reportJobs(rep, def, nation, n, st, metros) {
   const fmtLq = (v) => `×${v.toFixed(2)}`;
   const exactLq = (v) => `×${v.toFixed(3)}`;
   rep.boards.modes = [
-    { id: "abs", label: "Most jobs", hint: `${def.yield?.measure || "jobs"}, place of work 2024. ≥ marks lower bounds where the agency suppressed small cells.`,
+    { id: "abs", label: "Most jobs", hint: `${def.yield?.measure || "jobs"}, place of work 2024. ≥ means at least this many jobs; some small counts are not published.`,
       states: rank(st, y, { hiOf: yHi }), metros: rank(metros, y, { hiOf: yHi }) },
     {
       id: "rel", label: "Specialisation",
@@ -366,7 +366,7 @@ function boardHtml(rows) {
       const w = max > 0 ? (Math.abs(r.value) / max) * 100 : 0;
       const tip = `Open ${r.name}${r.exact && r.exact !== r.text ? ` (${r.exact})` : ""}`;
       return `<li><button class="yr-row" data-kind="${r.kind}" data-ref="${esc(r.ref)}" title="${esc(tip)}">
-        <span class="yr-rk${r.approx ? " range" : ""}" ${r.approx ? 'title="Possible ranks: suppressed cells make the exact position uncertain"' : ""}>${r.rank}</span>
+        <span class="yr-rk${r.approx ? " range" : ""}" ${r.approx ? 'title="Possible ranks because some job counts are not published"' : ""}>${r.rank}</span>
         <span class="yr-nm">${esc(r.name)}${r.sub ? ` <span class="muted">${esc(r.sub)}</span>` : ""}</span>
         <span class="yr-v">${esc(r.text)}</span>
         <span class="yr-track"><i style="width:${w.toFixed(1)}%"></i></span></button></li>`;

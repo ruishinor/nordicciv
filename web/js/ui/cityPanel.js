@@ -46,13 +46,13 @@ export function yieldTiles(nation, o, rankOf, ranks = o.ranks) {
     const hi = partial && fin(o.yields_hi?.[y.key]) ? ` (at most ${y.unit === "eur" ? money(o.yields_hi[y.key]) : compact(o.yields_hi[y.key])})` : "";
     const nOf = typeof rankOf === "object" ? rankOf[y.key] : rankOf;
     const rk = ranks === o.ranks ? rankText(o, y.key, rankOf) : (ranks?.[y.key] ? `#${ranks[y.key]} of ${nOf}` : "");
-    const tip = `${y.label} = ${y.measure || ""}. ${y.description}${partial ? ` Some components are suppressed by the agency for confidentiality: this is a lower bound${hi}.` : ""}`;
+    const tip = `${y.label} = ${y.measure || ""}. ${y.description}${partial ? ` Some small job counts are withheld for privacy. The total is at least the number shown${hi}.` : ""}`;
     return `<div class="yield-tile" title="${esc(tip)}">
       <div class="ico" style="color:${esc(y.color)}">${glyph(y, 20)}</div>
       <div class="val" style="color:${esc(y.color)}">${val}</div>
       <div class="lbl">${esc(y.key === "gold" ? "Gold" : y.label)}</div>
       <div class="meas">${esc(y.measure || "")}</div>
-      ${rk ? `<div class="rank" title="Rank among the ${nOf} areas with a value (1 = largest; equal values share a rank)${o.rank_range?.[y.key] ? ". Possible ranks: suppressed cells make the exact position uncertain" : ""}">${rk}</div>` : ""}</div>`;
+      ${rk ? `<div class="rank" title="Rank among the ${nOf} areas with a value (1 = largest; equal values share a rank)${o.rank_range?.[y.key] ? ". Possible ranks because some job counts are not published" : ""}">${rk}</div>` : ""}</div>`;
   }).join("");
 }
 
@@ -194,16 +194,16 @@ export function openCityPanel(city, ctx) {
   // The settlement's own name where it differs ("Open København in Maps"); "the town"/"the city" where it is the
   // municipality's name too, so the two links never read the same.
   const townLabel = townName && townName !== city.name ? `Open ${townName} in Maps` : `Open the ${city.population >= 50000 ? "city" : "town"} in Maps`;
-  const mapsHtml = muniMaps || townMaps ? `<div class="cp-actions" role="group" aria-label="See the real place">
+  const mapsHtml = muniMaps || townMaps ? `<div class="cp-actions" role="group" aria-label="Open external maps">
       ${mapsLink(muniMaps, { id: "municipality" })}
       ${townMaps ? mapsLink(townMaps, { label: townLabel, id: "settlement" }) : ""}</div>` : "";
 
   const srcRows = (SOURCES[city.country] || []).map(([k, v]) => row(k, "", v)).join("");
   const status = `<ul class="status-list">
-      <li><b>Observed</b>: population, age, area, jobs by industry (as published by ${city.country === "NO" ? "SSB" : city.country === "SE" ? "SCB" : "DST"})</li>
-      ${(city.yields_partial || []).length ? `<li><b>Lower bound (≥)</b>: ${city.yields_partial.map((k) => esc(nation.yields.find((y) => y.key === k)?.label || k)).join(", ")} — ${int(city.jobs_unallocated || 0)} jobs in suppressed cells cannot be placed in an industry</li>` : ""}
+      <li><b>Published figures</b>: population, age, area, jobs by industry (as published by ${city.country === "NO" ? "SSB" : city.country === "SE" ? "SCB" : "DST"})</li>
+      ${(city.yields_partial || []).length ? `<li><b>Lower bound (≥)</b>: ${city.yields_partial.map((k) => esc(nation.yields.find((y) => y.key === k)?.label || k)).join(", ")} — ${int(city.jobs_unallocated || 0)} jobs have no published industry breakdown</li>` : ""}
       <li><b>Estimate (≈)</b>: economic output (Gold)</li>
-      <li><b>Not comparable</b>: ${fin(city.growth) ? "nothing in 2016–2026" : esc(city.growth_note || "")}</li></ul>`;
+      ${!fin(city.growth) ? `<li><b>Population change</b>: ${esc(city.growth_note || "No comparable figures")}</li>` : ""}</ul>`;
 
   showPanel({
     kind: "city",
