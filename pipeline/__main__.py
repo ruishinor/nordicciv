@@ -6,7 +6,9 @@
   python -m pipeline relay-ingest FILE        store relay answers in the cache (with provenance)
   python -m pipeline process [source ...]     raw -> data/interim/<source>.json
   python -m pipeline build [builder ...]      interim -> web/data/*.json
-  python -m pipeline check                    validate web/data, print the data-quality report (exit 1 on FAIL)
+  python -m pipeline check [--mode built|source|release] [--accept]
+                                              validation gates (exit 1 on FAIL); see pipeline/check.py
+  python -m pipeline verify-cache             check every cached download against its manifest
   python -m pipeline all [--offline]          fetch + process + build + check
   python -m pipeline serve [--port 8765]      serve web/
 """
@@ -88,13 +90,18 @@ def main(argv):
         cmd_build(args)
     elif cmd == "check":
         from .check import main as check_main
-        return check_main()
+        return check_main(args)
+    elif cmd == "verify-cache":
+        from .check import Report, check_cache
+        r = Report("source")
+        check_cache(r)
+        return 1 if r.failed else 0
     elif cmd == "all":
         cmd_fetch([])
         cmd_process([])
         cmd_build([])
         from .check import main as check_main
-        return check_main()
+        return check_main(["--mode", "source"])
     elif cmd == "serve":
         import functools
         import http.server

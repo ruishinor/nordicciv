@@ -6,7 +6,7 @@ ALL = [GiscoGrids(), NaturalEarth(), Boundaries(), Euronym(), OurAirports(), Pow
        SSB_(), SCB_(), DST_(), Eurostat()]
 
 
-def extra():
+def _extra_sources():
     """Sources defined in other modules (resources, wonders); imported lazily to keep import errors local."""
     out = []
     try:
@@ -18,4 +18,4 @@ def extra():
 
 
 def registry() -> dict:
-    return {s.id: s for s in ALL + extra()}
+    return {s.id: s for s in ALL + _extra_sources()}

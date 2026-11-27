@@ -21,7 +21,7 @@ class RegionalAccounts(Source):
     info = SourceInfo(
         id="regional_accounts",
         title="Regional GDP from the national accounts of Norway, Sweden and Denmark, with Eurostat exchange rates and PPPs",
-        publisher="SSB (table 09391), SCB (TAB3138), DST (NRHP), Eurostat (ert_bil_eur_a, prc_ppp_ind)",
+        publisher="SSB (tables 09391, 11713), SCB (TAB3138), DST (NRHP, INDKP101), Eurostat (ert_bil_eur_a, prc_ppp_ind, nama_10r_3gva)",
         homepage="https://ec.europa.eu/eurostat/web/national-accounts",
         license="NLOD/CC BY 4.0 (SSB), CC0 (SCB), CC BY 4.0 (DST, Eurostat)",
         description=f"Gross domestic product at current prices by county (fylke), län and landsdel for {GDP_YEAR}, "
@@ -56,6 +56,14 @@ class RegionalAccounts(Source):
                  f"&currency=DKK&statinfo=AVG&time={GDP_YEAR}&time=2024"),
             File("prc_ppp_ind.json", f"{ESTAT}/prc_ppp_ind?format=JSON&lang=EN&na_item=PPP_EU27_2020&ppp_cat=GDP"
                  f"&geo=NO&geo=SE&geo=DK&time={GDP_YEAR}"),
+            # value added by industry, for the sector-weighted municipal allocation (pipeline/build/gva.py)
+            File("ssb_11713_gva_industry.json", f"{SSB}/11713/data?lang=en&outputFormat=json-stat2&valueCodes[Region]=*"
+                 "&valueCodes[NACE]=nr23_6,pub2X01_02,pub2X03,pub2X05,nr2X06_09,nr23ind,pub2X35,pub2X36_39,pub2X41_43,"
+                 "pub2X45_47,pub2X49B,pub2X50A,pub2X49A_52,pub2X53,pub2X55_56,pub2X58_63,pub2X64_66,pub2X68A,pub2X68B,"
+                 "pub2X69_75,pub2X77_82,pub2X84,pub2X85,pub2X86_88,pub2X90_97&valueCodes[ContentsCode]=BNPB"
+                 f"&valueCodes[Tid]={GDP_YEAR}"),
+            File("nama_10r_3gva.json", f"{ESTAT}/nama_10r_3gva?format=JSON&lang=EN&unit=CP_MEUR&time=2021&time=2022"
+                 "&time=2023&geoLevel=nuts3"),
         ]
 
     def process(self):

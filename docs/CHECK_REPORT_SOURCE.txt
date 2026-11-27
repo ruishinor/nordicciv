@@ -1,0 +1,128 @@
+NOTE  validation mode: source; data hash 974f12d21856c49e
+PASS  files: world.json parses as strict JSON numbers (no NaN/Infinity) [2.13 MB]
+PASS  files: cities.json parses as strict JSON numbers (no NaN/Infinity) [1.94 MB]
+PASS  files: states.json parses as strict JSON numbers (no NaN/Infinity) [0.07 MB]
+PASS  files: nation.json parses as strict JSON numbers (no NaN/Infinity) [0.01 MB]
+PASS  files: lenses.json parses as strict JSON numbers (no NaN/Infinity) [1.07 MB]
+PASS  files: sources.json parses as strict JSON numbers (no NaN/Infinity) [0.04 MB]
+PASS  files: resources.json parses as strict JSON numbers (no NaN/Infinity) [0.14 MB]
+PASS  files: infrastructure.json parses as strict JSON numbers (no NaN/Infinity) [0.14 MB]
+PASS  files: wonders.json parses as strict JSON numbers (no NaN/Infinity) [0.03 MB]
+PASS  files: detail.json parses as strict JSON numbers (no NaN/Infinity) [0.77 MB]
+FAIL  files: web/data/munis.json missing
+PASS  world: 9,005 Scandinavian land hexes ≈ 842,244 km² (land of NO+SE+DK ≈ 774,000 km² + inland water)
+PASS  world: every Scandinavian land hex has a dominant municipality (0 without)
+PASS  dasymetric: hex population 22,258,516 vs municipal total 22,258,431 (Δ 0.00038%, rounding only)
+PASS  ids: 745 municipality ids, all unique
+PASS  ids: every id has the form NO-nnnn / SE-nnnn / DK-nnn
+PASS  ids: municipalities per country {'SE': 290, 'NO': 357, 'DK': 98} (expected {'NO': 357, 'SE': 290, 'DK': 98}, 2024–2026 boundaries)
+PASS  cities: every banner stands on Scandinavian land (0 off: [])
+PASS  cities: NO municipal population sum 5,627,400 = mapped country aggregate 5,627,400
+PASS  cities: SE municipal population sum 10,605,520 = mapped country aggregate 10,605,520
+PASS  cities: DK municipal population sum 6,025,511 = mapped country aggregate 6,025,511
+PASS  history: no municipality-year is recorded as 0 residents (0; source zeros must be null with a status)
+PASS  history: every null population year carries a status (0 without)
+PASS  history: no growth figure spans a territorial break (0: [])
+PASS  history: all growth figures finite (0 not)
+PASS  history: every municipality without a growth figure says why (0 silent)
+NOTE  history: 9 municipalities with recorded territorial breaks: Sandefjord, Ålesund, Tønsberg, Narvik, Orkland, Haram, Heim, Hitra, Hábmer
+NOTE  history: 7 municipalities without a comparable 2016–26 figure: Sandefjord, Tønsberg, Narvik, Orkland, Heim, Hitra, Hábmer
+PASS  history fixture: Ålesund 2020–23 (incl. Haram) is a different territory from 2019 and 2024
+PASS  history: Scandinavia 2008 = sum of the three published national totals (19,395,889)
+PASS  history: Scandinavia 2016 = sum of the three published national totals (20,772,253)
+PASS  history: Scandinavia 2026 = sum of the three published national totals (22,258,532)
+PASS  history: national series name their published source (not a sum of municipalities)
+PASS  suppression: every partial yield has an upper bound ≥ its lower bound (0 missing)
+PASS  industry: groups (+ suppressed remainder) add up to total jobs in every municipality (0 off: [])
+PASS  industry: no double counting — group sums never exceed total jobs (0)
+NOTE  suppression: 307 municipalities with a suppressed yield component; 745 carry at least one rank interval instead of an exact rank
+PASS  economy: every municipal output value is flagged as an estimate
+PASS  economy: every municipal output names its accounting concept
+PASS  economy: the Scandinavian total is labelled as combined regional output, not harmonised GDP
+PASS  economy: country components add up to the combined €1,225.6 bn
+PASS  places: Oslo banner 1.6 km from its reference position
+PASS  places: Stockholm banner 6.8 km from its reference position
+PASS  places: Copenhagen banner 0.5 km from its reference position
+PASS  places: Bergen banner 0.5 km from its reference position
+PASS  places: Göteborg banner 3.3 km from its reference position
+PASS  places: Trondheim banner 1.3 km from its reference position
+PASS  places: Malmö banner 0.7 km from its reference position
+PASS  places: Aarhus banner 0.9 km from its reference position
+PASS  places: Tromsø banner 0.2 km from its reference position
+PASS  places: Kiruna banner 1.0 km from its reference position
+PASS  places: Luleå banner 3.5 km from its reference position
+PASS  places: Stavanger banner 2.1 km from its reference position
+FAIL  geometry: munis.json missing
+PASS  lens density: source ['ssb', 'scb', 'dst', 'gisco_grids'], unit 'people / km²', resolution derived
+PASS  lens growth: source ['ssb', 'scb', 'dst'], unit '% change', resolution municipality
+PASS  lens ageing: source ['ssb', 'scb', 'dst'], unit 'share of residents', resolution municipality
+PASS  lens youth: source ['ssb', 'scb', 'dst'], unit 'share of residents', resolution municipality
+PASS  lens gdp_pc: source ['regional_accounts'], unit 'PPS per resident', resolution region
+PASS  lens jobs_ratio: source ['ssb', 'scb', 'dst'], unit 'jobs per 100 residents', resolution municipality
+PASS  lens share_BC: source ['ssb', 'scb', 'dst'], unit 'share of jobs', resolution municipality
+PASS  lens share_A: source ['ssb', 'scb', 'dst'], unit 'share of jobs', resolution municipality
+PASS  lens share_J: source ['ssb', 'scb', 'dst'], unit 'share of jobs', resolution municipality
+PASS  lens share_I: source ['ssb', 'scb', 'dst'], unit 'share of jobs', resolution municipality
+PASS  lens share_O: source ['ssb', 'scb', 'dst'], unit 'share of jobs', resolution municipality
+PASS  lens specialisation: source ['ssb', 'scb', 'dst'], unit '', resolution municipality
+PASS  lens income: source ['ssb', 'scb', 'dst', 'regional_accounts'], unit '% of the country's own figure', resolution municipality
+PASS  lens hospital: source ['gisco_grids'], unit 'minutes by road', resolution hex
+PASS  lens school: source ['gisco_grids'], unit 'minutes by road', resolution hex
+PASS  lens road_reach: source ['gisco_grids'], unit 'people within 90 min by road', resolution hex
+PASS  lens remoteness: source ['ssb', 'scb', 'dst'], unit 'km to a municipality of 50,000+', resolution hex
+PASS  lens elevation: source ['gisco_grids'], unit 'metres', resolution hex
+PASS  lens forest: source ['gisco_grids'], unit '% tree cover', resolution hex
+PASS  lens farmland: source ['gisco_grids'], unit '% of land', resolution hex
+PASS  lens cover: source ['gisco_grids'], unit '', resolution hex
+PASS  lens urban_growth: source ['gisco_grids'], unit 'km² (1 km cells)', resolution hex
+PASS  resources: 687 sites, all inside the map (0 outside)
+PASS  resources: 0 on foreign hexes []
+PASS  source gisco_grids: 926 files, licence: Eurostat/GISCO reuse policy (free reuse with attribution: © 
+PASS  source natural_earth: 18 files, licence: Public domain
+PASS  source boundaries: 10 files, licence: NO: CC BY 4.0 Kartverket; SE: public data, reuse permitted; 
+PASS  source euronym: 3 files, licence: Eurostat reuse policy; © EuroGeographics
+PASS  source ourairports: 1 files, licence: Public domain
+PASS  source powerplants: 1 files, licence: Data: CC BY 4.0 (aggregated from open sources; see project f
+PASS  source ssb: 10 files, licence: NLOD 2.0 / CC BY 4.0 (Statistics Norway)
+PASS  source scb: 4 files, licence: CC0 1.0 (Statistics Sweden open data)
+PASS  source dst: 6 files, licence: CC BY 4.0 (Statistics Denmark terms of use)
+PASS  source eurostat: 5 files, licence: Eurostat reuse policy (CC BY 4.0)
+PASS  source regional_accounts: 9 files, licence: NLOD/CC BY 4.0 (SSB), CC0 (SCB), CC BY 4.0 (DST, Eurostat)
+PASS  source wikidata: 5 files, licence: CC0 1.0
+PASS  source sodir: 3 files, licence: NLOD 2.0 (Norwegian Licence for Open Government Data)
+PASS  source sgu: 2 files, licence: CC0 1.0 (SGU open data)
+PASS  source links: 2 files, licence: CC0 1.0 (Wikidata); CC BY 4.0 (Eurostat)
+PASS  source: SSB 07459 has no duplicate observations (0)
+PASS  source join: every Norwegian municipality-year equals SSB 07459 or is explicitly unavailable (0 off: [])
+PASS  source: Norway, every year 2008–2026: Σ municipalities + SSB's 'divided municipalities' bucket = national total (0 years off: [])
+PASS  source: Norway national series 2008–2026 identical to SSB 07459 country
+PASS  source: Sweden 2008 published total 9,182,927 = SCB TAB628 '00' 9,182,927
+PASS  source: Sweden 2008 Σ municipalities 9,182,927 vs national 9,182,927 (Δ 0; SCB cell-key noise from 2025)
+PASS  source: Sweden 2016 published total 9,851,017 = SCB TAB628 '00' 9,851,017
+PASS  source: Sweden 2016 Σ municipalities 9,851,017 vs national 9,851,017 (Δ 0; SCB cell-key noise from 2025)
+PASS  source: Sweden 2026 published total 10,605,529 = SCB TAB628 '00' 10,605,529
+PASS  source: Sweden 2026 Σ municipalities 10,605,520 vs national 10,605,529 (Δ 9; SCB cell-key noise from 2025)
+PASS  source: Denmark 2008 published total 5,475,791 = DST FOLK1A '000' 5,475,791
+PASS  source: Denmark 2016 published total 5,707,251 = DST FOLK1A '000' 5,707,251
+PASS  source: Denmark 2026 published total 6,025,603 = DST FOLK1A '000' 6,025,603
+PASS  source join: every Danish municipality's 2026 population equals DST FOLK1A (0 off)
+FAIL  economy: Σ municipal estimates reconcile with all 43 published regional totals (worst Δ 2.42e-05)
+PASS  economy: continental shelf GVA €104.1 bn reported separately, not in any municipality
+PASS  source: NO jobs 2,854,623 vs national 2,863,316 (Δ 0.304%; Svalbard/continental shelf/unknown excluded)
+NOTE  history review: NO-1151 Utsira 2022→2023: +10.6% (no recorded boundary change)
+NOTE  history review: NO-1535 Vestnes 2020→2021: +6.5% (no recorded boundary change)
+NOTE  history review: NO-1816 Vevelstad 2019→2020: -7.0% (no recorded boundary change)
+NOTE  history review: NO-1835 Træna 2009→2010: +7.5% (no recorded boundary change)
+NOTE  history review: NO-3112 Råde 2022→2023: +9.0% (no recorded boundary change)
+NOTE  history review: NO-3450 Etnedal 2023→2024: +10.3% (no recorded boundary change)
+NOTE  history review: NO-3450 Etnedal 2024→2025: -8.2% (no recorded boundary change)
+NOTE  history review: NO-3450 Etnedal 2025→2026: +27.0% (no recorded boundary change)
+NOTE  history review: NO-4219 Evje og Hornnes 2022→2023: +6.9% (no recorded boundary change)
+NOTE  history review: NO-4222 Bykle 2022→2023: +6.4% (no recorded boundary change)
+NOTE  history review: NO-4629 Modalen 2010→2011: +7.6% (no recorded boundary change)
+NOTE  history review: NO-4632 Austrheim 2009→2010: +6.3% (no recorded boundary change)
+NOTE  history review: NO-4649 Stad 2019→2020: +6.3% (no recorded boundary change)
+NOTE  history review: DK-187 Vallensbæk 2008→2009: +7.8% (no recorded boundary change)
+PASS  cache: 1003/1003 declared downloads match their manifest (SHA-256, size, request identity)
+
+105 pass, 18 note, 0 warn, 0 skipped, 3 fail → FAIL (mode: source)

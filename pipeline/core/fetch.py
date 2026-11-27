@@ -66,6 +66,7 @@ def record(source_id: str, rel_path: str, url: str, data: bytes, *, method: str 
     man = read_manifest(source_id)
     entry = {
         "url": url, "method": method, "sha256": hashlib.sha256(data).hexdigest(), "bytes": len(data),
+        "request": fingerprint(url, method, body),
         "retrieved": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"), "via": via,
     }
     if body:
@@ -92,9 +93,41 @@ def _queue(source_id: str, rel_path: str, url: str, method: str, body: str | Non
     atomic_write_text(p, json.dumps(pending, indent=1, ensure_ascii=False))
 
 
-def cached(source_id: str, rel_path: str) -> Path | None:
+class CacheError(RuntimeError):
+    """A cached file does not match its manifest (corrupted, edited, or recorded for a different request)."""
+
+
+def fingerprint(url: str, method: str = "GET", body: str | None = None) -> str:
+    """Identity of a request: a changed URL, method or body must never reuse an old answer."""
+    return hashlib.sha256(f"{method.upper()}\n{url}\n{body or ''}".encode()).hexdigest()
+
+
+def verify(source_id: str, rel_path: str, *, url: str | None = None, method: str = "GET",
+           body: str | None = None) -> tuple[bool, str]:
+    """Check a cached file against its manifest entry: present, same size and SHA-256, and (when the request is
+    given) recorded for the same URL, method and body. Returns (ok, reason)."""
     path = RAW / source_id / rel_path
-    return path if path.exists() and rel_path in read_manifest(source_id)["files"] else None
+    entry = read_manifest(source_id)["files"].get(rel_path)
+    if not path.exists():
+        return False, "file missing"
+    if not entry:
+        return False, "not in manifest"
+    data = path.read_bytes()
+    if entry.get("bytes") is not None and len(data) != entry["bytes"]:
+        return False, f"size {len(data)} != recorded {entry['bytes']}"
+    if hashlib.sha256(data).hexdigest() != entry.get("sha256"):
+        return False, "sha256 differs from manifest"
+    if url is not None:
+        rec = entry.get("request") or fingerprint(entry.get("url", ""), entry.get("method", "GET"), entry.get("body"))
+        if rec != fingerprint(url, method, body):
+            return False, "cached answer was recorded for a different request"
+    return True, "ok"
+
+
+def cached(source_id: str, rel_path: str, *, url: str | None = None, method: str = "GET",
+           body: str | None = None) -> Path | None:
+    ok, _ = verify(source_id, rel_path, url=url, method=method, body=body)
+    return RAW / source_id / rel_path if ok else None
 
 
 def download(source_id: str, url: str, rel_path: str, *, method: str = "GET", body: str | None = None,
@@ -103,11 +136,13 @@ def download(source_id: str, url: str, rel_path: str, *, method: str = "GET", bo
 
     Raises Pending if the file had to be queued for the browser relay.
     """
-    hit = cached(source_id, rel_path)
-    if hit and not force:
-        return hit
+    ok, why = verify(source_id, rel_path, url=url, method=method, body=body)
+    if ok and not force:
+        return RAW / source_id / rel_path
+    if (RAW / source_id / rel_path).exists() and why != "ok":
+        print(f"    cache {source_id}/{rel_path}: {why}; downloading again")
     if OFFLINE:
-        raise OfflineError(f"--offline: {source_id}/{rel_path} is not cached")
+        raise OfflineError(f"--offline: {source_id}/{rel_path} is not usable from the cache ({why})")
     from urllib.parse import urlsplit
     host = urlsplit(url).netloc
     err = "host refused earlier in this run" if host in _REFUSED else None

@@ -337,6 +337,22 @@ def build():
         "lq_rule": {"min_lq": LQ_MIN, "min_jobs": LQ_MIN_JOBS, "benchmark": "Norway, Sweden and Denmark combined"},
         "banner_floors": [[5, 4e5], [8, 2e5], [14, 6e4], [24, 3e4], [40, 1.2e4], [70, 4e3], [9999, 0]],
     }
+    comp = {}
+    for cc in ("NO", "SE", "DK"):
+        regs_cc = [v for v in gdp.values() if v["country"] == cc]
+        comp[cc] = {"eur": sum(v["eur"] for v in regs_cc) * 1e6, "concept": regs_cc[0]["concept"] if regs_cc else None,
+                    "regions": len(regs_cc)}
+    nation["gdp_components"] = comp
+    nation["gdp_label"] = ("Combined regional output — not harmonised GDP: Norway is gross value added at basic prices "
+                           "without the continental shelf, Sweden regional GDP at market prices (excl. extra-regio), "
+                           "Denmark regional GDP; converted at Eurostat 2023 average exchange rates.")
+    nation["gdp_allocation"] = ("Municipal values are estimates: each region's published total shared by industry value "
+                                f"added and local jobs per industry ({gva.SOURCES}); real estate by residents.")
+    nation["income_definitions"] = {
+        "NO": "median household income after tax, 2024 (SSB 06944)",
+        "SE": "median net income, residents aged 20+, 2024 (SCB TAB4840)",
+        "DK": "average disposable income of persons with income, 2024 (DST INDKP101)",
+    }
     nation["electricity"] = _electricity()
     write_json(WEB_DATA / "nation.json", nation)
     gdp_rows = {k: {kk: (round(vv, 1) if isinstance(vv, float) else vv) for kk, vv in v.items()} for k, v in gdp.items()}

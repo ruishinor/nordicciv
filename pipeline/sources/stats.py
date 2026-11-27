@@ -76,6 +76,11 @@ class SSB_(Source):
             File("06944_income_country.json", url("06944", {
                 "valueCodes[Region]": "0", "valueCodes[HusholdType]": "0000",
                 "valueCodes[ContentsCode]": "InntSkatt", "valueCodes[Tid]": "2024"})),
+            File("07459_pop_county2024.json", f"{SSB}/07459/data?lang=en&outputFormat=json-stat2&valueCodes[Region]=*"
+                 "&codelist[Region]=agg_Fylker2024&valueCodes[Tid]=" + ",".join(map(str, YEARS)) +
+                 "&valueCodes[ContentsCode]=Personer1"),
+            File("klass131_changes_2008_2026.json", "https://data.ssb.no/api/klass/v1/classifications/131/changes.json"
+                 "?from=2008-01-01&to=2026-12-31&language=nb"),
             File("08585_students.json", url("08585", {
                 "valueCodes[Kjonn]": "0", "valueCodes[UtdHogLerested]": "*", "valueCodes[ContentsCode]": "Studenter",
                 "valueCodes[Tid]": "2025"})),
