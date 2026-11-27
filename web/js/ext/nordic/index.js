@@ -214,7 +214,7 @@ export function install(app) {
         }
         if (c.nearest_bigger_km) {
           const big = cities.filter((x) => x.population > c.population).map((x) => [x, Math.hypot(x.x - c.x, x.y - c.y)]).sort((a, b) => a[1] - b[1])[0];
-          out.push(obs(`The nearest municipality with more people is ${cityLink(big[0])}, <b>${Math.round(big[1])} km</b> away in a straight line${big[1] > 100 ? " — a long way in Scandinavian terms, which makes this a regional centre by necessity" : ""}.`,
+          out.push(obs(`The nearest municipality with more people is ${cityLink(big[0])}, <b>${Math.round(big[1])} km</b> away in a straight line${big[1] > 100 ? ` — farther than for ${pct(cities.filter((x) => Number.isFinite(x.nearest_bigger_km) && x.nearest_bigger_km < big[1]).length / cities.length, 0)} of all municipalities` : ""}.`,
             { lensId: "remoteness", source: "municipal main settlements (Euronym)" }));
         }
         return out;

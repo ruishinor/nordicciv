@@ -1,0 +1,156 @@
+{
+ "01-overview": {
+  "wall_s": 9.12,
+  "perf": {
+   "static_ms": 145,
+   "frame_ms": 0.2,
+   "warm_ms": 0.1,
+   "static_n": 4,
+   "frame_n": 50
+  },
+  "errors": []
+ },
+ "02-regional-south": {
+  "wall_s": 7.49,
+  "perf": {
+   "static_ms": 34.5,
+   "frame_ms": 224,
+   "warm_ms": 0.3,
+   "static_n": 5,
+   "frame_n": 5
+  },
+  "errors": []
+ },
+ "03-bergen-profile": {
+  "wall_s": 7.14,
+  "perf": {
+   "static_ms": 59.6,
+   "frame_ms": 170,
+   "warm_ms": 0.3,
+   "static_n": 5,
+   "frame_n": 5
+  },
+  "errors": []
+ },
+ "04-kiruna-council": {
+  "wall_s": 7.1,
+  "perf": {
+   "static_ms": 53.4,
+   "frame_ms": 87.7,
+   "warm_ms": 0.2,
+   "static_n": 8,
+   "frame_n": 10
+  },
+  "errors": []
+ },
+ "05-western-norway-terrain": {
+  "wall_s": 7.53,
+  "perf": {
+   "static_ms": 150.6,
+   "frame_ms": 210.8,
+   "warm_ms": 3.9,
+   "static_n": 6,
+   "frame_n": 6
+  },
+  "errors": []
+ },
+ "06-coast-fjord-detail": {
+  "wall_s": 7.16,
+  "perf": {
+   "static_ms": 196.6,
+   "frame_ms": 249.6,
+   "warm_ms": 0.6,
+   "static_n": 6,
+   "frame_n": 6
+  },
+  "errors": []
+ },
+ "07-small-municipality-frederiksberg": {
+  "wall_s": 7.37,
+  "perf": {
+   "static_ms": 145.7,
+   "frame_ms": 328.7,
+   "warm_ms": 0.5,
+   "static_n": 6,
+   "frame_n": 6
+  },
+  "errors": []
+ },
+ "08-specialisation-lens": {
+  "wall_s": 7.02,
+  "perf": {
+   "static_ms": 148.1,
+   "frame_ms": 188.8,
+   "warm_ms": 0.2,
+   "static_n": 4,
+   "frame_n": 4
+  },
+  "errors": []
+ },
+ "09-population-density-lens": {
+  "wall_s": 7.37,
+  "perf": {
+   "static_ms": 134.2,
+   "frame_ms": 189.2,
+   "warm_ms": 0.2,
+   "static_n": 5,
+   "frame_n": 5
+  },
+  "errors": []
+ },
+ "10-growth-lens-oresund": {
+  "wall_s": 7.45,
+  "perf": {
+   "static_ms": 141.4,
+   "frame_ms": 203.8,
+   "warm_ms": 0.5,
+   "static_n": 5,
+   "frame_n": 5
+  },
+  "errors": []
+ },
+ "11-lofoten": {
+  "wall_s": 7.03,
+  "perf": {
+   "static_ms": 54.7,
+   "frame_ms": 125.9,
+   "warm_ms": 0.4,
+   "static_n": 5,
+   "frame_n": 5
+  },
+  "errors": []
+ },
+ "12-stockholm-archipelago": {
+  "wall_s": 7.29,
+  "perf": {
+   "static_ms": 152,
+   "frame_ms": 231.3,
+   "warm_ms": 1.5,
+   "static_n": 6,
+   "frame_n": 6
+  },
+  "errors": []
+ },
+ "13-mobile-overview": {
+  "wall_s": 8.92,
+  "perf": {
+   "static_ms": 200.9,
+   "frame_ms": 0.2,
+   "warm_ms": 0.2,
+   "static_n": 4,
+   "frame_n": 50
+  },
+  "errors": []
+ },
+ "14-mobile-tromso": {
+  "wall_s": 7.01,
+  "perf": {
+   "static_ms": 40.4,
+   "frame_ms": 110.8,
+   "warm_ms": 2.4,
+   "static_n": 5,
+   "frame_n": 5
+  },
+  "errors": []
+ }
+}

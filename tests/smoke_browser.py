@@ -274,10 +274,18 @@ async def main():
             await pg.add_script_tag(path=str(axe))
             await pg.evaluate("__app.selectCity('NO-4601', {fly: false})")
             await pg.wait_for_timeout(500)
-            res = await pg.evaluate("axe.run(document, {runOnly: ['wcag2a','wcag2aa','wcag21aa','wcag22aa']}).then(r => r.violations.map(v => ({id: v.id, impact: v.impact, n: v.nodes.length})))")
+            scan = "axe.run(document, {runOnly: ['wcag2a','wcag2aa','wcag21aa','wcag22aa']}).then(r => r.violations.map(v => ({id: v.id, impact: v.impact, n: v.nodes.length})))"
+            res = await pg.evaluate(scan)
+            await pg.evaluate("__app.nordic.toggle(true)")
+            await pg.wait_for_timeout(400)
+            res += [dict(v, where="council") for v in await pg.evaluate(scan)]
+            await pg.click(".nc-tabs [data-tab='timeline']")
+            await pg.wait_for_timeout(300)
+            res += [dict(v, where="timeline") for v in await pg.evaluate(scan)]
+            await pg.evaluate("__app.nordic.toggle(false)")
             serious = [v for v in res if v["impact"] in ("serious", "critical")]
             timings["axe"] = res
-            ok("17 axe-core WCAG 2.2 A/AA: no serious or critical violations", not serious, json.dumps(res)[:280])
+            ok("17 axe-core WCAG 2.2 A/AA (map, inspector, Council, Timeline): no serious or critical violations", not serious, json.dumps(res)[:280])
         else:
             ok("17 axe-core accessibility scan", False, "axe-core not installed (tests/.node)", skip=True)
 

@@ -249,6 +249,7 @@ def build():
             "pop_status": {str(y): st for y, st in h["status"].items() if st != "observed"},
             "pop_terr_notes": {str(k): v for k, v in h["terr_notes"].items()},
             "pop_breaks": h["breaks"],
+            "pop_review": h.get("review") or None,
             "land_km2": m.get("land_km2"), "density": (pop / m["land_km2"]) if pop and m.get("land_km2") else None,
             "age": {"0_19": age.get("F0-19"), "20_64": age.get("F20-64"), "65_plus": age.get("F65+")},
             "share_65plus": (age.get("F65+") / age_tot) if age_tot and age.get("F65+") is not None else None,

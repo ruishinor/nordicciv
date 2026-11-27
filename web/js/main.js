@@ -220,8 +220,22 @@ async function main() {
     if (list.length > 60) list.shift();
   }
 
+  // Map scale bar (§15): a round distance that spans 60–140 css px at the current zoom. Equal-area projection, so the
+  // bar is exact at the map centre and within a few per cent across Scandinavia.
+  const scaleEl = document.getElementById("scalebar");
+  let scaleShown = 0;
+  function updateScale() {
+    if (!scaleEl || Math.abs(cam.scale - scaleShown) < 1e-6) return;
+    scaleShown = cam.scale;
+    const steps = [1, 2, 5, 10, 20, 25, 50, 100, 200, 250, 500, 1000];
+    const km = steps.find((k) => k * cam.scale >= 60) || 1000;
+    scaleEl.querySelector("i").style.width = `${Math.round(km * cam.scale)}px`;
+    scaleEl.querySelector("span").textContent = `${km} km`;
+  }
+
   function draw(moving) {
     const t0 = performance.now();
+    updateScale();
     const v = cam.view();
     const c = cache.vp;
     const sameKey = c && cache.key === cacheKey();

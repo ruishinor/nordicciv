@@ -150,6 +150,7 @@ def classify(munis: list[dict], country_pop: dict[str, dict[int, float]]) -> dic
                 ch = s[y] / s[y - 1] - 1
                 if abs(ch) > REVIEW_JUMP:
                     review.append(f"{mid} {by_id[mid]['name']} {y - 1}→{y}: {ch:+.1%} (no recorded boundary change)")
+                    h.setdefault("review", []).append({"years": [y - 1, y], "change": round(ch, 4)})
     return {"munis": out, "review": review}
 
 
