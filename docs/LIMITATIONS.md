@@ -37,6 +37,10 @@
   published table shows, all be in that group. The bounds deliberately ignore national totals (see Methodology).
 - **Norway's output key for professional services** uses NACE 68–75 jobs, which include real estate; SSB publishes no
   finer municipal split. Sweden and Denmark use M–N jobs only.
+- **Rendering cost of the illustrations.** Without a GPU (software rendering) a settled redraw in an illustrated view
+  takes about twice as long as in v0.2 (≈ 180 ms instead of ≈ 95 ms close in); the map drops to reduced detail, and on
+  very slow machines turns the illustrations off for the session. `?detail=off` turns them off; `?detail=full` keeps
+  them. GPU machines were not measured.
 - **Discovery facts** are single extremes under a stated filter; small municipalities dominate ratios, so most facts use
   a 5,000-resident threshold. They describe, they do not explain.
 - Roads, railways and ferries are Natural Earth 1:10m line work: generalised and incomplete, drawn as map art.

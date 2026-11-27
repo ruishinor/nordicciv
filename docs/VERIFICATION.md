@@ -56,12 +56,39 @@ Not run: the CI workflow on GitHub (no remote repository, none created); a real-
 | Statistical and geographical | ranking conventions; remainder checks; output classification and fallback; "remote" fact for Copenhagen (distance to Oslo) restricted to places under 50,000; "youngest population" for a low 65+ share and "job magnet" for 62 jobs per 100 reworded; Nordic land mask | bounds stay conservative by design |
 | Visual and game identity | isolated sprites removed over the relief; ranges as connected masses; lakes no longer 1 km stair steps (same area); heath and scree glyphs enlarged to be visible; greens toned down; polygonal shore strokes smoothed | soft base between illustrations at very close zoom; Russia edge in hexes; archipelago coasts from 1 km cells |
 | Product discovery, new users | first-run hint covered the Council (now under all panels, dismissed by use); Discover unreachable on phones (now in the bottom bar); a discovery showed the wrong definition; the Almanac button was cut off at 1440 px | no real-user test yet |
-| Responsiveness, accessibility, performance | illustrated redraw cost on a software GPU (see below): occupancy skipping, mask decoding in idle steps, pre-painted patterns, adaptive detail, `?detail=off` | more long frames while zooming on software rendering |
+| Responsiveness, accessibility, performance | illustrated redraw cost on a software GPU (first measured at 270 ms against 70 ms): occupancy skipping, mask decoding in idle steps, pre-painted patterns, adaptive detail (full → reduced → off), `?detail=off`; the benchmark tour first ran under a lens and measured no illustration — corrected and rerun | settled redraws in illustrated views still ~1.9× v0.2 on software rendering; more long frames while zooming |
 | Software and release assurance | candidate identity, browser verification of served files, evidence lifecycle, staged promotion, four test false positives, build backup removed from git, Pillow 12.3.0 → 13.0.0 (42 known CVEs; relief output byte-identical) | CI not executed remotely |
 
 ## Performance (laboratory, `docs/perf/v02_v03_*.json`)
 
-PERF_TABLE
+Same scripted session on v0.2.0 and v0.3.0, 3 runs each with the build order alternated, headless Chrome with a
+software GPU (SwiftShader), 1440×900. Values are median / 95th percentile / worst over all samples. A "settled redraw"
+is the full map redraw at a view whose tiles are already decoded — what happens once after every pan or zoom stops;
+frames during movement reuse the cached image. Unthrottled = this machine; 4× = the CPU slowed four times.
+
+| Measure | v0.2.0 | v0.3.0 | v0.2.0 at 4× | v0.3.0 at 4× |
+|---|---|---|---|---|
+| Data ready (ms, median) | 985 | 911 | 3,503 | 4,694 |
+| Relief ready (ms, median / worst) | 1,453 / 1,508 | 1,495 / 1,602 | 5,889 / 12,418 | 7,144 / 7,682 |
+| LCP (ms, median; returning visitor) | 84 | 64 | 252 | 216 |
+| Pan frames (ms) | 16.7 / 16.8 / 83 | 16.7 / 16.8 / 83 | 16.7 / 50 / 650 | 16.7 / 50 / 417 |
+| Zoom frames (ms); frames > 50 ms | 16.7 / 33 / 117; 12 | 16.7 / 50 / 133; 24 | 16.7 / 267 / 650; 64 | 16.7 / 367 / 500; 71 |
+| Close-zoom pan frames (ms) | 16.7 / 16.8 / 117 | 16.7 / 16.8 / 217 | 16.7 / 50 / 550 | 16.7 / 50 / 767 |
+| Settled redraw, overview / regional | 42 / 55 | 44 / 44 | 245 / 308 | 242 / 222 |
+| Settled redraw, mid (illustrated in v0.3) | 50 / 87 / 92 | 128 / 191 / 214 | 334 / 569 / 660 | 273 / 469 / 482 |
+| Settled redraw, close | 96 / 123 / 175 | 181 / 227 / 238 | 494 / 805 / 821 | 446 / 577 / 580 |
+| Settled redraw, very close | 91 / 124 / 125 | 166 / 221 / 240 | 461 / 577 / 579 | 410 / 614 / 656 |
+| Lens switch to next frame (ms) | 122 / 223 / 223 | 120 / 208 / 208 | 608 / 1,283 / 1,283 | 608 / 837 / 837 |
+| Municipality click (Event Timing max, ms) | ≤ 16–32 | ≤ 16 | 40–72 | 32–48 |
+| JS heap (MB, median) | 56 | 60 | 37 | 38 |
+
+Reading: panning and lens switching are unchanged. The illustrated views cost about 80–90 ms more per settled redraw
+on this software-rendered machine (reduced detail, 3 classes, chosen automatically); zooming produces about twice as
+many frames over 50 ms. At 4× CPU the first illustrated redraw took 260–530 ms, after which the map switched the
+illustrations off for the session and later redraws were no slower than v0.2. Mask decoding runs in idle steps (no
+long task) and the decoded masks hold up to 8 tiles × 7 classes of 1 MB canvases. Machines with a GPU were not
+measured; the illustration layer is a handful of full-screen GPU composites there. Data-ready and relief-ready at 4×
+vary by several seconds between runs in both builds.
 
 ## Accessibility
 

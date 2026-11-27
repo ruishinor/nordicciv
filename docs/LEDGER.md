@@ -21,7 +21,7 @@ check, test or file that verifies the item. v0.3 items first; the v0.2 table fol
 | NC-X01 | "What stands out" + related municipalities, industries, history, lenses | ✅ | `web/js/explore.js`; panel section with definitions, map links, ranking neighbours | journey 21 |
 | NC-X02 | Discover (surprising, supported facts) | ✅ | 18 computed facts, each flies to the place and colours the map | journey 21 |
 | NC-X03 | Concise contextual onboarding | ✅ | three-line first-run hint under all panels, dismissed by use | journey 21 (incl. axe) |
-| NC-P01 | Performance and memory, before/after | ✅ | chunked mask decoding in idle time; patterns pre-painted; perf script with runs, median/p95/worst, redraw tour, close pan | `docs/perf/` |
+| NC-P01 | Performance and memory, before/after | 🟡 (measured; illustrated redraws slower on software rendering) | chunked mask decoding in idle time; patterns pre-painted; perf script with runs, median/p95/worst, redraw tour, close pan | `docs/perf/` |
 | NC-U01 | Real-user test | ⏳ | `docs/USER_TEST_SCRIPT.md` | not run (no participants) |
 
 ## v0.2
