@@ -208,6 +208,55 @@ kbd {
   body.dock-open #lens-area { left: calc(12px + var(--dock-left, 0px)); }
 }
 
+/* ---------- daylight exploration ---------- */
+#btn-daylight .lbl { display: inline; }
+.daylight-panel {
+  position: fixed; z-index: 11; top: calc(var(--topbar-h) + 12px); left: calc(12px + var(--dock-left, 0px));
+  width: min(292px, calc(100vw - 24px)); max-height: calc(100dvh - var(--topbar-h) - 24px);
+  overflow: auto; overscroll-behavior: contain; padding: 11px 13px; font-size: 13px;
+}
+.daylight-head, .daylight-modes, .daylight-fields, .daylight-key { display: flex; align-items: center; gap: 8px; }
+.daylight-head { justify-content: space-between; }
+.daylight-head h2 { margin: 0; font: 20px var(--serif); color: var(--gold-bright); }
+.daylight-clock { display: grid; gap: 2px; margin: 7px 0 9px; font-variant-numeric: tabular-nums; }
+.daylight-clock time { font-weight: 600; }
+.daylight-modes .btn { padding-inline: 8px; }
+.daylight-modes [aria-pressed="true"] { background: #544526; color: #fff0bb; }
+.daylight-panel form { margin-top: 9px; }
+.daylight-fields { align-items: start; }
+.daylight-fields label, .daylight-occurrence { display: grid; gap: 3px; min-width: 0; }
+.daylight-fields label:first-child { flex: 1 1 54%; }
+.daylight-fields label:last-child { flex: 1 1 46%; }
+.daylight-panel input, .daylight-panel select {
+  width: 100%; min-width: 0; padding: 4px 5px; border: 1px solid #8a7958; border-radius: 4px;
+  background: #111a23; color: var(--ink); color-scheme: dark; font: inherit;
+}
+.daylight-occurrence { margin-top: 7px; }
+.daylight-notice { color: var(--gold-bright); margin: 6px 0; }
+.daylight-notice:empty { margin-top: 0; }
+.daylight-key {
+  list-style: none; padding: 7px 0 0; margin: 9px 0 0; border-top: 1px solid var(--line);
+  justify-content: space-between; flex-wrap: wrap; gap: 5px 8px; font-size: 12px;
+}
+.daylight-key li { display: inline-flex; align-items: center; gap: 4px; }
+.daylight-key li::before {
+  content: ""; display: inline-block; width: 11px; height: 11px; border-radius: 2px;
+  border: 1px solid #b3b6af; background: #b3ad86;
+}
+.daylight-key li:nth-child(2)::before { background: #797c72; }
+.daylight-key li:nth-child(3)::before { background: #4f5660; }
+.daylight-local, .daylight-local-link { margin: 7px 0 0; font-size: 12px; }
+.daylight-phase { margin: 6px 0; }
+.daylight-stats { margin: 4px 0; font-variant-numeric: tabular-nums; }
+.daylight-stats div { display: flex; justify-content: space-between; gap: 8px; padding: 4px 0; border-bottom: 1px dashed var(--line); }
+.daylight-stats dd { margin: 0; text-align: right; font-weight: 600; }
+@media (max-width: 700px) {
+  body:not(.panel-open) #btn-daylight { display: none; }
+  .daylight-panel { z-index: 26; top: calc(var(--topbar-h) + 8px); left: 8px; max-height: calc(100dvh - var(--topbar-h) - 72px); }
+  body.panel-open .daylight-panel, body.dock-open .daylight-panel { max-height: calc(45dvh - var(--topbar-h) - 16px); }
+  .daylight-panel :is(button, input, select) { min-height: 32px; }
+}
+
 /* ---------- tooltip ---------- */
 .tooltip {
   position: fixed; z-index: 20; pointer-events: none; max-width: 280px;

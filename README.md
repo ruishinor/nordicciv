@@ -26,11 +26,16 @@ towns, Danish farmland or the Øresund.
   Food (agriculture/forestry/fishing jobs), Production (mining, manufacturing, construction), Gold (GDP), Science (ICT and
   professional services), Culture (arts, recreation, other services) and — distinctly Nordic — **Welfare** (education,
   health and social work). City types come from location quotients against the three countries combined.
-- **Municipality panel** in four tabs — Overview (yields with what each measures, rank or rank interval, largest
+- **Municipality panel** — Overview (yields with what each measures, rank or rank interval, largest
   industry vs strongest specialisation, actions: compare with neighbours, similar municipalities, where else this
   industry concentrates, ask the Council), Economy (output estimate and method, specialisations, jobs by 14 industries,
-  sites), Society (population chart with boundary breaks, age, density, income relative to the national reference) and
-  Sources (data status per value, tables).
+  sites), Society (population chart with boundary breaks, age, density, income relative to the national reference),
+  Sources (data status per value, tables) and Daylight (local sun and daylight times).
+- **Daylight.** Open **Daylight** to see where the sun is up, where there is twilight and where it is dark.
+  Use the current time or choose a date and local time. Pick a municipality to see its sunrise, sunset, and
+  daylight hours, including midnight sun and polar night. **Turn off** brings back the usual map colours.
+  The light depends on the sun's position. The painted terrain relief keeps its fixed shading.
+  Times are calculated at the municipality's map location for a clear, level horizon.
 - **Regions.** 15 fylker, 21 län, 5 Danish regions, with yields, ranks, land-cover mix and largest municipalities.
 - **Resources.** 687 sites: hydropower, pumped storage, nuclear, wind (onshore/offshore), solar, thermal plants
   (installed MW — never presented as generation), 101 producing oil and gas fields with production, Swedish metal and

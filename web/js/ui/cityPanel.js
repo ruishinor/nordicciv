@@ -205,6 +205,8 @@ export function openCityPanel(city, ctx) {
       <li><b>Estimate (≈)</b>: economic output (Gold)</li>
       ${!fin(city.growth) ? `<li><b>Population change</b>: ${esc(city.growth_note || "No comparable figures")}</li>` : ""}</ul>`;
 
+  const extra = extraSections(ctx, city);
+  const sectionsFor = (tab) => extra.filter((section) => section.tab === tab);
   showPanel({
     kind: "city",
     stripe: col,
@@ -221,17 +223,20 @@ export function openCityPanel(city, ctx) {
       { tab: "Overview", title: "Economic profile", html: specSummary },
       { tab: "Overview", title: "Explore from here", html: actions },
       mapsHtml && { tab: "Overview", title: "Maps", html: mapsHtml },
-      ...extraSections(ctx, city, "Overview"),
+      ...sectionsFor("Overview"),
       { tab: "Economy", title: "Economic output", html: gdpBlock },
       { tab: "Economy", title: "Specialisations", html: specs + (detailTxt ? `<p class="muted small">Finer detail published by ${COUNTRY[city.country]}: ${esc(detailTxt)}</p>` : "") },
       { tab: "Economy", title: "Jobs by industry · place of work, 2024", html: industryBars(city, nation) },
       { tab: "Economy", title: "Resources, wonders & hubs", html: siteHtml },
+      ...sectionsFor("Economy"),
       { tab: "Society", title: `Population ${Object.keys(city.pop_series || {})[0] || 2008}–${nation.year}`, html: popChart(city) + breakNotes(city) },
       { tab: "Society", title: "People and place", html: profile },
-      ...extraSections(ctx, city, "Society"),
+      ...sectionsFor("Society"),
       peers.length && { tab: "Society", title: "Similar-sized municipalities", html: peerHtml },
       { tab: "Sources", title: "Data status", html: status },
       { tab: "Sources", title: "Tables", html: srcRows + row("Economic output", "", nation.gdp_vintage || "") + row("Boundary", "", "Municipal polygons for display; statistics refer to the municipality as published") },
+      ...sectionsFor("Sources"),
+      ...extra.filter(({ tab }) => !["Overview", "Economy", "Society", "Sources"].includes(tab)),
     ],
     foot: `Population 1 January ${nation.year}; jobs November/Q4 2024. Banner placed at ${esc(city.place || "the municipality")} (${esc(city.anchor || "")}).`,
     onClose: ctx.onClose,
@@ -259,11 +264,11 @@ export const closeCityPanel = hidePanel;
 
 // Sections contributed by extensions (app.addCitySections): fn(city) → [{tab, title, html, wire?}]; a failing
 // provider is logged and skipped so the panel always opens.
-function extraSections(ctx, city, tab) {
+function extraSections(ctx, city) {
   const out = [];
   for (const fn of ctx.extraSections || []) {
     try {
-      for (const s of fn(city) || []) if (s && (s.tab || "Society") === tab) out.push({ tab, ...s });
+      for (const s of fn(city) || []) if (s) out.push({ ...s, tab: s.tab || "Society" });
     } catch (err) {
       console.error("city panel section failed", err);
     }

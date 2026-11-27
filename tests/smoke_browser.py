@@ -41,7 +41,7 @@ URL = _pos[0] if _pos else "http://127.0.0.1:8765/"
 CANDIDATE = Path(_arg("--candidate", str(ROOT))).resolve()
 OUT = Path(_arg("--out", str(ROOT / "tests" / "results"))).resolve()
 # every journey must run and pass for a release (journey ids are the leading numbers of the names below)
-MANDATORY = [str(i) for i in range(0, 43)]  # 22–26: public shelters (v0.4); 27–32: camera uplinks; 33–39: opening; 40–42: Open in Maps (v0.5)
+MANDATORY = [str(i) for i in range(0, 46)]  # 43–45 cover Daylight.
 AXE = ROOT / "tests" / ".node" / "node_modules" / "axe-core" / "axe.min.js"
 AXE_ALT = Path(os.environ.get("NORDICCIV_AXE", "/nonexistent"))
 
@@ -155,14 +155,15 @@ async def main():
         ok("3 search folds ø/å/ö and finds exonyms; Enter opens the result", all(found.values()) and "BERGEN" in title.upper(), json.dumps(found))
 
         # 4. Bergen inspector: tabs, measures, data status
-        tabs = await pg.evaluate("[...document.querySelectorAll('#city-panel [data-cptab]')].map(b => b.innerText)")
+        tabs = await pg.evaluate("[...document.querySelectorAll('#city-panel [data-cptab]')].map(b => b.dataset.cptab)")
         meas = await pg.evaluate("[...document.querySelectorAll('#city-panel .yield-tile .meas')].map(x => x.innerText).join('|')")
         await pg.click("#city-panel [data-cptab='Economy']")
         econ = await pg.inner_text("#city-panel")
         await pg.click("#city-panel [data-cptab='Sources']")
         src = await pg.inner_text("#city-panel")
         await pg.click("#city-panel [data-cptab='Overview']")
-        ok("4 Bergen inspector: 4 tabs, yields name their measures, output is an estimate", len(tabs) == 4 and "jobs" in meas and "estimate" in econ.lower() and "Estimate" in src,
+        ok("4 Bergen inspector: 5 tabs, yields name their measures, output is an estimate",
+           tabs == ["Overview", "Economy", "Society", "Sources", "Daylight"] and "jobs" in meas and "estimate" in econ.lower() and "Estimate" in src,
            f"tabs={tabs}")
 
         # 5. compare the three capitals: neutral emphasis
@@ -361,8 +362,8 @@ async def main():
         sx = await mp.evaluate("document.documentElement.scrollWidth <= innerWidth + 1")
         city_y = await mp.evaluate("(() => { const c = __app.state.selectedCity; return __app.cam.toScreen(c.x, c.y)[1]; })()")
         # innerText applies the CSS text-transform, so compare case-insensitively
-        labels_ok = [x.replace("🗺️", "").replace("🔍", "").replace("🏛️", "").replace("📖", "").replace("✦", "").strip().upper() for x in nav] == ["EXPLORE", "LENSES", "COUNCIL", "ALMANAC", "DISCOVER"]
-        ok("18 mobile: five labelled nav buttons, Council opens, Tromsø sheet leaves the town visible",
+        labels_ok = [x.replace("🗺️", "").replace("🔍", "").replace("☀", "").replace("🏛️", "").replace("📖", "").replace("✦", "").strip().upper() for x in nav] == ["EXPLORE", "LENSES", "DAYLIGHT", "COUNCIL", "ALMANAC", "DISCOVER"]
+        ok("18 mobile: six labelled nav buttons, Council opens, Tromsø sheet leaves the town visible",
            labels_ok and dock_hidden and council and not sheet["hidden"] and sx and city_y < sheet["top"],
            f"nav={nav} dockHidden={dock_hidden} council={council} sheet={sheet} townY={round(city_y)} noHScroll={sx}")
         await m.close()
@@ -665,6 +666,8 @@ async def main():
             return _to.transform(x + _proj["x0_km"], _proj["y1_km"] - y)
         from journeys_opening_maps import run as run_v05
         await run_v05(b, URL, ok, errors, timings, geo_of)
+        from journeys_daylight import run as run_daylight
+        await run_daylight(b, URL, ok, errors)
 
         ok("20 no console errors", not errors, errors[:3])
         await b.close()

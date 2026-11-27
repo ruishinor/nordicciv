@@ -12,7 +12,7 @@ import {
 // [UTC, azimuth, elevation]. Event times are linearly interpolated between the
 // reference elevations bracketing each fixed threshold and rounded to seconds.
 // Daylight is the sum of the elapsed intervals above -0.833° within that day.
-const fixtures = JSON.parse(readFileSync(new URL("./solar_horizons.json", import.meta.url), "utf8"));
+const fixtures = JSON.parse(readFileSync(new URL("./fixtures/solar_horizons.json", import.meta.url), "utf8"));
 const thresholds = { sunrise: -0.833, civil: -6, nautical: -12, astronomical: -18 };
 const circularError = (a, b) => Math.abs((a - b + 540) % 360 - 180);
 const asIso = (d) => d?.toISOString() ?? null;
