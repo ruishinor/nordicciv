@@ -47,29 +47,36 @@ export function count3(n) {
 // Formats a value of a stat ("usd" → $, "rate" → %, anything else → compact count).
 export function fmtStat(def, v) {
   if (!fin(v)) return "–";
+  if (def.partial) return "≥" + compact(v);
   if (def.unit === "usd" || def.unit === "eur") return money(v);
   if (def.unit === "rate") return pct(v);
   return compact(v);
 }
 
-// Every top-bar stat in display order: population, the yields from nation.json, unemployment.
-export function statDefs(nation) {
-  const n = nation?.nation || {};
-  const yields = (nation?.yields || []).map((y) => ({
-    key: y.key,
-    label: y.label,
-    name: y.key === "gold" ? `${y.label} (GDP)` : y.label,
-    color: y.color,
-    yield: y,
-    unit: y.unit,
-    description: y.description || "",
-    source: y.key === "gold" ? nation.gdp_vintage || nation.vintage || "" : nation.vintage || "",
-    value: y.key === "gold" ? n.gdp ?? n.yields?.gold ?? null : n.yields?.[y.key] ?? null,
-  }));
+// Every top-bar stat in display order: population, then the yields from nation.json. `scope` = "" (Scandinavia) or a
+// country code; the values always say which area they describe (NC-T07, §18.3).
+export const SCOPE_NAME = { "": "Scandinavia", NO: "Norway", SE: "Sweden", DK: "Denmark" };
+export function statDefs(nation, scope = "") {
+  const n = (scope ? nation?.countries?.[scope] : nation?.nation) || {};
+  const where = SCOPE_NAME[scope] || "Scandinavia";
+  const yields = (nation?.yields || []).map((y) => {
+    const pub = n.yields_published?.[y.key];
+    const partial = pub == null && (n.yields_partial || []).includes(y.key);
+    const status = y.key === "gold" ? (scope ? "sum of published regional output" : "combined regional output, mixed concepts (not harmonised GDP)")
+      : partial ? "lower bound: suppressed cells" : "observed";
+    return {
+      key: y.key, label: y.label, name: y.label, color: y.color, yield: y, unit: y.unit, measure: y.measure,
+      description: `${where}: ${y.measure}. ${y.description}`, status, partial,
+      source: y.key === "gold" ? nation.gdp_vintage || nation.vintage || "" : (pub != null ? n.yields_published_note : "") || nation.vintage || "",
+      value: pub ?? (y.key === "gold" ? n.gdp ?? n.yields?.gold ?? null : n.yields?.[y.key] ?? null),
+    };
+  });
+  const pubPop = n.population_published ?? n.population ?? null;
   return [
     {
-      key: "population", label: "Population", name: "Population", color: "#e8dcc0", iconId: "pop", emoji: "👥", unit: "people",
-      description: "Registered residents on 1 January 2026 (SSB 07459, SCB TAB628, DST FOLK1A).", source: nation?.vintage || "", value: n.population ?? null,
+      key: "population", label: "Population", name: "Population", color: "#e8dcc0", iconId: "pop", emoji: "👥", unit: "people", measure: "residents, 1 Jan 2026",
+      description: `${where}: registered residents on 1 January 2026 — ${n.pop_series_source || "SSB 07459, SCB TAB628, DST FOLK1A"}.`,
+      status: "observed", source: nation?.vintage || "", value: pubPop,
     },
     ...yields,
   ];
@@ -82,27 +89,37 @@ const industryLabel = (nation, k, gdp = false) => {
 const NORDIC_IND = { A: "agriculture", BC: "manufacturing", DE: "utilities", F: "construction", G: "retail", H: "transportation", I: "accommodation", J: "information", K: "finance", LMN: "professional", O: "public_admin", P: "education", Q: "health", RS: "arts", X: "other" };
 export const industryIcon = (k) => { k = NORDIC_IND[k] || k; return hasIcon(`i-${k}`) ? `i-${k}` : k === "government" && hasIcon("i-public_admin") ? "i-public_admin" : null; };
 
-// Areas the leaderboards rank: states (index into states.json = world.json states) and metro areas.
+// Areas the leaderboards rank: regions (index into states.json = world.json states) and municipalities.
+// NordicCiv: every record in cities.json is a municipality, selected explicitly by its id (the inherited US engine
+// filtered on `metro`, which excluded every Scandinavian municipality — NC-T05).
 function areas(states, cities) {
   const st = (Array.isArray(states) ? states : [])
     .map((o, i) => (o ? { kind: "state", ref: i, name: o.name || o.abbr || "?", sub: o.abbr || "", o } : null))
     .filter(Boolean);
   const metros = (Array.isArray(cities) ? cities : [])
-    .filter((c) => c && c.metro !== false)
+    .filter((c) => c && typeof c.id === "string" && /^(NO|SE|DK)-\d+$/.test(c.id))
     .map((c) => ({ kind: "city", ref: c.id, name: c.name, sub: (c.states || []).join("–"), o: c }));
   return { st, metros };
 }
 
 // Top TOP rows by valueOf(o); null values are skipped. opts: {asc, min (population), fmt, exact (full-precision
 // text for the row's tooltip), subOf}
-function rank(list, valueOf, { asc = false, min = 0, fmt = count3, exact = int, subOf = null } = {}) {
+// Ties break by name, then id, so the order is the same on every load. `partial(o)` marks values that are lower
+// bounds (suppressed components): shown with ≥, and the board's ranks below the first such row read as approximate.
+function rank(list, valueOf, { asc = false, min = 0, fmt = count3, exact = int, subOf = null, partial = null } = {}) {
+  let uncertain = false;
   return list
     .filter((r) => !min || (r.o.population ?? 0) >= min)
     .map((r) => ({ r, v: valueOf(r.o) }))
     .filter((x) => fin(x.v))
-    .sort((a, b) => (asc ? a.v - b.v : b.v - a.v))
+    .sort((a, b) => (asc ? a.v - b.v : b.v - a.v) || String(a.r.name).localeCompare(String(b.r.name)) || String(a.r.ref).localeCompare(String(b.r.ref)))
     .slice(0, TOP)
-    .map(({ r, v }, i) => ({ rank: i + 1, kind: r.kind, ref: r.ref, name: r.name, sub: subOf ? subOf(r.o) : r.sub, value: v, text: fmt(v), exact: exact ? exact(v) : "" }));
+    .map(({ r, v }, i) => {
+      const lb = partial ? !!partial(r.o) : false;
+      uncertain ||= lb;
+      const sub = (subOf ? subOf(r.o) : r.sub) + (lb ? " · lower bound (suppressed cells)" : "");
+      return { rank: i + 1, approx: uncertain, kind: r.kind, ref: r.ref, name: r.name, sub, value: v, text: (lb ? "≥" : "") + fmt(v), exact: exact ? exact(v) : "" };
+    });
 }
 
 // Which states the "States" rankings cover. states.json holds the states drawn on the map; when the U.S. total
@@ -174,10 +191,10 @@ function reportPopulation(rep, n, st, metros) {
 
   const g = (o) => o.growth;
   const row = (x, prefix = "") => ({
-    label: `${prefix}${x.r.name}`, sub: x.r.kind === "city" ? x.r.sub : "", value: x.v, text: signedPct(x.v), tone: x.v >= 0 ? "good" : "bad",
+    label: `${prefix}${x.r.name}`, sub: x.r.kind === "city" ? x.r.sub : "", value: x.v, text: signedPct(x.v),
   });
   const groups = [];
-  if (fin(n.growth)) groups.push({ rows: [{ label: "Scandinavia", value: n.growth, text: signedPct(n.growth), tone: n.growth >= 0 ? "good" : "bad", strong: true }] });
+  if (fin(n.growth)) groups.push({ rows: [{ label: "Scandinavia (published national totals)", value: n.growth, text: signedPct(n.growth), strong: true }] });
   const extremes = (list, what) => {
     if (list.length < 2) return;
     const k = Math.min(3, Math.floor(list.length / 2));
@@ -187,7 +204,9 @@ function reportPopulation(rep, n, st, metros) {
   };
   extremes(sorted(st, g), "regions");
   extremes(sorted(metros, g, METRO_MIN), `municipalities (${compact(METRO_MIN)}+)`);
-  if (groups.length) rep.breakdown = { title: yrs ? `Population change ${yrs[0]}–${yrs[1]}` : "Population change", note: rep.scope.note, groups };
+  const excluded = metros.filter((r) => !fin(r.o.growth)).length;
+  const cohort = excluded ? `${excluded} municipalities whose territory changed between the two years are not ranked.` : "";
+  if (groups.length) rep.breakdown = { title: yrs ? `Population change ${yrs[0]}–${yrs[1]}` : "Population change", note: [rep.scope.note, cohort].filter(Boolean).join(" "), groups };
 
   rep.boards.modes = [
     { id: "abs", label: "Largest", states: rank(st, (o) => o.population), metros: rank(metros, (o) => o.population) },
@@ -229,7 +248,8 @@ function reportGold(rep, nation, n, st, metros) {
   const popYear = fin(nation.year) ? nation.year : null;
   const years = n.gdp_year && popYear && n.gdp_year !== popYear ? `${n.gdp_year} GDP ÷ ${popYear} residents` : "GDP ÷ residents";
   if (pp != null) rep.context.push(`${money(pp)} per person (${years})`);
-  if (n.gdp_year) rep.context.push(`Year ${n.gdp_year}, current prices in euro; Norway: value added at basic prices`);
+  if (n.gdp_year) rep.context.push(`Year ${n.gdp_year}, current prices in euro`);
+  if (nation.gdp_label) rep.context.push(nation.gdp_label);
   if (nation.extra_regio?.note) rep.context.push(nation.extra_regio.note);
 
   const rows = Object.entries(n.gdp_by_industry || {})
@@ -244,10 +264,10 @@ function reportGold(rep, nation, n, st, metros) {
 
   const perPerson = (o) => ratio(gdp(o), o.population);
   rep.boards.modes = [
-    { id: "abs", label: "Largest GDP", states: rank(st, gdp, { fmt: money, exact: dollars }), metros: rank(metros, gdp, { fmt: money, exact: dollars }) },
+    { id: "abs", label: "Largest output", hint: "Municipal values are estimates (≈): each region's published output shared by industry value added and local jobs.", states: rank(st, gdp, { fmt: money, exact: money }), metros: rank(metros, gdp, { fmt: (v) => "≈" + money(v), exact: money }) },
     {
-      id: "rel", label: "Per person", hint: `${years}; municipalities of ${compact(METRO_MIN)}+ people. Municipal GDP is an estimate (regional GDP × share of jobs).`,
-      states: rank(st, perPerson, { fmt: money, exact: dollars }), metros: rank(metros, perPerson, { fmt: money, exact: dollars, min: METRO_MIN }),
+      id: "rel", label: "Per resident", hint: `${years}; municipalities of ${compact(METRO_MIN)}+ people. Municipal output is an estimate; commuting inflates it where many jobs are filled by residents of other municipalities.`,
+      states: rank(st, perPerson, { fmt: money, exact: money }), metros: rank(metros, perPerson, { fmt: (v) => "≈" + money(v), exact: money, min: METRO_MIN }),
     },
   ];
 }
@@ -281,7 +301,7 @@ function reportJobs(rep, def, nation, n, st, metros) {
     })
     .filter(Boolean)
     .sort((a, b) => b.value - a.value);
-  if (rows.length) rep.breakdown = { title: "Jobs by industry", note: "Jobs at the place of work, November / 4th quarter 2024.", groups: [{ rows }] };
+  if (rows.length) rep.breakdown = { title: "Jobs by industry", note: `Jobs at the place of work, November / 4th quarter 2024. ${def.label} counts ${def.yield?.measure || "jobs"} — employment, not output.`, groups: [{ rows }] };
 
   const y = (o) => o.yields?.[key];
   const lq = (o) => (nShare ? ratio(ratio(y(o), o.employed), nShare) : null);
@@ -292,11 +312,13 @@ function reportJobs(rep, def, nation, n, st, metros) {
   const fmtLq = (v) => `×${v.toFixed(2)}`;
   const exactLq = (v) => `×${v.toFixed(3)}`;
   rep.boards.modes = [
-    { id: "abs", label: "Most workers", states: rank(st, y), metros: rank(metros, y) },
+    { id: "abs", label: "Most jobs", hint: `${def.yield?.measure || "jobs"}, place of work 2024. ≥ marks lower bounds where the agency suppressed small cells.`,
+      states: rank(st, y, { partial: (o) => (o.yields_partial || []).includes(key) }), metros: rank(metros, y, { partial: (o) => (o.yields_partial || []).includes(key) }) },
     {
       id: "rel", label: "Specialisation",
       hint: `Share of the area's jobs in ${def.label.toLowerCase()} ÷ the Scandinavian share (${pct(nShare)}); municipalities of ${compact(METRO_MIN)}+ people.`,
-      states: rank(st, lq, { fmt: fmtLq, exact: exactLq, subOf: shareSub }), metros: rank(metros, lq, { fmt: fmtLq, exact: exactLq, subOf: shareSub, min: METRO_MIN }),
+      states: rank(st, lq, { fmt: fmtLq, exact: exactLq, subOf: shareSub, partial: (o) => (o.yields_partial || []).includes(key) }),
+      metros: rank(metros, lq, { fmt: fmtLq, exact: exactLq, subOf: shareSub, min: METRO_MIN, partial: (o) => (o.yields_partial || []).includes(key) }),
     },
   ];
 }
@@ -342,7 +364,7 @@ function boardHtml(rows) {
       const w = max > 0 ? (Math.abs(r.value) / max) * 100 : 0;
       const tip = `Open ${r.name}${r.exact && r.exact !== r.text ? ` (${r.exact})` : ""}`;
       return `<li><button class="yr-row" data-kind="${r.kind}" data-ref="${esc(r.ref)}" title="${esc(tip)}">
-        <span class="yr-rk">${r.rank}</span>
+        <span class="yr-rk" ${r.approx ? 'title="Approximate: a lower bound above or here makes the exact order uncertain"' : ""}>${r.approx ? "≈" : ""}${r.rank}</span>
         <span class="yr-nm">${esc(r.name)}${r.sub ? ` <span class="muted">${esc(r.sub)}</span>` : ""}</span>
         <span class="yr-v">${esc(r.text)}</span>
         <span class="yr-track"><i style="width:${w.toFixed(1)}%"></i></span></button></li>`;

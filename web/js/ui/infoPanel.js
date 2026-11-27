@@ -118,7 +118,8 @@ export function showPanel(spec) {
       ${spec.sub ? `<div class="cp-full">${spec.sub}</div>` : ""}
       ${spec.headExtra || ""}
     </div>
-    ${spec.sections.filter(Boolean).map((s) => `<section class="cp-section"><h3>${s.title}</h3>${s.html}</section>`).join("")}
+    ${tabBar(spec)}
+    ${spec.sections.filter(Boolean).map((s) => `<section class="cp-section" ${s.tab ? `data-tab="${esc(s.tab)}" role="tabpanel"` : ""} ${s.tab && s.tab !== activeTab(spec) ? "hidden" : ""}>${s.title ? `<h3>${s.title}</h3>` : ""}${s.html}</section>`).join("")}
     <div class="cp-foot">${spec.foot || ""} <a href="#" data-pedia>Almanac ›</a></div>`;
   panel.hidden = false;
   panel.scrollTop = 0;
@@ -130,7 +131,49 @@ export function showPanel(spec) {
     e.preventDefault();
     spec.onPedia?.();
   };
+  wireTabs(panel, spec);
   spec.wire?.(panel);
+}
+
+// Progressive disclosure: sections may carry a `tab`; the panel shows one tab at a time and remembers the last one.
+const lastTab = {};
+function tabsOf(spec) {
+  const t = [];
+  for (const s of spec.sections) if (s && s.tab && !t.includes(s.tab)) t.push(s.tab);
+  return t;
+}
+function activeTab(spec) {
+  const t = tabsOf(spec);
+  return t.includes(lastTab[spec.kind]) ? lastTab[spec.kind] : t[0];
+}
+function tabBar(spec) {
+  const t = tabsOf(spec);
+  if (t.length < 2) return "";
+  const a = activeTab(spec);
+  return `<div class="cp-tabs" role="tablist" aria-label="Sections">${t.map((x) => `<button role="tab" data-cptab="${esc(x)}" aria-selected="${x === a}" tabindex="${x === a ? 0 : -1}">${esc(x)}</button>`).join("")}</div>`;
+}
+export function showPanelTab(name) {
+  const panel = panelEl();
+  const b = panel?.querySelector(`[data-cptab="${CSS.escape(name)}"]`);
+  b?.click();
+}
+function wireTabs(panel, spec) {
+  const btns = [...panel.querySelectorAll("[data-cptab]")];
+  const pick = (b, focus = false) => {
+    lastTab[spec.kind] = b.dataset.cptab;
+    btns.forEach((x) => { const on = x === b; x.setAttribute("aria-selected", on); x.tabIndex = on ? 0 : -1; });
+    panel.querySelectorAll(".cp-section[data-tab]").forEach((sec) => (sec.hidden = sec.dataset.tab !== b.dataset.cptab));
+    if (focus) b.focus();
+  };
+  btns.forEach((b, k) => {
+    b.onclick = () => pick(b);
+    b.onkeydown = (e) => {
+      if (e.key === "ArrowRight" || e.key === "ArrowLeft") {
+        e.preventDefault();
+        pick(btns[(k + (e.key === "ArrowRight" ? 1 : btns.length - 1)) % btns.length], true);
+      }
+    };
+  });
 }
 
 export function hidePanel() {

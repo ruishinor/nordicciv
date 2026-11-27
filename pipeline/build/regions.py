@@ -318,6 +318,23 @@ def build():
         countries[cc] = _aggregate([c for c in cities if c["country"] == cc])
         countries[cc]["name"] = admin.COUNTRIES[cc]
         _published(countries[cc], country_pop[cc], history.COUNTRY_SOURCE[cc])
+    # Norway: national jobs by industry from SSB's national table (no suppression at that level), so national yields
+    # are exact rather than lower bounds. It includes jobs on Svalbard, the continental shelf and with unknown
+    # municipality, which no municipality contains.
+    ssb_country = json.loads((INTERIM / "ssb.json").read_text())["country"]["jobs"]
+    nat_groups, _, nat_partial = admin._harmonise({k: v for k, v in ssb_country.items() if k != "00-99"}, admin.MAP_NO)
+    if not nat_partial:
+        no = countries["NO"]
+        no["jobs_published"] = nat_groups
+        no["jobs_total_published"] = ssb_country.get("00-99")
+        no["yields_published"] = {y_["key"]: (sum(nat_groups[k] for k in y_["groups"]) if y_["groups"] else no["yields"].get("gold"))
+                                  for y_ in YIELDS}
+        no["yields_published_note"] = ("SSB 07984, whole country (incl. Svalbard, continental shelf and unknown municipality): "
+                                       "exact, unlike the sum of municipalities where small cells are suppressed")
+        for cc in ("SE", "DK"):
+            countries[cc]["yields_published"] = dict(countries[cc]["yields"])
+        nat["yields_published"] = {k: sum(countries[cc]["yields_published"][k] or 0 for cc in ("NO", "SE", "DK")) for k in nat["yields"]}
+        nat["yields_published_note"] = "Norway from SSB's national table; Sweden and Denmark as the sum of municipalities (no suppression)"
     scand = {y: sum(country_pop[cc].get(y) or 0 for cc in ("NO", "SE", "DK")) if all(country_pop[cc].get(y) for cc in ("NO", "SE", "DK")) else None
              for y in history.YEARS}
     _published(nat, scand, "sum of the three national totals (SSB 07459, SCB TAB628, DST FOLK1A)")

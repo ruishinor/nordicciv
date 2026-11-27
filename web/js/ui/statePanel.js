@@ -3,7 +3,8 @@ import { css } from "../color.js";
 import { esc, int, pct, popShort } from "../format.js";
 import { icon } from "./icon.js";
 import { showPanel } from "./infoPanel.js";
-import { yieldTiles, industryBars, sparkline } from "./cityPanel.js";
+import { yieldTiles, industryBars } from "./cityPanel.js";
+import { popChart } from "../stats.js";
 
 const COUNTRY = { NO: "Norway", SE: "Sweden", DK: "Denmark" };
 const KIND = { NO: "County (fylke)", SE: "County (län)", DK: "Region" };
@@ -11,6 +12,15 @@ const FLAG = { NO: "🇳🇴", SE: "🇸🇪", DK: "🇩🇰" };
 const LAND = [["forest", "Forest", "#2f5a3a"], ["crop", "Farmland", "#c9b955"], ["pasture", "Pasture", "#8fb04e"], ["heath", "Fjell heath", "#9c9a6e"],
   ["bare", "Bare rock", "#a8a196"], ["wetland", "Mire & wetland", "#5f8a74"], ["shrub", "Woodland & scrub", "#8f9a58"], ["developed", "Built-up", "#8a8378"],
   ["ice", "Glacier", "#e8eef2"], ["grass", "Grassland", "#a9b35a"]];
+
+function popBasis(st) {
+  const b = st.pop_basis || {};
+  const ys = Object.keys(st.pop_series || {});
+  const pub = ys.filter((y) => b[y] === "published"), sum_ = ys.filter((y) => b[y] === "sum"), na = ys.filter((y) => st.pop_series[y] == null);
+  const span = (a) => (a.length ? `${a[0]}–${a.at(-1)}` : "");
+  return `<p class="muted small">${pub.length ? `${span(pub)}: published regional series. ` : ""}${sum_.length ? `${span(sum_)}: sum of municipalities on today's borders. ` : ""}${na.length
+    ? `${span(na)}: not available — some municipalities could not be reconstructed for those years (they cover ${Math.round(100 * (st.pop_coverage?.[na[0]] ?? 0))}% of today's population there is data for).` : ""}</p>`;
+}
 
 export function openStatePanel(idx, ctx) {
   const { w, nation } = ctx;
@@ -39,8 +49,8 @@ export function openStatePanel(idx, ctx) {
       <div class="cp-pop"><span class="muted">${int(st.jobs_total)} jobs · ${Number.isFinite(st.density) ? st.density.toFixed(1) : "–"} residents/km² · aged 65+ ${pct(st.share_65plus)}</span></div>`,
     sections: [
       st.yields && { title: `Yields · rank among the ${count} regions`, html: `<div class="yield-grid">${yieldTiles(nation, st, count)}</div>
-        <p class="muted small">GDP is the sum of the municipalities' estimates; for Swedish län and Danish regions it equals the published regional GDP, for Norway's 2024 counties split from Viken, Vestfold og Telemark and Troms og Finnmark it is apportioned by jobs.</p>` },
-      { title: "Population 2008–2026", html: sparkline(st.pop_series) },
+        <p class="muted small">Gold is the sum of the municipalities' output estimates: for Swedish län and Danish regions it equals the published regional output; for Norway's 2024 counties split from Viken, Vestfold og Telemark and Troms og Finnmark it is an estimate (≈). ≥ = lower bound.</p>` },
+      { title: "Population 2008–2026", html: popChart(st) + popBasis(st) },
       { title: "Land", html: landBar },
       st.jobs && { title: "Jobs by industry · place of work, 2024", html: industryBars(st, nation, 8) },
       { title: "Largest municipalities", html: cityRows },

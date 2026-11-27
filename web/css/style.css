@@ -231,7 +231,7 @@ kbd {
 .cp-name .cap { color: #ffe9a8; }
 .cp-full { color: var(--ink-dim); font-size: 12px; margin-top: 3px; }
 .chips { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 6px; }
-.chip { font: 11px var(--sans); letter-spacing: .06em; padding: 1px 7px; border-radius: 9px; border: 1px solid rgba(201,164,92,.5); background: rgba(0,0,0,.25); color: var(--gold-bright); }
+.chip { font: 12px var(--sans); letter-spacing: .04em; padding: 2px 8px; border-radius: 9px; border: 1px solid rgba(201,164,92,.5); background: rgba(0,0,0,.25); color: var(--gold-bright); }
 button.chip { cursor: pointer; }
 button.chip:hover { background: rgba(201,164,92,.2); }
 .cp-pop { margin-top: 8px; font-size: 13px; display: flex; align-items: center; gap: 4px; flex-wrap: wrap; }
@@ -594,3 +594,43 @@ button.link { background:none; border:0; padding:0; color:#f0d48a; cursor:pointe
 .nc-scatter circle { cursor:pointer; }
 .nc h4 { margin:12px 0 4px; font:600 12.5px system-ui, sans-serif; color:#e0d3b0; display:flex; gap:6px; align-items:center; flex-wrap:wrap; }
 #btn-council .lbl { margin-left:4px; }
+
+/* ===================================================================== v0.2 consolidation ===================== */
+/* overview bar: explicit scope and a caption naming what each value measures */
+.hud-scope select { background: rgba(0,0,0,.35); color: var(--gold-bright); border: 1px solid var(--line); border-radius: 3px;
+  font: 12px var(--serif); letter-spacing: .04em; padding: 2px 4px; margin-right: 4px; cursor: pointer; }
+.yield .yv { display: inline-flex; flex-direction: column; line-height: 1.05; align-items: flex-start; }
+.yield .ym { font-size: 9px; letter-spacing: .02em; color: var(--ink-dim); white-space: nowrap; }
+@media (max-width: 700px) { .yield .ym { display: none; } }
+
+/* municipality inspector: tabs, measures, actions */
+.cp-tabs { display: flex; gap: 2px; padding: 6px 12px 0; border-bottom: 1px solid var(--line); position: sticky; top: 0; z-index: 2;
+  background: var(--panel-2); }
+.cp-tabs button { flex: 1; background: none; border: 1px solid transparent; border-bottom: none; border-radius: 4px 4px 0 0;
+  padding: 6px 4px 7px; font: 12px var(--serif); letter-spacing: .08em; text-transform: uppercase; color: var(--ink-dim); cursor: pointer; min-height: 32px; }
+.cp-tabs button:hover { color: var(--gold-bright); }
+.cp-tabs button[aria-selected="true"] { color: var(--gold-bright); border-color: var(--line); background: linear-gradient(180deg, #3a2f15, rgba(58,47,21,0)); }
+.yield-tile .meas { font-size: 10px; line-height: 1.2; color: var(--ink-dim); margin-top: 1px; min-height: 2.4em; }
+.cp-actions { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip.sm { padding: 1px 6px; font-size: 11px; margin-left: 6px; }
+.spec-two { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 6px; }
+.spec-two b { font-family: var(--serif); font-weight: normal; color: var(--gold-bright); font-size: 14px; }
+.growth.up { color: #cfe3b8; } .growth.down { color: #e8c3a8; }
+.link { background: none; border: none; padding: 0; color: var(--gold-bright); text-decoration: underline dotted; text-underline-offset: 3px; cursor: pointer; font: inherit; }
+.cp-section a, .nc a { color: var(--gold-bright); }
+.status-list, .breaks { margin: 4px 0; padding-left: 18px; font-size: 12px; line-height: 1.45; }
+.breaks li { margin-bottom: 4px; }
+.spark-legend { display: flex; gap: 12px; font-size: 10.5px; color: var(--ink-dim); margin-top: 2px; }
+.spark-legend .lg { display: inline-block; width: 14px; height: 8px; margin-right: 4px; vertical-align: -1px; }
+.lg.gap { background: rgba(255,255,255,.12); } .lg.alt { border-top: 2px dashed #8aa0c8; height: 0; } .lg.brk { border-left: 2px dashed #e5707a; width: 0; height: 10px; }
+
+/* compare: neutral magnitude bars */
+.cmp-table td { position: relative; }
+.cmp-table td .mag { display: block; height: 3px; background: rgba(201,164,92,.55); margin-top: 3px; border-radius: 2px; }
+.cmp-table td.na { color: var(--ink-dim); cursor: help; }
+.cmp-table th[scope="row"] { font-weight: normal; text-align: left; color: var(--ink-dim); }
+.nc-excl { max-height: 160px; overflow: auto; font-size: 12px; border-left: 2px solid var(--line); padding-left: 8px; margin: 4px 0; }
+
+/* touch targets and readable secondary text (WCAG 2.2 target size, contrast) */
+@media (pointer: coarse) { .chip, .cp-tabs button, .icon-btn, .link { min-height: 32px; } }
+.small, .muted.small { font-size: 12px; }
