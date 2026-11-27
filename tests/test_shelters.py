@@ -54,17 +54,31 @@ class BuiltTest(unittest.TestCase):
             self.assertAlmostEqual(p["y1_km"] - y, r["y"], delta=0.001)
 
     def test_municipality_contains_record_or_is_nearest_within_limit(self):
-        import shapely
-        from shapely.geometry import Point
-        from pipeline.build import admin
-        polys = admin.polygons()
+        # independent of the build's boundary files: the shipped display polygons (munis.json, 80 m simplification)
+        from shapely.geometry import Point, Polygon
+        from shapely.ops import unary_union
+        mj = json.loads((DATA / "munis.json").read_text())
+        sc = mj["scale"]
+        polys = {}
+        for f in mj["features"]:
+            if not f["id"].startswith("NO-"):
+                continue
+            shells, holes = [], []
+            for ring in f["rings"]:
+                xs, ys, x, y = [], [], 0, 0
+                for k in range(0, len(ring), 2):
+                    x += ring[k]; y += ring[k + 1]
+                    xs.append(x * sc); ys.append(y * sc)
+                pg = Polygon(list(zip(xs, ys))).buffer(0)
+                shells.append(pg)
+            polys[f["id"]] = unary_union(shells)
         for r in self.sh["shelters"]:
-            inside = polys[r["muni"]].covers(Point(r["lon"], r["lat"]))
+            d = polys[r["muni"]].distance(Point(r["x"], r["y"]))  # km
             if "assigned" in r:
-                self.assertFalse(inside)
                 self.assertLessEqual(r["assigned"]["distance_m"], 1500)
+                self.assertLess(d, 1.6, r["id"])
             else:
-                self.assertTrue(inside, r["id"])
+                self.assertLess(d, 0.25, r["id"])  # inside, up to the display simplification
 
     def test_aggregates_and_coverage(self):
         sh = self.sh

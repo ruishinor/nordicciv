@@ -1,9 +1,9 @@
-NOTE  validation mode: release; data hash 30aad91639999a52
+NOTE  validation mode: release; data hash 284a808a1f1bcc0d
 PASS  files: world.json parses as strict JSON numbers (no NaN/Infinity) [2.13 MB]
 PASS  files: cities.json parses as strict JSON numbers (no NaN/Infinity) [1.99 MB]
 PASS  files: states.json parses as strict JSON numbers (no NaN/Infinity) [0.07 MB]
 PASS  files: nation.json parses as strict JSON numbers (no NaN/Infinity) [0.02 MB]
-PASS  files: lenses.json parses as strict JSON numbers (no NaN/Infinity) [1.22 MB]
+PASS  files: lenses.json parses as strict JSON numbers (no NaN/Infinity) [1.26 MB]
 PASS  files: sources.json parses as strict JSON numbers (no NaN/Infinity) [0.04 MB]
 PASS  files: resources.json parses as strict JSON numbers (no NaN/Infinity) [0.14 MB]
 PASS  files: infrastructure.json parses as strict JSON numbers (no NaN/Infinity) [0.14 MB]
@@ -81,6 +81,24 @@ PASS  lens forest: source ['gisco_grids'], unit '% tree cover', resolution hex
 PASS  lens farmland: source ['gisco_grids'], unit '% of land', resolution hex
 PASS  lens cover: source ['gisco_grids'], unit '', resolution hex
 PASS  lens urban_growth: source ['gisco_grids'], unit 'km² (1 km cells)', resolution hex
+PASS  lens shelter_places: source ['dsb_shelters'], unit '', resolution municipality
+PASS  shelters: 555 records, every DSB lokalId present, well-formed and unique
+PASS  shelters: all 555 features the WFS reports as matched are in the build (555)
+PASS  shelters: room numbers are integers and unique
+PASS  shelters: registered places are non-negative integers or null when not stated, never a placeholder (0 bad)
+NOTE  shelters: 1 record(s) registered with 0 places (kept as 0), 0 without a stated figure (kept as null)
+PASS  shelters: every position lies within mainland Norway's lon/lat envelope (0 outside)
+PASS  shelters: map positions transform back to the published ETRS89 coordinates (worst 0.7 m; 3-decimal km rounding)
+NOTE  shelters: 522 of 555 sit on a Norwegian land hex; 33 fall on coastal hexes the 9.7 km grid counts as sea (each is inside, or ≤ 1.5 km from, its municipality's outline; true position kept)
+PASS  shelters: every record belongs to a Norwegian municipality of the app (0 not)
+PASS  shelters: 4 record(s) just outside a simplified outline were assigned to the nearest municipality (≤ 1,500 m; distance kept)
+PASS  shelters: municipal counts and place totals equal the sums of their records (0 off)
+PASS  shelters: county totals equal the sums of their municipalities (0 off)
+PASS  shelters: national totals 555 shelters, 296,937 places
+PASS  shelters: coverage says Norway integrated, Sweden and Denmark not integrated (with reasons)
+PASS  shelters: capacity meaning, public/private distinction, absence caveat, licence and attribution are published with the data
+PASS  source: every shelter record (id, position, room, places) equals the cached WFS answer (555 read independently, 0 differ; WFS reports 555 matched)
+PASS  lens shelter_places: Sweden/Denmark no data (0 valued), every Norwegian municipality valued, 'no public shelter' exactly where the register has none
 PASS  resources: 687 sites, all inside the map (0 outside)
 PASS  resources: 0 on foreign hexes []
 PASS  source gisco_grids: 926 files, licence: Eurostat/GISCO reuse policy (free reuse with attribution: © 
@@ -98,6 +116,7 @@ PASS  source wikidata: 5 files, licence: CC0 1.0
 PASS  source sodir: 3 files, licence: NLOD 2.0 (Norwegian Licence for Open Government Data)
 PASS  source sgu: 2 files, licence: CC0 1.0 (SGU open data)
 PASS  source links: 2 files, licence: CC0 1.0 (Wikidata); CC BY 4.0 (Eurostat)
+PASS  source dsb_shelters: 4 files, licence: NLOD 1.0 (Norwegian Licence for Open Government Data)
 PASS  source: SSB 07459 has no duplicate observations (0)
 PASS  source join: every Norwegian municipality-year matches SSB 07459 according to its status (observed = equal and non-zero, boundary = source 0, missing = source empty) (0 off: [])
 PASS  source: Norway, every year 2008–2026: Σ municipalities + SSB's 'divided municipalities' bucket = national total (0 years off: [])
@@ -129,15 +148,15 @@ NOTE  history review: NO-4629 Modalen 2010→2011: +7.6% (no recorded boundary c
 NOTE  history review: NO-4632 Austrheim 2009→2010: +6.3% (no recorded boundary change)
 NOTE  history review: NO-4649 Stad 2019→2020: +6.3% (no recorded boundary change)
 NOTE  history review: DK-187 Vallensbæk 2008→2009: +7.8% (no recorded boundary change)
-PASS  cache: 1003/1003 declared downloads match their manifest (SHA-256, size, request identity)
+PASS  cache: 1007/1007 declared downloads match their manifest (SHA-256, size, request identity)
 PASS  release: key totals unchanged against the accepted baseline 
-NOTE  release: candidate 210b9a84d85f717c (app 49, data 112, tests 9, pipeline 32 files)
+NOTE  release: candidate 1ec869e40bb622e4 (app 51, data 113, tests 10, pipeline 34 files)
 PASS  release: browser evidence is from a completed run during which the candidate did not change
-PASS  release: browser evidence is for this candidate (210b9a84d85f vs 210b9a84d85f)
-PASS  release: browser evidence lists the mandatory journeys of the test implementation (22)
-PASS  release: all 22 mandatory browser journeys PASS (/usr/bin/google-chrome)
+PASS  release: browser evidence is for this candidate (1ec869e40bb6 vs 1ec869e40bb6)
+PASS  release: browser evidence lists the mandatory journeys of the test implementation (27)
+PASS  release: all 27 mandatory browser journeys PASS (playwright-chromium 158.0.8127.36)
 PASS  release: unit evidence is from a completed run during which the candidate did not change
-PASS  release: unit evidence is for this candidate (210b9a84d85f vs 210b9a84d85f)
-PASS  release: unit tests 31 ran, 0 failed, 0 errors, 0 skipped
+PASS  release: unit evidence is for this candidate (1ec869e40bb6 vs 1ec869e40bb6)
+FAIL  release: unit tests 37 ran, 0 failed, 1 errors, 0 skipped
 
-121 pass, 20 note, 0 warn, 0 skipped, 0 fail → PASS (mode: release)
+137 pass, 22 note, 0 warn, 0 skipped, 1 fail → FAIL (mode: release)
