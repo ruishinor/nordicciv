@@ -11,7 +11,7 @@ feature branch. The 0.4.0 and 0.3.0 records follow unchanged below this section.
 | Browser journeys | 33 mandatory (0–32) PASS, incl. the axe accessibility journeys 17 and 21; 27–32 are new: layer default/scale/grouping/z-order, hover and card with one safe outbound link, **no request to any third party while the layer is on, hovered and selected** (the click is the only outbound request; blocked in the test), municipality panel, Discover and Almanac, phone |
 | `check --mode built` | 125 pass, 8 note, 0 warn, 0 fail (14 new `uplinks:*` lines) |
 | `check --mode source` (uplinks part) | every published position equals the provider's cached listing, read independently of the build (175 of 175); the other sources' raw caches are not in this build environment, so their source reconciliation was not re-run here (unchanged data) |
-| Release run | `python -m pipeline release` must be run where all raw caches are present (it reconciles every source); until it passes, `dist/release/` keeps 0.4.0 |
+| Release run | `python -m pipeline release` on commit 443e8b2: staged candidate `efa15245f3e1…`; on the staged copy unit tests 48/0/0 and browser journeys 33 PASS (bound to that candidate, unchanged during the run); then `check --mode release` stopped because the original downloads of the other sources (data/raw) are not in this build environment, so the candidate was **not promoted** and the last known-good release (0.4.0) stays in place. Run it where the raw caches are present to promote 0.5.0 |
 
 ## Data integrity (camera uplinks)
 
