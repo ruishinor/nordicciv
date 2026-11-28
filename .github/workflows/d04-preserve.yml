@@ -1,0 +1,65 @@
+name: D04 preserve acquired pilots
+on:
+  push:
+    branches: ['prep/d04-d05-intake']
+    paths:
+      - '.github/workflows/d04-preserve.yml'
+  workflow_dispatch:
+permissions:
+  contents: write
+  actions: read
+jobs:
+  preserve:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: prep/d04-d05-intake
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: pip install 'numpy>=1.26' 'pyproj>=3.6' 'shapely>=2.0' 'rasterio>=1.4,<2'
+      - uses: actions/download-artifact@v4
+        with:
+          name: d04-n50-aurland
+          run-id: 46181266975
+          github-token: ${{ github.token }}
+          path: staging/n50-aurland
+      - uses: actions/download-artifact@v4
+        with:
+          name: d04-n50-oslo-lillestrom
+          run-id: 46181266975
+          github-token: ${{ github.token }}
+          path: staging/n50-oslo
+      - uses: actions/download-artifact@v4
+        with:
+          name: d04-herning-overture-odbl
+          run-id: 46181344653
+          github-token: ${{ github.token }}
+          path: staging/overture
+      - name: Verify, repair and finalize acquired bytes
+        run: |
+          python tools/d04_finalize.py --region aurland --source staging/n50-aurland/aurland --dest data/prepared/d04/n50/aurland
+          python tools/d04_finalize.py --region oslo-lillestrom --source staging/n50-oslo/oslo-lillestrom --dest data/prepared/d04/n50/oslo-lillestrom
+          python tools/d04_finalize.py --region herning --source staging/overture --dest data/prepared/d04/overture-odbl/herning
+      - uses: actions/upload-artifact@v4
+        with:
+          name: d04-finalized-n50
+          path: data/prepared/d04/n50/
+          retention-days: 30
+      - uses: actions/upload-artifact@v4
+        with:
+          name: d04-finalized-herning-odbl
+          path: data/prepared/d04/overture-odbl/herning/
+          retention-days: 30
+      - name: Preserve bounded national-source staging assets
+        run: |
+          # ODbL selected records and derived assets stay in the separate artifact.
+          # Only small, verified national-source outputs are committed, never raw archives.
+          git add -f data/prepared/d04/n50/
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          if git diff --cached --quiet; then exit 0; fi
+          git commit -m "Preserve acquired and verified N50 pilot geometry"
+          git push origin HEAD:prep/d04-d05-intake

@@ -97,8 +97,11 @@ def clip(doc, input_crs, region, kind, tolerance=0, buffer_m=2000):
         for part in parts(make_valid(geom.intersection(extent)), kind):
             if not part.is_valid:
                 raise ValueError('Invalid output geometry')
-            output.append({'type':'Feature','geometry':mapping(transform(backward, part)),
-                           'properties':{}})
+            # Projection round trips can introduce a self-intersection at a touching ring.
+            for exported in parts(make_valid(transform(backward, part)), kind):
+                if not exported.is_valid:
+                    raise ValueError('Invalid geographic export geometry')
+                output.append({'type':'Feature','geometry':mapping(exported),'properties':{}})
     if not output:
         raise ValueError('No geometry intersects exact pilot; coverage not established')
     return {'type':'FeatureCollection','features':output}, dict(inputFeatures=len(doc['features']),
