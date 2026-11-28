@@ -172,3 +172,5 @@ The Environment advisor and Norwegian county panels include selected glacier are
 
 ### Connected discovery journeys
 Open Discover, then Journeys, to follow hydropower, industry, farmland, winter daylight or built-up land changes across municipalities with figures in the map. Previous and Next stop keep the municipality and map lens in view; a shared link restores the current stop. Municipality panels link to Copernicus satellite imagery around the map location and to Yr's forecast search, with local coordinates. The sites open separately; NordicCiv does not load imagery or forecasts from them.
+
+Historical forest and agricultural land change lenses use the 1990 and 2018 CORINE classes on the same 1 km cells. Missing years are excluded; a zero net change may include gains and losses. The figures describe the mapped hexes, not exact municipal areas. The targeted builder is `python -m pipeline.build.land_history`; its pinned tile inventory, hashes and coverage travel with `lenses.json`. The original urban-growth values must be reproduced before the new layers are written.

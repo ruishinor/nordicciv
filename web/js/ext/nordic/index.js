@@ -430,6 +430,15 @@ export function install(app) {
         const n = sum(cells.map((i) => ug.values[i]));
         out.push(obs(`Between 1990 and 2018 about <b>${int(n)}</b> one-kilometre cells ${c ? "here" : "in this area"} turned into built-up, industrial or transport land on the CORINE grid.`, { lensId: "urban_growth", source: "CORINE 1990 and 2018" }));
       }
+      for (const id of ["forest_change", "agriculture_change"]) {
+        const layer = lens(id);
+        if (!layer) continue;
+        const values = cells.map(i => layer.values[i]).filter(fin);
+        if (!values.length) continue;
+        const change = sum(values);
+        const label = id === "forest_change" ? "Forest" : "Agricultural land";
+        out.push(obs(`${label} changed by <b>${change > 0 ? "+" : ""}${int(change)} km²</b> in the mapped hexes between 1990 and 2018 (net change in 1 km cell classes, not a municipal land total).`, {lensId:id, source:"CORINE 1990 and 2018"}));
+      }
       const parks = (app.data.wonders?.wonders || []).filter((x) => x.rule === "national_park" && (c ? x.county === c.id : r ? x.state === r.fips : true));
       if (parks.length) out.push(obs(`Large national parks: ${parks.map((p) => `${esc(p.short)} (${int(p.metrics.area_km2)} km²)`).join(", ")}.`, { source: "Wikidata areas; rule ≥ 1,000 km²" }));
       const scope = c ? c.states?.[0] || c.country : r?.fips || "";
@@ -760,7 +769,7 @@ export function install(app) {
       <div class="nc-excl" hidden>${d.excluded.map((c) => `<div>${cityLink(c)} <span class="muted small">${esc(whyNotComparable(c, tl.a, tl.b))}</span></div>`).join("")}</div>
       ${d.ranked.length >= 2 ? `<p>Grew most: ${top.map(line).join(", ")}<br>${bottom[0][1] < 0 ? "Shrank most" : "Grew least"}: ${bottom.map(line).join(", ")}</p>` : ""}
       <p class="muted small">Population 1 January on today's municipal borders. SSB 07459 (aggregated series for the 2024 municipalities; county totals from agg_Fylker2024), SCB TAB628 (31 December of the previous year), DST FOLK1A (1st quarter). A municipality is compared only between years observed on the same territory.</p>
-      <div class="obs"><h4>Land cover, 1990–2018</h4><p>See where the CORINE grid changed to built-up land, industry, mines or transport.</p>${lens("urban_growth") ? '<button class="chip" data-lens="urban_growth">Show new built-up land</button>' : ""}</div>
+      <div class="obs"><h4>Land cover, 1990–2018</h4><p>See where the CORINE grid changed to built-up land, industry, mines or transport.</p>${lens("urban_growth") ? '<button class="chip" data-lens="urban_growth">Show new built-up land</button>' : ""}${["forest_change","agriculture_change"].filter(id=>lens(id)).map(id=>`<button class="chip" data-lens="${id}">${esc(lens(id).name)}</button>`).join("")}</div>
       ${glacierHistoryHtml(tl.scope)}</div>`;
   }
   function sparkScope(o) {
