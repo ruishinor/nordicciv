@@ -9,8 +9,8 @@ Statistics Sweden and Statistics Denmark, Eurostat, the Norwegian Offshore Direc
 Natural Earth and Wikidata — and every number says what it measures, where it came from and at what resolution.
 
 Explore your hometown, see what stands out, compare it with nearby municipalities,
-press **Discover** for a surprising fact about a real place, or wander off into Norwegian hydropower, Swedish mining
-towns, Danish farmland or the Øresund.
+press **Discover** for a surprising fact or follow a short journey through Norwegian hydropower, Swedish industrial
+towns, Danish farmland, commuting connections or the Øresund. Save places to return to later.
 
 ## What's in it
 
@@ -36,19 +36,27 @@ towns, Danish farmland or the Øresund.
   Use the current time or choose a date and local time. Pick a municipality to see its sunrise, sunset, and
   daylight hours, including midnight sun and polar night. **Turn off** brings back the usual map colours.
   The light depends on the sun's position. The painted terrain relief keeps its fixed shading.
-  Times are calculated at the municipality's map location for a clear, level horizon.
+  Times are calculated at the municipality's map location for a clear, level horizon. Explore the seasons to compare
+  daylight and try optional seasonal trees and fields. The artwork does not show current snow or weather.
 - **Regions.** 15 fylker, 21 län, 5 Danish regions, with yields, ranks, land-cover mix and largest municipalities.
 - **Resources.** 687 sites: hydropower, pumped storage, nuclear, wind (onshore/offshore), solar, thermal plants
   (installed MW — never presented as generation), 101 producing oil and gas fields with production, Swedish metal and
   industrial-mineral mines.
 - **Infrastructure.** Motorways, major roads, railways and ferry routes (Natural Earth, as map art), 145 ports by goods
   handled and 59 airports by passengers (Eurostat 2024).
-- **Public shelters (v0.4, Norway).** All 555 public civil-defence shelters in DSB's register (296,937 registered places;
+- **Connections.** Explore 2024 domestic commuting in Norway, Sweden and Denmark, selected Danish airport and ferry
+  passenger and freight figures, and 2023 Øresund commuting totals from Nordic Statistics (COMP53). The map connects
+  published endpoints; the lines are not travel routes. The Øresund commuting figures cover the region, not individual
+  municipality pairs.
+- **Shelters in Scandinavia.** All 555 public civil-defence shelters in DSB's register (296,937 registered places;
   NLOD 1.0), as an optional layer in the Map menu: summarised by county and municipality far out, every record at its
   published position closer in, a card per shelter, a section in the municipality panel's Society tab, notes from the
   Council's Resilience advisor, an Almanac page and a lens. Public shelters only (private shelters are not published);
-  DSB lists the number of places in each shelter. Data for Sweden and Denmark is not available here.
-  In an emergency, follow the authorities' instructions.
+  DSB lists the number of places in each shelter. The individual map points and shelter lens cover Norway.
+  Sweden's MCF register lists 63,321 shelters with 6,751,759 places (November 2026); Sweden and Denmark also have
+  municipality and regional shelter summaries in the Society tab. Denmark uses the June 2024 national inventory,
+  which separates public shelters, building-associated rooms and supplementary spaces. In an emergency, follow
+  the authorities' instructions.
 - **Camera uplinks (v0.5).** 196 public webcams their operators publish — towns, mountains, fjords, coasts, islands,
   ski resorts, weather stations — as an optional layer in the Map menu (off by default; hidden at the scale of the whole
   of Scandinavia). Selecting one opens a small card with **Open uplink**, to the provider's own page in
