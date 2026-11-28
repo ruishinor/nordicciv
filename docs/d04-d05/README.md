@@ -18,11 +18,12 @@ Use the existing Python environment and D05 utilities. New tools/d04_water_prep.
 
     python tools/d04_water_prep.py plan --region aurland
     python tools/d04_water_prep.py clip --region aurland --source n50 --role water-area --input PATH_TO_SELECTED_WATER.geojson --input-crs EPSG:4326 --revision ACTUAL_EXTRACT_DATE
+    python tools/d04_water_prep.py overture-sql --region herning
     python tools/d05_landcover.py plan --region herning
     python tools/d05_landcover.py worldcover --region herning
     python tools/d05_landcover.py raster --region herning --source clms-tcd --year 2021 --input PATH_TO_NATIVE_TIF
 
-For N50, use capabilities/Atom or portal and intersect buffered bounds with all relevant municipalities, not just the named pilot city. Use local source selection to export only needed polygon/line classes and verify islands and river surfaces. GeoDanmark: use custom AOI GPKG after access resumes; validate water layer names, drop Z. Do not acquire all Sweden. For Overture fallback use the pinned release and bbox from plan (west,south,east,north); apply overlap predicates to bbox min/max, not containment. Select water subtypes ocean/lake/pond/reservoir/river/stream/water/canal; exclude physical named features and classify by actual geometry dimension; land requires subtype=land AND class=land. Use documented DuckDB httpfs/spatial access, s3_region=us-west-2, and spatially clip returned geometries; bbox filtering alone does not clip. See https://docs.overturemaps.org/getting-data/duckdb/ and https://docs.overturemaps.org/schema/reference/base/water/. CLI targets latest automatically, so record resolved release if used. No acquisition dependency installed here.
+For N50, use capabilities/Atom or portal and intersect buffered bounds with all relevant municipalities, not just the named pilot city. Use local source selection to export only needed polygon/line classes and verify islands and river surfaces. GeoDanmark: use custom AOI GPKG after access resumes; validate water layer names, drop Z. Do not acquire all Sweden. For Overture fallback use the pinned release and bbox from plan (west,south,east,north); apply overlap predicates to bbox min/max, not containment. Select water subtypes ocean/lake/pond/reservoir/river/stream/water/canal; exclude physical named features and classify by actual geometry dimension; land requires subtype=land AND class=land. Use documented DuckDB httpfs/spatial access, s3_region=us-west-2, and spatially clip returned geometries; bbox filtering alone does not clip. See https://docs.overturemaps.org/getting-data/duckdb/ and https://docs.overturemaps.org/schema/reference/base/water/. CLI targets latest automatically, so record resolved release if used. The overture-sql action emits the pinned SQL with exact buffered pilot bounds and distinct polygon/line files. Run only if fallback is needed, using an existing DuckDB installation with spatial/httpfs extensions in a separate raw staging directory. Do not publish the files or claim complete coverage from a successful query. The generated SQL was inspected but not executed: DuckDB is absent here and external DNS is unavailable.
 
 ## Reconciliation and integration
 
@@ -31,6 +32,15 @@ D04 owns detailed water placement inside known source coverage. D03R owns terrai
 D05: WorldCover 2021 baseline; CLMS 2021 TCD, DLT and grassland are independent supplements. Crop types/wetness optional with verified legends. Grassland is not pasture; canopy density is not tree count. Procedural trees/fields are illustrative, constrained by coverage and mapped surfaces. Marker field geometry is declared fields, not cadastral boundaries. AR50 optional regional cross-check, not field geometry. D04 water prevents vegetation and later buildings on known water; no changes to municipality IDs or statistical data.
 
 Prepare buffered vectors then clip final region; use the existing 3.84 km tile grid for runtime compilation after D03R defines interfaces. Simplify before tile clipping, inspect seam consistency. Keep native raster classes, nearest-neighbour sampling, valid zero, nodata 255 and provenance. 10 m pilot grid 3072x2304 + 1536x1536 twice = 11.25 MiB per uint8 layer; 30 m = 1.25 MiB; four 10 m bands = 45 MiB uncompressed. Measure actual compressed assets, coverage, acquisition bytes and active viewport budgets before shipping. Bounded local caches outside web and Git, no unrelated tests or deployments.
+
+## Targeted validation, 2026-11-28
+
+- Repository terrain index and existing D05 manifest agree exactly on projection and all three pilot bounds.
+- New Python file compiled locally. Its Git blob hash matches the locally compiled version.
+- Isolated synthetic checks used Shapely 2.1.2, pyproj 3.7.2 and Rasterio 1.5.0, with a minimal reproduction of the imported D05 constants and helper functions (not a full repository checkout). All three plans succeeded. Polygon dissolve, exact clipping, island-hole retention, attribute removal, Z removal and empty-result rejection passed. These are processing checks, not validation of Scandinavian geography.
+- 2 km buffered WGS84 bounds (west, south, east, north; rounded here for inspection only): Oslo–Lillestrøm 10.57392, 59.82286, 11.22415, 60.08482; Aurland 7.01861, 60.83236, 7.41569, 61.02565; Herning 8.79609, 56.07652, 9.13388, 56.26596. Generate full precision using plan.
+- Generated Herning Overture SQL inspected; live DuckDB execution outstanding. Transfer size and source coverage unmeasured. Source DNS queries for nedlasting.geonorge.no, esa-worldcover.s3.eu-central-1.amazonaws.com and stac.overturemaps.org all failed with temporary name-resolution errors; no dataset bytes acquired.
+- D05 prior synthetic results are retained as reported, not rerun. No renderer or production changes and no new runtime contract.
 
 ## Acceptance
 

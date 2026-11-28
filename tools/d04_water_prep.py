@@ -37,6 +37,31 @@ def plan(region, buffer_m):
                 projection=CRS)
 
 
+def overture_sql(region, buffer_m):
+    # A pinned fallback query, generated only for an existing pilot. Run separately
+    # from national-source staging; DuckDB extensions must already be available.
+    w, s, e, n = plan(region, buffer_m)['bufferedLonLat']
+    bb = f'{w:.12f}, {s:.12f}, {e:.12f}, {n:.12f}'
+    overlap = (f'bbox.xmin <= {e:.12f} AND bbox.xmax >= {w:.12f} '
+               f'AND bbox.ymin <= {n:.12f} AND bbox.ymax >= {s:.12f}')
+    water = "subtype IN ('ocean','lake','pond','reservoir','river','stream','water','canal')"
+    layers = [('water-area','water',water,"'POLYGON','MULTIPOLYGON'"),
+              ('water-line','water',water,"'LINESTRING','MULTILINESTRING'"),
+              ('land-area','land',"subtype = 'land' AND class = 'land'","'POLYGON','MULTIPOLYGON'")]
+    release = MANIFEST['sources']['overture']['vintage'].split()[0]
+    statements = ["LOAD spatial;", "LOAD httpfs;", "SET s3_region='us-west-2';"]
+    for role, layer, predicate, types in layers:
+        url = f's3://overturemaps-us-west-2/release/{release}/theme=base/type={layer}/*'
+        filename = f'overture-{region["id"]}-{role}.geojson'
+        statements.append(f"COPY (SELECT id, subtype, class, "
+                          f"ST_Intersection(ST_MakeValid(geometry), ST_MakeEnvelope({bb})) AS geometry "
+                          f"FROM read_parquet('{url}', hive_partitioning=1) "
+                          f"WHERE {overlap} AND {predicate} "
+                          f"AND ST_GeometryType(geometry) IN ({types})) "
+                          f"TO '{filename}' WITH (FORMAT GDAL, DRIVER 'GeoJSON');")
+    return '\n'.join(statements)
+
+
 def clip(doc, input_crs, region, kind, tolerance=0, buffer_m=2000):
     if doc.get('type') != 'FeatureCollection' or not isinstance(doc.get('features'), list):
         raise ValueError('Expected a GeoJSON FeatureCollection')
@@ -82,7 +107,7 @@ def clip(doc, input_crs, region, kind, tolerance=0, buffer_m=2000):
 
 def main():
     p = argparse.ArgumentParser(description=__doc__)
-    p.add_argument('action', choices=['plan','clip'])
+    p.add_argument('action', choices=['plan','clip','overture-sql'])
     p.add_argument('--region', choices=REGIONS, required=True)
     p.add_argument('--buffer-m', type=int, choices=[2000,3000,5000], default=2000)
     p.add_argument('--source', choices=['n50','geodanmark','elvis','topografi50','overture','eu-hydro'])
@@ -94,6 +119,9 @@ def main():
     p.add_argument('--out', type=Path, default=ROOT/'data/raw/d04-prep')
     a = p.parse_args()
     region = REGIONS[a.region]
+    if a.action == 'overture-sql':
+        print(overture_sql(region,a.buffer_m))
+        return
     if a.action == 'plan':
         print(json.dumps(plan(region,a.buffer_m), indent=2))
         return
