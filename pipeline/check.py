@@ -88,7 +88,7 @@ class Report:
 
 def load(name):
     p = WEB_DATA / f"{name}.json"
-    return json.loads(p.read_text()) if p.exists() else None
+    return json.loads(p.read_text(encoding="utf-8")) if p.exists() else None
 
 
 def data_hash() -> str:
@@ -108,7 +108,7 @@ def check_files(r):
         if not p.exists():
             r.add("FAIL", f"files: web/data/{n}.json missing")
             continue
-        txt = p.read_text()
+        txt = p.read_text(encoding="utf-8")
         bad = re.search(r"(?<![\w\"])(NaN|-?Infinity)(?![\w\"])", txt)
         r.ok(not bad, f"files: {n}.json parses as strict JSON numbers (no NaN/Infinity) [{len(txt) / 1e6:.2f} MB]")
 
@@ -424,7 +424,7 @@ def check_source(r, cities, nation, states, gdp_by_region):
     mism = [c["name"] for c in cities if c["country"] == "DK" and dk.get((c["id"][3:], 2026)) != c["population"]]
     r.ok(not mism, f"source join: every Danish municipality's 2026 population equals DST FOLK1A ({len(mism)} off)")
     # --- regional output: Σ municipal estimates = published region totals (in euro)
-    g = json.loads((INTERIM / "_gdp_regions.json").read_text())["regions"] if (INTERIM / "_gdp_regions.json").exists() else None
+    g = json.loads((INTERIM / "_gdp_regions.json").read_text(encoding="utf-8"))["regions"] if (INTERIM / "_gdp_regions.json").exists() else None
     if g:
         # the interim file stores regional totals rounded to €0.1 million
         worst = max(abs(gdp_by_region.get(k, 0) - v["eur"] * 1e6) for k, v in g.items())
@@ -437,30 +437,48 @@ def check_source(r, cities, nation, states, gdp_by_region):
     fx = nation["fx"]["NOK"]
     r.ok(abs(shelf / fx * 1e6 - nation["extra_regio"]["NO_continental_shelf_eur"]) < 1, f"economy: continental shelf GVA €{shelf / fx / 1e3:,.1f} bn reported separately, not in any municipality")
     # --- employment totals vs national tables
-    ssb = json.loads((INTERIM / "ssb.json").read_text())
-    for cc, jt in (("NO", ssb["country"]["jobs"].get("00-99")),):
-        sj = sum(c["jobs_total"] or 0 for c in cities if c["country"] == cc)
-        r.ok(abs(sj - jt) / jt <= 0.01, f"source: {cc} jobs {sj:,.0f} vs national {jt:,.0f} (Δ {abs(sj - jt) / jt:.3%}; Svalbard/continental shelf/unknown excluded)", bad="WARN")
+    ssb_path = INTERIM / "ssb.json"
+    if not ssb_path.exists():
+        r.skip("source: processed SSB employment totals missing; run pipeline process ssb --strict",
+               mandatory_in=("source", "release"))
+    else:
+        ssb = json.loads(ssb_path.read_text(encoding="utf-8"))
+        for cc, jt in (("NO", ssb["country"]["jobs"].get("00-99")),):
+            sj = sum(c["jobs_total"] or 0 for c in cities if c["country"] == cc)
+            if not jt:
+                r.add("FAIL", f"source: {cc} national employment total missing")
+            else:
+                r.ok(abs(sj - jt) / jt <= 0.01, f"source: {cc} jobs {sj:,.0f} vs national {jt:,.0f} (Δ {abs(sj - jt) / jt:.3%}; Svalbard/continental shelf/unknown excluded)", bad="WARN")
     # --- review list of unexplained large one-year changes
     rv = INTERIM / "_population_review.json"
     if rv.exists():
-        for line in json.loads(rv.read_text())["review"]:
+        for line in json.loads(rv.read_text(encoding="utf-8"))["review"]:
             r.add("NOTE", f"history review: {line}")
 
 
 def check_cache(r):
     from .core import fetch
     from .sources import registry
-    n = bad = 0
+    n = bad = unlisted = 0
     for s in registry().values():
-        for f in s.files():
+        try:
+            files = s.files()
+        except FileNotFoundError as error:
+            unlisted += 1
+            r.add("FAIL", f"cache: {s.id}: cannot list required files ({error})")
+            continue
+        failures = []
+        for f in files:
             n += 1
             ok, why = fetch.verify(s.id, f.rel_path, url=f.url, method=f.method, body=f.body)
             if not ok:
                 bad += 1
-                if bad <= 5:
-                    r.add("FAIL", f"cache: {s.id}/{f.rel_path}: {why}")
-    r.ok(bad == 0, f"cache: {n - bad}/{n} declared downloads match their manifest (SHA-256, size, request identity)")
+                failures.append((f.rel_path, why))
+        r.ok(not failures, f"cache: {s.id}: {len(files) - len(failures)}/{len(files)} files match their manifest"
+             + (f"; first failures: {failures[:3]}" if failures else ""))
+    r.ok(bad == 0 and unlisted == 0,
+         f"cache: {n - bad}/{n} enumerated downloads match their manifest (SHA-256, size, request identity); "
+         f"{unlisted} source inventories unavailable")
 
 
 # =================================================================================================== release ====
@@ -484,12 +502,12 @@ def check_release(r, cities, nation, accept=False, evidence=None, candidate_root
     cur = summary(cities, nation)
     if accept:
         SUMMARY.parent.mkdir(parents=True, exist_ok=True)
-        SUMMARY.write_text(json.dumps(cur, indent=1, ensure_ascii=False))
+        SUMMARY.write_text(json.dumps(cur, indent=1, ensure_ascii=False), encoding="utf-8")
         r.add("NOTE", f"release: summary baseline accepted at {SUMMARY.relative_to(ROOT)} (explicit --accept)")
     if not SUMMARY.exists():
         r.add("FAIL", "release: no accepted summary baseline (tests/fixtures/release_summary.json); review the totals and accept with --accept")
     else:
-        base = json.loads(SUMMARY.read_text())
+        base = json.loads(SUMMARY.read_text(encoding="utf-8"))
         diff = {k: (base.get(k), v) for k, v in cur.items() if base.get(k) != v}
         r.ok(not diff, f"release: key totals unchanged against the accepted baseline {('— changed: ' + str(diff)[:300]) if diff else ''}")
     cand = manifest(candidate_root or ROOT)
@@ -503,7 +521,7 @@ def check_release(r, cities, nation, accept=False, evidence=None, candidate_root
         if not f.exists():
             r.add("FAIL", f"release: no {name} test evidence ({f.name}); run tests/{'smoke_browser' if name == 'browser' else 'run_unit'}.py on this candidate")
             continue
-        e = json.loads(f.read_text())
+        e = json.loads(f.read_text(encoding="utf-8"))
         eid = (e.get("candidate") or {}).get("id")
         r.ok(e.get("completed") is True and e.get("candidate_unchanged") is True,
              f"release: {name} evidence is from a completed run during which the candidate did not change")
@@ -523,7 +541,7 @@ def check_release(r, cities, nation, accept=False, evidence=None, candidate_root
 
 
 def _mandatory_journeys():
-    txt = (ROOT / "tests" / "smoke_browser.py").read_text()
+    txt = (ROOT / "tests" / "smoke_browser.py").read_text(encoding="utf-8")
     m = re.search(r"MANDATORY = \[str\(i\) for i in range\((\d+), (\d+)\)\]", txt)
     return [str(i) for i in range(int(m.group(1)), int(m.group(2)))] if m else []
 
@@ -643,7 +661,7 @@ def check_shelters(r, sh, cities, world, lenses, mode):
             src = {i: (float(la), float(lo), int(rm), int(pl) if pl else None) for i, la, lo, rm, pl in recs}
             built = {x["id"]: (x["lat"], x["lon"], x["room"], x["places"]) for x in rows}
             diff = [i for i in set(src) | set(built) if src.get(i) != built.get(i)]
-            hits = re.search(r'numberMatched="(\d+)"', (raw.parent / "hits.xml").read_text())
+            hits = re.search(r'numberMatched="(\d+)"', (raw.parent / "hits.xml").read_text(encoding="utf-8"))
             r.ok(not diff and len(src) == int(hits.group(1)), f"source: every shelter record (id, position, room, places) equals the cached WFS answer "
                  f"({len(src)} read independently, {len(diff)} differ; WFS reports {hits.group(1)} matched)")
         else:
@@ -814,7 +832,7 @@ def check_climate(r, climate, sources, mode):
 
 def check_version(r, v):
     """The opening screen shows web/data/version.json: it must be the repository's VERSION (pipeline/build/version.py)."""
-    want = (ROOT / "VERSION").read_text().strip()
+    want = (ROOT / "VERSION").read_text(encoding="utf-8").strip()
     got = v.get("version") if isinstance(v, dict) else None
     r.ok(got == want and set(v) == {"version"},
          f"version: web/data/version.json says {got!r}, VERSION says {want!r} (rebuild with: python -m pipeline build version)")
@@ -827,7 +845,7 @@ def _finish(r):
     print("\n" + line)
     out = ROOT / "docs" / f"CHECK_REPORT{'' if r.mode == 'release' else '_' + r.mode.upper()}.txt"
     out.parent.mkdir(exist_ok=True)
-    out.write_text("\n".join(f"{l:4s}  {m}" for l, m in r.lines) + "\n\n" + line + "\n")
+    out.write_text("\n".join(f"{l:4s}  {m}" for l, m in r.lines) + "\n\n" + line + "\n", encoding="utf-8")
     return 1 if r.failed else 0
 
 
