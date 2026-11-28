@@ -78,7 +78,7 @@ async def run(browser, url, ok, errors):
             await saved.click()
             assert await page.evaluate("__app.state.selectedCity.id") == second
             if mobile:
-                await page.locator("#city-panel .close").click()
+                await page.locator("#city-panel .cp-close").click()
             await discover.click()
             await card.get_by_role("button", name="Recent places", exact=False).click()
             await expect(card.locator("[data-place-open]").first).to_have_attribute("data-place-open", second)
@@ -89,6 +89,7 @@ async def run(browser, url, ok, errors):
             await card.locator("[data-place-remove]").click()
             await expect(card).to_contain_text("No places yet.")
             await card.get_by_role("button", name="Close", exact=True).click()
+            await page.evaluate("id => __app.selectCity(id, {fly:false})", second)
             await expect(page.locator("#city-panel [data-save-city]")).to_have_attribute("aria-pressed", "false")
             ok(label, True, "journeys, public links, saved places across reload, recent places and removal")
         except Exception as error:

@@ -4,11 +4,12 @@
 #   release : source + unit and browser evidence for this exact candidate (app, data, tests) + accepted key totals
 # -Browser runs the 21 browser journeys (0–20) first (starts and stops a local server).
 [CmdletBinding()]
-param([ValidateSet('built', 'source', 'release')][string]$Mode = 'built', [switch]$Browser, [int]$Port = 8765)
+param([ValidateSet('built', 'source', 'release')][string]$Mode = 'built', [switch]$Browser, [int]$Port = 8765, [string]$Python = "")
 $ErrorActionPreference = 'Stop'
 Set-Location (Split-Path -Parent $PSScriptRoot)
 $venvPy = '.venv\Scripts\python.exe'
-$python = if (Test-Path $venvPy) { (Resolve-Path $venvPy).Path } else { (Get-Command python -ErrorAction Stop).Source }
+$env:PYTHONUTF8 = "1"
+$python = if ($Python) { $Python } elseif (Test-Path $venvPy) { (Resolve-Path $venvPy).Path } else { (Get-Command python -ErrorAction Stop).Source }
 $failed = $false
 
 Write-Host "== unit tests" -ForegroundColor Cyan
