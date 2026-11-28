@@ -4,6 +4,8 @@ on:
   push:
     branches: [integration/roadmap-2026-11-28]
     paths:
+      - 'web/js/render/art/**'
+      - 'web/js/render/banners.js'
       - 'tests/perf.py'
       - 'tests/visual_states.py'
       - '.github/workflows/close-zoom-review.yml'
@@ -23,9 +25,9 @@ jobs:
       - name: Compare identical views and supported maximum zoom
         run: |
           set -e
-          git worktree add --detach "$RUNNER_TEMP/nc-baseline" origin/main
+          git worktree add --detach "$RUNNER_TEMP/nc-baseline" 23d09ba9ff15a7b90183c6be25851009e2ab67db
           mkdir -p tests/results/close-zoom-review
-          git rev-parse origin/main > tests/results/close-zoom-review/baseline.txt
+          git -C "$RUNNER_TEMP/nc-baseline" rev-parse HEAD > tests/results/close-zoom-review/baseline.txt
           git rev-parse HEAD > tests/results/close-zoom-review/candidate.txt
           python -m pipeline serve --port 8765 > /tmp/nc-candidate-server.log 2>&1 &
           (cd "$RUNNER_TEMP/nc-baseline" && python -m pipeline serve --port 8766) > /tmp/nc-baseline-server.log 2>&1 &

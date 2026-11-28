@@ -11,10 +11,11 @@
 // source-in fill with the class pattern → draw the layer onto the relief. No per-tile destination-in (that would
 // erase the other tiles).
 
+import { woodlandPoints, fieldParcels } from "./landscape.js";
+
 const CLASSES = [
   // order = painting order: flat ground first, trees last (they stand on everything)
-  // tier 1 = drawn on slow (software-rendered) machines; tier 2 = full detail; tier 0 (no illustrations) when even
-// tier 1 takes more than ~200 ms per redraw
+  // tier 1 = main covers on slower machines; tier 2 = full detail.
   { key: "farm", pack: "A", ch: 2, lo: 0.30, hi: 0.62, tier: 1 },
   { key: "heath", pack: "B", ch: 2, lo: 0.35, hi: 0.75, tier: 2 },
   { key: "wet", pack: "B", ch: 1, lo: 0.30, hi: 0.65, tier: 2 },
@@ -123,6 +124,7 @@ function tile(tx, ty) {
 // Deterministic, seamless patterns. At close zoom the artwork keeps a fixed map scale instead of shrinking
 // as the camera zooms. Repaint the same artwork at a higher raster density for crisp edges on high-DPI screens.
 const PAT = 256;
+const WOOD = 384; // longer repeat period without changing tree size
 const cache = new Map();
 let season = "off";
 const SEASONAL_CLASSES = new Set(["farm", "broadleaf", "conifer"]);
@@ -139,7 +141,7 @@ export const illustrationSeason = () => season;
 export function seasonalPatternKey(key, raster, value = season) {
   return key + ":" + raster + ":" + (SEASONAL_CLASSES.has(key) ? value : "off");
 }
-const PATTERN_BUDGET = 12e6; // at most ~48 MB of pattern canvas pixels
+const PATTERN_BUDGET = 14e6; // at most ~56 MB of pattern canvas pixels, including the larger forest tiles
 let cachedPixels = 0;
 
 /** Logical pattern scale uses CSS pixels so phones and desktops show the same landscape at the same map zoom. */
@@ -165,12 +167,10 @@ function wrapDraw(N, x, y, r, fn) {
 }
 
 function conifer(raster = 1, appearance = "off") {
-  const c = canvas(PAT, raster), g = c.getContext("2d"), r = rng(2401);
-  const pts = [];
-  for (let gy = 0; gy < 18; gy++) for (let gx = 0; gx < 18; gx++) pts.push([(gx + 0.15 + r() * 0.7) * PAT / 18, (gy + 0.1 + r() * 0.8) * PAT / 18, 0.75 + r() * 0.5, r()]);
-  pts.sort((a, b) => a[1] - b[1]);
-  for (const [x, y, s, v] of pts) wrapDraw(PAT, x, y, 14, (X, Y) => {
-    const h = 13 * s, w = 5.2 * s;
+  const c = canvas(WOOD, raster), g = c.getContext("2d");
+  const pts = woodlandPoints(WOOD, 12.5, 2401);
+  for (const [x, y, s, v] of pts) wrapDraw(WOOD, x, y, 23, (X, Y) => {
+    const h = (11 + v * 5) * s, w = (4.2 + (1 - v) * 1.8) * s;
     g.fillStyle = "rgba(10,22,18,0.30)"; // ground shadow to the south-east
     g.beginPath(); g.ellipse(X + 2.2 * s, Y + 0.6, w * 0.9, 1.8 * s, 0, 0, 2 * Math.PI); g.fill();
     g.fillStyle = "rgba(85,65,44,0.9)";
@@ -191,11 +191,9 @@ function conifer(raster = 1, appearance = "off") {
 }
 
 function broadleaf(raster = 1, appearance = "off") {
-  const c = canvas(PAT, raster), g = c.getContext("2d"), r = rng(911);
-  const pts = [];
-  for (let gy = 0; gy < 15; gy++) for (let gx = 0; gx < 15; gx++) pts.push([(gx + 0.1 + r() * 0.8) * PAT / 15, (gy + 0.1 + r() * 0.8) * PAT / 15, 0.8 + r() * 0.45, r()]);
-  pts.sort((a, b) => a[1] - b[1]);
-  for (const [x, y, s, v] of pts) wrapDraw(PAT, x, y, 14, (X, Y) => {
+  const c = canvas(WOOD, raster), g = c.getContext("2d");
+  const pts = woodlandPoints(WOOD, 15, 911);
+  for (const [x, y, s, v] of pts) wrapDraw(WOOD, x, y, 19, (X, Y) => {
     const R = 7 * s;
     g.fillStyle = "rgba(12,24,10,0.28)";
     g.beginPath(); g.ellipse(X + 2.5 * s, Y + R * 0.55, R * 0.95, R * 0.38, 0, 0, 2 * Math.PI); g.fill();
@@ -238,36 +236,29 @@ function farm(raster = 1, appearance = "off") {
     appearance === "spring" ? [[137,174,91],[167,192,115],[156,132,96],[194,180,130]] :
     appearance === "autumn" ? [[184,141,79],[159,111,74],[207,177,104],[146,126,83]] :
     [[214,190,108],[176,186,92],[200,164,96],[226,210,150],[150,172,86],[188,150,104],[222,196,120]];
-  // rows of fields of varying depth, each row split into fields of varying width (seamless in both directions)
-  let y = 0;
-  while (y < N) {
-    const hgt = Math.min(N - y, 26 + Math.floor(r() * 46));
-    let x = 0;
-    const off = Math.floor(r() * 40);
-    while (x < N) {
-      const wd = Math.min(N - x, 30 + Math.floor(r() * 70));
-      const col = crops[Math.floor(r() * crops.length)];
-      const furrows = r() < 0.55, vert = r() < 0.5;
-      for (const dx of [0, -N]) {
-        const X = x + off + dx;
-        g.fillStyle = `rgba(${col[0]},${col[1]},${col[2]},0.62)`;
-        g.fillRect(X, y, wd, hgt);
-        if (furrows) { // furrows, identical in both wrapped copies
-          g.strokeStyle = "rgba(90,80,40,0.25)"; g.lineWidth = 0.85;
-          g.beginPath();
-          for (let k = 3; k < (vert ? wd : hgt); k += 4) vert ? (g.moveTo(X + k, y + 2), g.lineTo(X + k, y + hgt - 2)) : (g.moveTo(X + 2, y + k), g.lineTo(X + wd - 2, y + k));
-          g.stroke();
-        }
-        g.strokeStyle = "rgba(62,74,34,0.55)"; g.lineWidth = 1.6; // hedgerow
-        if (wd > 2 && hgt > 2) g.strokeRect(X + 0.8, y + 0.8, wd - 1.6, hgt - 1.6);
-        if (wd > 12 && hgt > 12) {
-          g.strokeStyle = "rgba(246,226,164,0.28)"; g.lineWidth = 0.55;
-          g.strokeRect(X + 3, y + 3, wd - 6, hgt - 6);
-        }
+  // Periodic irregular parcels; boundaries meet across the tile edges.
+  const path = (poly, dx, dy) => {
+    g.beginPath();
+    poly.forEach(([x,y],i)=>i?g.lineTo(x+dx,y+dy):g.moveTo(x+dx,y+dy));
+    g.closePath();
+  };
+  for (const f of fieldParcels(N,7177)) {
+    const col=crops[Math.min(crops.length-1,Math.floor(f.crop*crops.length))];
+    const xs=f.poly.map(p=>p[0]),ys=f.poly.map(p=>p[1]);
+    const x0=Math.min(...xs),x1=Math.max(...xs),y0=Math.min(...ys),y1=Math.max(...ys);
+    for(const dx of [-N,0,N])for(const dy of [-N,0,N]){
+      if(x1+dx<0||x0+dx>N||y1+dy<0||y0+dy>N)continue;
+      path(f.poly,dx,dy);
+      g.fillStyle=`rgba(${col[0]},${col[1]},${col[2]},0.68)`;g.fill();
+      g.strokeStyle="rgba(62,74,34,0.48)";g.lineWidth=1.1;g.stroke();
+      if(f.furrow){
+        g.save();g.clip();g.translate(f.x+dx,f.y+dy);g.rotate(f.angle);
+        const d=Math.hypot(x1-x0,y1-y0);
+        g.strokeStyle="rgba(87,77,42,0.22)";g.lineWidth=.65;g.beginPath();
+        for(let k=-d;k<=d;k+=4.3){g.moveTo(-d,k);g.lineTo(d,k);}
+        g.stroke();g.restore();
       }
-      x += wd;
     }
-    y += hgt;
   }
   // scattered hedgerow trees
   for (let k = 0; k < 90; k++) {
@@ -393,9 +384,14 @@ export function drawIllustration(L, vp, devPerKm) {
   for (let ty = ty0; ty <= ty1; ty++) for (let tx = tx0; tx <= tx1; tx++) { const t = tile(tx, ty); if (t) ready.push([tx, ty, t]); }
   if (!ready.length) return false;
   const cv = L.canvas;
-  if (!layer || layer.width !== cv.width || layer.height !== cv.height) { layer = document.createElement("canvas"); layer.width = cv.width; layer.height = cv.height; }
+  // Keep the composition buffer at a bounded resolution on high-DPI devices.
+  // World placement and the source masks are unchanged; full detail keeps native pixels.
+  const factor = DETAIL === "full" ? 1 : Math.min(1, 1.6 / Math.max(1,vp.dpr));
+  const width = Math.ceil(cv.width * factor), height = Math.ceil(cv.height * factor);
+  if (!layer || layer.width !== width || layer.height !== height) { layer = document.createElement("canvas"); layer.width = width; layer.height = height; }
   const G = layer.getContext("2d");
-  const T = L.getTransform();
+  const original = L.getTransform();
+  const T = new DOMMatrix([original.a*factor,0,0,original.d*factor,original.e*factor,original.f*factor]);
   const { kmPerPx, raster } = illustrationPatternSpec(vp.s, devPerKm);
   const t0 = performance.now();
   const bk = span / OCC;
@@ -447,7 +443,7 @@ export function drawIllustration(L, vp, devPerKm) {
     L.setTransform(1, 0, 0, 1, 0, 0);
     L.globalAlpha = fade * (cl.key === "farm" ? 0.85 : 1);
     L.globalCompositeOperation = "source-atop"; // respect the relief land mask at coastlines and lakes
-    L.drawImage(layer, rx, ry, rw, rh, rx, ry, rw, rh);
+    L.drawImage(layer, rx, ry, rw, rh, rx/factor, ry/factor, rw/factor, rh/factor);
     L.restore();
     drawn++;
   }
@@ -457,13 +453,13 @@ export function drawIllustration(L, vp, devPerKm) {
   if (DETAIL !== "full") {
     if (quality.tier === 2 && quality.cost > 110) quality.tier = 1;
     else if (quality.tier === 1 && quality.cost < 35) quality.tier = 2;
-    else if (quality.tier === 1 && quality.cost > 200) quality.tier = 0;
+    // Keep the main cover illustrations rather than permanently removing them after one slow view.
   }
-  lastStats = { ms: Math.round(ms), classes: drawn, tier: quality.tier, zoom: vp.s, kmPerPx, raster, cachedPixels, season, at: Math.round(performance.now()) };
+  lastStats = { ms: Math.round(ms), classes: drawn, tier: quality.tier, zoom: vp.s, kmPerPx, raster, cachedPixels, compositionScale: factor, season, at: Math.round(performance.now()) };
   return true;
 }
 
-// ?detail=full keeps every class (visual evidence, fast machines); ?detail=off turns the illustrations off
+// ?detail=full keeps every class at native resolution; ?detail=off turns the illustrations off
 const DETAIL = (() => { try { return new URLSearchParams(location.search).get("detail"); } catch { return null; } })();
 const regionalQuality = { tier: 2, cost: 0 }, closeQuality = { tier: 2, cost: 0 };
 let lastStats = null;

@@ -594,8 +594,9 @@ export function drawBanners(ctx, cam, w, state, yields, nation = state.nation) {
   const { grid } = w;
   const Rpx = grid.R * cam.scale;
   const minPop = popFloor(Rpx, (nation || state.nation)?.banner_floors);
-  const showYields = Rpx > 24;
-  const L = Rpx < 8 ? LAYOUTS.compact : LAYOUTS.full;
+  const phoneClose = cam.w <= 700 && cam.scale >= 6;
+  const showYields = Rpx > 24 && !phoneClose;
+  const L = Rpx < 8 || phoneClose ? LAYOUTS.compact : LAYOUTS.full;
   // count budget: about 0.3 plates per plate-sized patch of screen (the plates themselves stay well under that)
   const unit = L === LAYOUTS.compact ? 170 * 50 : 320 * 90;
   const budget = Math.max(6, Math.round(((cam.w * cam.h) / unit) * 0.3));
