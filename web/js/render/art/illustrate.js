@@ -120,12 +120,26 @@ function tile(tx, ty) {
 }
 
 // ---- patterns ---------------------------------------------------------------------------------------------------
-// Deterministic, seamless 256-px tiles; one pattern pixel is mapped to a power-of-two number of km so a zoom bucket
-// keeps the same pattern (no shimmer) and the bitmap is never enlarged by more than ~1.4×.
+// Deterministic, seamless patterns. At close zoom the artwork keeps a fixed map scale instead of shrinking
+// as the camera zooms. Repaint the same artwork at a higher raster density for crisp edges on high-DPI screens.
 const PAT = 256;
 const cache = new Map();
+const PATTERN_BUDGET = 12e6; // at most ~48 MB of pattern canvas pixels
+let cachedPixels = 0;
+
+/** Logical pattern scale uses CSS pixels so phones and desktops show the same landscape at the same map zoom. */
+export function illustrationPatternSpec(cssPerKm, devPerKm) {
+  const kmPerPx = Math.max(0.125, 2 ** Math.round(Math.log2(0.75 / cssPerKm)));
+  const raster = Math.min(4, Math.max(1, Math.ceil(kmPerPx * devPerKm)));
+  return { kmPerPx, raster };
+}
 function rng(seed) { let s = seed >>> 0 || 1; return () => ((s = (s * 16807) % 2147483647) / 2147483647); }
-function canvas(N = PAT) { const c = document.createElement("canvas"); c.width = c.height = N; return c; }
+function canvas(N = PAT, raster = 1) {
+  const c = document.createElement("canvas");
+  c.width = c.height = N * raster;
+  c.getContext("2d").setTransform(raster, 0, 0, raster, 0, 0);
+  return c;
+}
 // draw fn at (x, y) and its wrapped copies so the tile is seamless
 function wrapDraw(N, x, y, r, fn) {
   for (const dx of [-N, 0, N]) for (const dy of [-N, 0, N]) {
@@ -135,8 +149,8 @@ function wrapDraw(N, x, y, r, fn) {
   }
 }
 
-function conifer() {
-  const c = canvas(), g = c.getContext("2d"), r = rng(2401);
+function conifer(raster = 1) {
+  const c = canvas(PAT, raster), g = c.getContext("2d"), r = rng(2401);
   const pts = [];
   for (let gy = 0; gy < 18; gy++) for (let gx = 0; gx < 18; gx++) pts.push([(gx + 0.15 + r() * 0.7) * PAT / 18, (gy + 0.1 + r() * 0.8) * PAT / 18, 0.75 + r() * 0.5, r()]);
   pts.sort((a, b) => a[1] - b[1]);
@@ -144,6 +158,8 @@ function conifer() {
     const h = 13 * s, w = 5.2 * s;
     g.fillStyle = "rgba(10,22,18,0.30)"; // ground shadow to the south-east
     g.beginPath(); g.ellipse(X + 2.2 * s, Y + 0.6, w * 0.9, 1.8 * s, 0, 0, 2 * Math.PI); g.fill();
+    g.fillStyle = "rgba(85,65,44,0.9)";
+    g.fillRect(X - 0.48 * s, Y - 3 * s, 0.96 * s, 3.7 * s);
     const dark = `rgb(${24 + v * 10},${58 + v * 16},${40 + v * 10})`, lit = `rgb(${58 + v * 16},${104 + v * 20},${62 + v * 12})`;
     for (let k = 0; k < 3; k++) { // three tiers, shadowed east half
       const ty = Y - h * (0.18 + 0.27 * k), tw = w * (1 - 0.24 * k), th = h * 0.46;
@@ -151,13 +167,16 @@ function conifer() {
       g.beginPath(); g.moveTo(X, ty - th); g.lineTo(X + tw, ty); g.lineTo(X - tw, ty); g.closePath(); g.fill();
       g.fillStyle = lit;
       g.beginPath(); g.moveTo(X, ty - th); g.lineTo(X - tw * 0.15, ty); g.lineTo(X - tw, ty); g.closePath(); g.fill();
+      // Small branch highlights become visible as the same tree is enlarged.
+      g.strokeStyle = "rgba(174,196,126,0.28)"; g.lineWidth = 0.45 * s;
+      g.beginPath(); g.moveTo(X - 0.18 * tw, ty - th * 0.45); g.lineTo(X - tw * 0.68, ty - th * 0.09); g.stroke();
     }
   });
   return c;
 }
 
-function broadleaf() {
-  const c = canvas(), g = c.getContext("2d"), r = rng(911);
+function broadleaf(raster = 1) {
+  const c = canvas(PAT, raster), g = c.getContext("2d"), r = rng(911);
   const pts = [];
   for (let gy = 0; gy < 15; gy++) for (let gx = 0; gx < 15; gx++) pts.push([(gx + 0.1 + r() * 0.8) * PAT / 15, (gy + 0.1 + r() * 0.8) * PAT / 15, 0.8 + r() * 0.45, r()]);
   pts.sort((a, b) => a[1] - b[1]);
@@ -177,12 +196,19 @@ function broadleaf() {
       k ? g.lineTo(px, py) : g.moveTo(px, py);
     }
     g.closePath(); g.fill();
+    // Soft crown lobes, in a common light direction rather than a flat green disc.
+    for (let j = 0; j < 3; j++) {
+      const a = j * 2.1 + v * 3;
+      g.fillStyle = j === 0 ? "rgba(202,212,122,0.24)" : "rgba(36,73,36,0.18)";
+      g.beginPath(); g.ellipse(X + Math.cos(a) * R * 0.33, Y - R * 0.18 + Math.sin(a) * R * 0.29,
+        R * 0.31, R * 0.25, a, 0, 2 * Math.PI); g.fill();
+    }
   });
   return c;
 }
 
-function farm() {
-  const N = 512, c = canvas(N), g = c.getContext("2d"), r = rng(7177);
+function farm(raster = 1) {
+  const N = 512, c = canvas(N, raster), g = c.getContext("2d"), r = rng(7177);
   const crops = [[214, 190, 108], [176, 186, 92], [200, 164, 96], [226, 210, 150], [150, 172, 86], [188, 150, 104], [222, 196, 120]];
   // rows of fields of varying depth, each row split into fields of varying width (seamless in both directions)
   let y = 0;
@@ -193,19 +219,23 @@ function farm() {
     while (x < N) {
       const wd = Math.min(N - x, 30 + Math.floor(r() * 70));
       const col = crops[Math.floor(r() * crops.length)];
+      const furrows = r() < 0.55, vert = r() < 0.5;
       for (const dx of [0, -N]) {
         const X = x + off + dx;
         g.fillStyle = `rgba(${col[0]},${col[1]},${col[2]},0.62)`;
         g.fillRect(X, y, wd, hgt);
-        if (r() < 0.55) { // furrows
-          g.strokeStyle = "rgba(90,80,40,0.16)"; g.lineWidth = 1;
+        if (furrows) { // furrows, identical in both wrapped copies
+          g.strokeStyle = "rgba(90,80,40,0.25)"; g.lineWidth = 0.85;
           g.beginPath();
-          const vert = r() < 0.5;
           for (let k = 3; k < (vert ? wd : hgt); k += 4) vert ? (g.moveTo(X + k, y + 2), g.lineTo(X + k, y + hgt - 2)) : (g.moveTo(X + 2, y + k), g.lineTo(X + wd - 2, y + k));
           g.stroke();
         }
         g.strokeStyle = "rgba(62,74,34,0.55)"; g.lineWidth = 1.6; // hedgerow
-        g.strokeRect(X + 0.8, y + 0.8, wd - 1.6, hgt - 1.6);
+        if (wd > 2 && hgt > 2) g.strokeRect(X + 0.8, y + 0.8, wd - 1.6, hgt - 1.6);
+        if (wd > 12 && hgt > 12) {
+          g.strokeStyle = "rgba(246,226,164,0.28)"; g.lineWidth = 0.55;
+          g.strokeRect(X + 3, y + 3, wd - 6, hgt - 6);
+        }
       }
       x += wd;
     }
@@ -220,8 +250,8 @@ function farm() {
   return c;
 }
 
-function rock() {
-  const c = canvas(), g = c.getContext("2d"), r = rng(3301);
+function rock(raster = 1) {
+  const c = canvas(PAT, raster), g = c.getContext("2d"), r = rng(3301);
   for (let k = 0; k < 120; k++) {
     const x = r() * PAT, y = r() * PAT, s = 3.2 + r() * 5, v = r();
     const off = [];
@@ -246,8 +276,8 @@ function rock() {
   return c;
 }
 
-function wet() {
-  const c = canvas(), g = c.getContext("2d"), r = rng(5501);
+function wet(raster = 1) {
+  const c = canvas(PAT, raster), g = c.getContext("2d"), r = rng(5501);
   for (let k = 0; k < 70; k++) { // small pools
     const x = r() * PAT, y = r() * PAT, w = 3 + r() * 7;
     wrapDraw(PAT, x, y, 12, (X, Y) => {
@@ -264,8 +294,8 @@ function wet() {
   return c;
 }
 
-function heath() {
-  const c = canvas(), g = c.getContext("2d"), r = rng(6607);
+function heath(raster = 1) {
+  const c = canvas(PAT, raster), g = c.getContext("2d"), r = rng(6607);
   for (let k = 0; k < 150; k++) {
     const x = r() * PAT, y = r() * PAT, s = 2.6 + r() * 3, v = r();
     wrapDraw(PAT, x, y, 10, (X, Y) => {
@@ -277,8 +307,8 @@ function heath() {
   return c;
 }
 
-function urban() {
-  const c = canvas(), g = c.getContext("2d"), r = rng(8803);
+function urban(raster = 1) {
+  const c = canvas(PAT, raster), g = c.getContext("2d"), r = rng(8803);
   g.strokeStyle = "rgba(226,220,204,0.55)"; g.lineWidth = 2.2; // streets
   for (let k = 0; k < 6; k++) {
     const y = (k + 0.5) * PAT / 6 + (r() - 0.5) * 8, x = (k + 0.3) * PAT / 6 + (r() - 0.5) * 8;
@@ -293,20 +323,41 @@ function urban() {
       g.fillStyle = `rgb(${col[0]},${col[1]},${col[2]})`; g.fillRect(X, Y, w, h);
       g.fillStyle = "rgba(255,240,220,0.35)"; g.fillRect(X, Y, w, h * 0.45); // lit roof slope
       g.strokeStyle = "rgba(40,30,30,0.45)"; g.lineWidth = 0.7; g.beginPath(); g.moveTo(X, Y + h * 0.45); g.lineTo(X + w, Y + h * 0.45); g.stroke();
+      if (w > 8) {
+        g.fillStyle = "rgba(55,53,51,0.65)"; g.fillRect(X + w * 0.72, Y + h * 0.18, 1.1, 1.3);
+        g.fillStyle = "rgba(240,225,195,0.5)"; g.fillRect(X + w * 0.72, Y + h * 0.18, 0.5, 0.8);
+      }
     });
   }
   return c;
 }
 
 const MAKERS = { conifer, broadleaf, farm, rock, wet, heath, urban };
-const pattern = (key) => cache.get(key) || (cache.set(key, MAKERS[key]()), cache.get(key));
+function pattern(key, raster = 1) {
+  const id = key + ":" + raster;
+  let c = cache.get(id);
+  if (c) { cache.delete(id); cache.set(id, c); return c; }
+  c = MAKERS[key](raster);
+  const pixels = c.width * c.height;
+  while (cache.size && cachedPixels + pixels > PATTERN_BUDGET) {
+    const old = cache.keys().next().value, cv = cache.get(old);
+    cachedPixels -= cv.width * cv.height;
+    cache.delete(old);
+  }
+  cachedPixels += pixels;
+  cache.set(id, c);
+  return c;
+}
 
 // ---- drawing ----------------------------------------------------------------------------------------------------
 let layer = null;
 
 /** Paint the illustration over the relief in L (a screen-size canvas context whose transform is world → device). */
 export function drawIllustration(L, vp, devPerKm) {
-  if (!S || DETAIL === "off" || tier === 0 || devPerKm < ILLUSTRATE_MIN || typeof DOMMatrix === "undefined") return false;
+  if (!S || DETAIL === "off" || devPerKm < ILLUSTRATE_MIN || typeof DOMMatrix === "undefined") return false;
+  // A costly regional view must not permanently disable detail when zooming into a much smaller area.
+  const quality = vp.s > 6 ? closeQuality : regionalQuality;
+  if (quality.tier === 0) return false;
   const fade = Math.min(1, (devPerKm - ILLUSTRATE_MIN) / 1.6);
   const span = S.cover.tile_px * S.cover.km_per_px;
   const tx0 = Math.floor(vp.x0 / span), tx1 = Math.floor(vp.x1 / span), ty0 = Math.floor(vp.y0 / span), ty1 = Math.floor(vp.y1 / span);
@@ -317,13 +368,12 @@ export function drawIllustration(L, vp, devPerKm) {
   if (!layer || layer.width !== cv.width || layer.height !== cv.height) { layer = document.createElement("canvas"); layer.width = cv.width; layer.height = cv.height; }
   const G = layer.getContext("2d");
   const T = L.getTransform();
-  // one pattern pixel ≈ 0.75 device px, quantised to powers of two
-  const kmPerPx = Math.pow(2, Math.round(Math.log2(0.75 / devPerKm)));
+  const { kmPerPx, raster } = illustrationPatternSpec(vp.s, devPerKm);
   const t0 = performance.now();
   const bk = span / OCC;
   let drawn = 0;
   for (const cl of CLASSES) {
-    if (cl.tier > tier) continue;
+    if (cl.tier > quality.tier) continue;
     // world bounding box of this class's occupied blocks inside the view; nothing to draw → skip the class
     let bx0 = Infinity, by0 = Infinity, bx1 = -Infinity, by1 = -Infinity;
     for (const [tx, ty, t] of ready) {
@@ -359,8 +409,8 @@ export function drawIllustration(L, vp, devPerKm) {
       G.drawImage(t.masks[cl.key], x0 - e, y0 - e, span + 2 * e, span + 2 * e);
     }
     G.globalCompositeOperation = "source-in";
-    const p = G.createPattern(pattern(cl.key), "repeat");
-    const k = cl.key === "farm" ? kmPerPx * 1.6 : kmPerPx; // fields a little larger than trees
+    const p = G.createPattern(pattern(cl.key, raster), "repeat");
+    const k = (cl.key === "farm" ? kmPerPx * 1.6 : kmPerPx) / raster; // same world size at every raster density
     p.setTransform(new DOMMatrix([k, 0, 0, k, 0, 0]));
     G.fillStyle = p;
     G.fillRect(bx0, by0, bx1 - bx0, by1 - by0);
@@ -368,23 +418,25 @@ export function drawIllustration(L, vp, devPerKm) {
     L.save();
     L.setTransform(1, 0, 0, 1, 0, 0);
     L.globalAlpha = fade * (cl.key === "farm" ? 0.85 : 1);
+    L.globalCompositeOperation = "source-atop"; // respect the relief land mask at coastlines and lakes
     L.drawImage(layer, rx, ry, rw, rh, rx, ry, rw, rh);
     L.restore();
     drawn++;
   }
   // adaptive detail: if illustrating takes too long on this machine (software rendering), draw only the main covers
   const ms = performance.now() - t0;
-  cost = cost ? 0.6 * cost + 0.4 * ms : ms;
+  quality.cost = quality.cost ? 0.6 * quality.cost + 0.4 * ms : ms;
   if (DETAIL !== "full") {
-    if (tier === 2 && cost > 110) tier = 1;
-    else if (tier === 1 && cost < 35) tier = 2;
-    else if (tier === 1 && cost > 200) tier = 0; // still too slow: plain relief for the rest of the session
+    if (quality.tier === 2 && quality.cost > 110) quality.tier = 1;
+    else if (quality.tier === 1 && quality.cost < 35) quality.tier = 2;
+    else if (quality.tier === 1 && quality.cost > 200) quality.tier = 0;
   }
-  lastStats = { ms: Math.round(ms), classes: drawn, tier, at: Math.round(performance.now()) };
+  lastStats = { ms: Math.round(ms), classes: drawn, tier: quality.tier, zoom: vp.s, kmPerPx, raster, cachedPixels, at: Math.round(performance.now()) };
   return true;
 }
 
 // ?detail=full keeps every class (visual evidence, fast machines); ?detail=off turns the illustrations off
 const DETAIL = (() => { try { return new URLSearchParams(location.search).get("detail"); } catch { return null; } })();
-let tier = 2, cost = 0, lastStats = null;
+const regionalQuality = { tier: 2, cost: 0 }, closeQuality = { tier: 2, cost: 0 };
+let lastStats = null;
 export const illustrationState = () => S && { tiles: S.tiles.size, decoded: [...S.tiles.values()].filter((t) => t.masks).length, last: lastStats };

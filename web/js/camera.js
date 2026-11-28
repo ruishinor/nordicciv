@@ -17,7 +17,7 @@ export class Camera {
     this.w = 1;
     this.h = 1;
     this.minScale = 0.05;
-    this.maxScale = 6;
+    this.maxScale = 12; // close exploration: 12 CSS pixels per map kilometre
     this.zoomTarget = null; // {scale, sx, sy}: eased wheel/keyboard zoom around a screen anchor
     this.flight = null; // {path, x1, y1, s1, t, ms}
     this.pan = { x: 0, y: 0 }; // keyboard panning, screen px per second
