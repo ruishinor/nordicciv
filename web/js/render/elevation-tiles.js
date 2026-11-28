@@ -1,4 +1,6 @@
 // Bounded, same-origin elevation tiles. These assets are separate from municipal statistics.
+import { physicalLodForWidth, terrainLevelForWidth } from "./surface-contract.js";
+
 export const TILE_LIMITS = Object.freeze({ entries: 96, bytes: 8 * 1024 * 1024, requests: 4 });
 const smooth = (t) => { t = Math.min(1, Math.max(0, t)); return t * t * (3 - 2 * t); };
 const key = (level, x, y) => `${level}-${x}-${y}`;
@@ -51,7 +53,7 @@ export class ElevationTiles {
     this.projection = projection; this.onChange = onChange; this.fetcher = fetcher; this.limits = limits;
     this.index = null; this.descriptors = new Map(); this.cache = new Map(); this.running = new Map();
     this.failed = new Map(); this.wanted = new Set(); this.queue = []; this.bytes = 0; this.peakBytes = 0;
-    this.revision = 0; this.disposed = false; this.error = null; this.level = 0; this.evictions = 0;
+    this.revision = 0; this.disposed = false; this.error = null; this.level = -1; this.widthKm = Infinity; this.evictions = 0;
   }
 
   async init() {
@@ -72,11 +74,13 @@ export class ElevationTiles {
 
   update(vp, pitch = 0) {
     if (!this.index || this.disposed) return;
-    this.level = vp.s >= 160 ? 2 : vp.s >= 40 ? 1 : 0;
+    this.widthKm = Number.isFinite(vp.widthKm) ? vp.widthKm :
+      (Number.isFinite(vp.cssW) && vp.s > 0 ? vp.cssW / vp.s : Infinity);
+    this.level = terrainLevelForWidth(this.widthKm);
     const span = this.index.tileSpanKm;
     const yPad = 4 * Math.tan(pitch * Math.PI / 180);
     const desired = [];
-    if (vp.s >= 8) for (const t of this.descriptors.values()) {
+    if (this.level >= 0 && vp.s >= 8) for (const t of this.descriptors.values()) {
       if (t.level > this.level || (t.x + 1) * span < vp.x0 || t.x * span > vp.x1 ||
           (t.y + 1) * span < vp.y0 - 0.2 || t.y * span > vp.y1 + yPad) continue;
       desired.push(t);
@@ -127,7 +131,7 @@ export class ElevationTiles {
     }
   }
 
-  coverage(x, y) {
+  regionCoverage(x, y) {
     let weight = 0;
     for (const r of this.index?.regions || []) {
       const [x0, y0, x1, y1] = r.bounds;
@@ -136,24 +140,31 @@ export class ElevationTiles {
     return weight;
   }
 
-  sample(x, y, fallback) {
+  sampleAt(x, y, fallback) {
     const span = this.index?.tileSpanKm || 3.84, tx = Math.floor(x / span), ty = Math.floor(y / span);
     const dx = x - tx * span, dy = y - ty * span;
     let height = fallback(x, y);
+    let coverage = 0;
     for (let level = 0; level <= this.level; level++) {
       const tile = this.cache.get(key(level, tx, ty));
       if (!tile) continue;
       const spec = this.index.levels[level];
       const h = triangleHeight(tile.data, spec.samples, dx / spec.stepKm + 1, dy / spec.stepKm + 1) * 0.25;
-      let weight = this.coverage(x, y);
+      let weight = this.regionCoverage(x, y);
       // Fade into the parent at a missing neighbour. One continuous viewport grid prevents T-junctions.
       for (const [nx, ny, distance] of [[tx - 1, ty, dx], [tx + 1, ty, span - dx], [tx, ty - 1, dy], [tx, ty + 1, span - dy]]) {
         if (!this.cache.has(key(level, nx, ny))) weight = Math.min(weight, smooth(distance / 0.48));
       }
+      if (weight <= 0) continue;
       height += (h - height) * weight;
+      coverage += (1 - coverage) * weight;
     }
-    return height;
+    return { elevationM: height, coverage };
   }
+
+  sample(x, y, fallback) { return this.sampleAt(x, y, fallback).elevationM; }
+
+  coverage(x, y) { return this.sampleAt(x, y, () => 0).coverage; }
 
   dispose() {
     this.disposed = true; this.indexController?.abort();
@@ -163,7 +174,9 @@ export class ElevationTiles {
 
   stats() {
     return { entries: this.cache.size, bytes: this.bytes, peakBytes: this.peakBytes, pending: this.running.size + this.queue.length,
-      requests: this.running.size, failed: this.failed.size, level: this.level, spacingM: [480, 120, 30][this.level],
+      requests: this.running.size, failed: this.failed.size, level: this.level,
+      spacingM: this.level < 0 ? null : [480, 120, 30][this.level], widthKm: this.widthKm,
+      physicalLod: physicalLodForWidth(this.widthKm),
       loadedByLevel: [0, 1, 2].map(l => [...this.cache.values()].filter(t => t.level === l).length),
       limits: this.limits, evictions: this.evictions, error: this.error };
   }
