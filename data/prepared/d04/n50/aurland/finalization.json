@@ -1,0 +1,39 @@
+{
+  "region": "aurland",
+  "source": "Kartverket N50 Kartdata",
+  "licence": "CC BY 4.0",
+  "coverage": "unverified; simplified municipal bbox selection",
+  "sourceInputBytes": 48446780,
+  "sourceReportSha256": "61f3125ca251839e413a6d77dad240127fe6364c61a86d16b41b1ef87c935713",
+  "exportRepairs": {
+    "area": 0,
+    "line": 0
+  },
+  "waterAreaKm2": 28.754808499376875,
+  "polygonHoles": 28,
+  "maxPilotBoundsExcessM": 1.979060471057892e-09,
+  "layers": {
+    "water-area": {
+      "file": "water-area.geojson.gz",
+      "features": 483,
+      "bytes": 286706,
+      "uncompressedBytes": 777483,
+      "sha256": "d925917ec0e57e2e7f054860af45a2be0a6343c2dbdb950d42472d8be3156bb4"
+    },
+    "water-line": {
+      "file": "water-line.geojson.gz",
+      "features": 1012,
+      "bytes": 611333,
+      "uncompressedBytes": 1632495,
+      "sha256": "f41b4c16ecd6bec66fa9a0e6b3de812fbb1a3ddd2f416cd031b40a5e1befb950"
+    },
+    "water-line-visible": {
+      "file": "water-line-visible.geojson.gz",
+      "features": 1012,
+      "bytes": 611353,
+      "uncompressedBytes": 1632429,
+      "sha256": "23b5f4a8e6fb7698ddaf132527127b28fcb9cdbd3f48f2f244018a8bd190e3ba"
+    }
+  },
+  "note": "Water areas and lines are mapped features; no dry-land coverage claim. Visible lines are derived, original lines retained."
+}

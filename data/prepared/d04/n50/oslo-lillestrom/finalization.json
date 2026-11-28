@@ -1,0 +1,39 @@
+{
+  "region": "oslo-lillestrom",
+  "source": "Kartverket N50 Kartdata",
+  "licence": "CC BY 4.0",
+  "coverage": "unverified; simplified municipal bbox selection",
+  "sourceInputBytes": 48403638,
+  "sourceReportSha256": "5bd8443217651b4b4381c14de31a957722decef5572ca7904f5cbbaa43e70bc8",
+  "exportRepairs": {
+    "area": 1,
+    "line": 0
+  },
+  "waterAreaKm2": 89.79306862942795,
+  "polygonHoles": 209,
+  "maxPilotBoundsExcessM": 2.2118911147117615e-09,
+  "layers": {
+    "water-area": {
+      "file": "water-area.geojson.gz",
+      "features": 429,
+      "bytes": 695230,
+      "uncompressedBytes": 1835316,
+      "sha256": "4356cb787d754971cfb3a5e90bbff203169a3034edc82ad307692259e96450fd"
+    },
+    "water-line": {
+      "file": "water-line.geojson.gz",
+      "features": 1972,
+      "bytes": 489858,
+      "uncompressedBytes": 1412305,
+      "sha256": "e5fae06f97341cb6a0bf25163dee8116c1d138766f1564935a00746fe1893b8e"
+    },
+    "water-line-visible": {
+      "file": "water-line-visible.geojson.gz",
+      "features": 1973,
+      "bytes": 490014,
+      "uncompressedBytes": 1412528,
+      "sha256": "5b192dd77d5382e30e01116686947f1a40ce722c28cc7ff55f51807e51a9817d"
+    }
+  },
+  "note": "Water areas and lines are mapped features; no dry-land coverage claim. Visible lines are derived, original lines retained."
+}

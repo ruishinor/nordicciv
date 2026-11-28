@@ -1,0 +1,341 @@
+{
+  "region": "oslo-lillestrom",
+  "candidateMunicipalities": [
+    "0301",
+    "3201",
+    "3205",
+    "3207",
+    "3209",
+    "3212",
+    "3220",
+    "3222",
+    "3224",
+    "3230",
+    "3232",
+    "3305"
+  ],
+  "startedUtc": "2026-11-28T19:27:39.145627+00:00",
+  "licence": "CC BY 4.0",
+  "attribution": "Kartverket, N50 Kartdata, CC BY 4.0; clipped and transformed",
+  "inputs": [
+    {
+      "municipality": "0301",
+      "file": "Basisdata_0301_Oslo_25832_N50Kartdata_FGDB.zip",
+      "bytes": 7320230,
+      "sha256": "1ef8b7ca4c5236bab131657f369e9f69e9565cfe0c02d7c0c4d17be8f81c16e5",
+      "layers": [
+        {
+          "layer": "N50_Arealdekke_omrade",
+          "counts": {
+            "elv": 42,
+            "havflate": 13,
+            "innsjø": 284,
+            "innsjøregulert": 23
+          },
+          "geometry": "MultiPolygon"
+        },
+        {
+          "layer": "N50_Arealdekke_senterlinje",
+          "counts": {
+            "elvbekk": 1002
+          },
+          "geometry": "MultiLineString"
+        }
+      ],
+      "orderDate": "2026-11-28T19:27:41.4394857Z"
+    },
+    {
+      "municipality": "3201",
+      "file": "Basisdata_3201_Berum_25832_N50Kartdata_FGDB.zip",
+      "bytes": 2769567,
+      "sha256": "f103d843333b7dc750be2e12e1b2ae60233124864bb3b6a68b8f038b161a7d70",
+      "layers": [
+        {
+          "layer": "N50_Arealdekke_omrade",
+          "counts": {
+            "elv": 17,
+            "havflate": 13,
+            "innsjø": 8,
+            "innsjøregulert": 1
+          },
+          "geometry": "MultiPolygon"
+        },
+        {
+          "layer": "N50_Arealdekke_senterlinje",
+          "counts": {
+            "elvbekk": 64
+          },
+          "geometry": "MultiLineString"
+        }
+      ],
+      "orderDate": "2026-11-28T19:27:41.4394857Z"
+    },
+    {
+      "municipality": "3205",
+      "file": "Basisdata_3205_Lillestrom_25832_N50Kartdata_FGDB.zip",
+      "bytes": 4684417,
+      "sha256": "7ec3039f702891d736de1d2a86da2a02fa246875958cb9577d722cad9e3e8f66",
+      "layers": [
+        {
+          "layer": "N50_Arealdekke_omrade",
+          "counts": {
+            "elv": 19,
+            "innsjø": 78,
+            "innsjøregulert": 2
+          },
+          "geometry": "MultiPolygon"
+        },
+        {
+          "layer": "N50_Arealdekke_senterlinje",
+          "counts": {
+            "elvbekk": 584
+          },
+          "geometry": "MultiLineString"
+        }
+      ],
+      "orderDate": "2026-11-28T19:27:41.4394857Z"
+    },
+    {
+      "municipality": "3207",
+      "file": "Basisdata_3207_Nordre_Follo_25832_N50Kartdata_FGDB.zip",
+      "bytes": 2806692,
+      "sha256": "889a95e3ba29c9d8a05df2c3a09ec567a31adcf3c8e18e3efd1f9eb4966df018",
+      "layers": [
+        {
+          "layer": "N50_Arealdekke_omrade",
+          "counts": {
+            "elv": 1,
+            "havflate": 2,
+            "innsjø": 4
+          },
+          "geometry": "MultiPolygon"
+        },
+        {
+          "layer": "N50_Arealdekke_senterlinje",
+          "counts": {
+            "elvbekk": 38
+          },
+          "geometry": "MultiLineString"
+        }
+      ],
+      "orderDate": "2026-11-28T19:27:41.4394857Z"
+    },
+    {
+      "municipality": "3209",
+      "file": "Basisdata_3209_Ullensaker_25832_N50Kartdata_FGDB.zip",
+      "bytes": 2200353,
+      "sha256": "ff4997f42943e99b7818457793ad25e8a6492889143be9754301db8cb8a8fd02",
+      "layers": [
+        {
+          "layer": "N50_Arealdekke_omrade",
+          "counts": {
+            "elv": 19,
+            "innsjø": 7
+          },
+          "geometry": "MultiPolygon"
+        },
+        {
+          "layer": "N50_Arealdekke_senterlinje",
+          "counts": {
+            "elvbekk": 99
+          },
+          "geometry": "MultiLineString"
+        }
+      ],
+      "orderDate": "2026-11-28T19:27:41.4394857Z"
+    },
+    {
+      "municipality": "3212",
+      "file": "Basisdata_3212_Nesodden_25832_N50Kartdata_FGDB.zip",
+      "bytes": 985171,
+      "sha256": "36479f4366db6640cff2f22980cec42a68832b5c34fcce989969b1a9a40aa13a",
+      "layers": [
+        {
+          "layer": "N50_Arealdekke_omrade",
+          "counts": {
+            "havflate": 12,
+            "innsjø": 5
+          },
+          "geometry": "MultiPolygon"
+        },
+        {
+          "layer": "N50_Arealdekke_senterlinje",
+          "counts": {
+            "elvbekk": 30
+          },
+          "geometry": "MultiLineString"
+        }
+      ],
+      "orderDate": "2026-11-28T19:27:41.4394857Z"
+    },
+    {
+      "municipality": "3220",
+      "file": "Basisdata_3220_Enebakk_25832_N50Kartdata_FGDB.zip",
+      "bytes": 2677926,
+      "sha256": "bf793b6896b50d9919800e93cac1e65f3e66604974fddea7463e15d6117dcce3",
+      "layers": [
+        {
+          "layer": "N50_Arealdekke_omrade",
+          "counts": {
+            "innsjø": 50,
+            "innsjøregulert": 1
+          },
+          "geometry": "MultiPolygon"
+        },
+        {
+          "layer": "N50_Arealdekke_senterlinje",
+          "counts": {
+            "elvbekk": 88
+          },
+          "geometry": "MultiLineString"
+        }
+      ],
+      "orderDate": "2026-11-28T19:27:41.4394857Z"
+    },
+    {
+      "municipality": "3222",
+      "file": "Basisdata_3222_Lorenskog_25832_N50Kartdata_FGDB.zip",
+      "bytes": 1085022,
+      "sha256": "53f16d7c028dd95d9dcded8d4a0f43f7d13a6d224daa50c2121287992208cb12",
+      "layers": [
+        {
+          "layer": "N50_Arealdekke_omrade",
+          "counts": {
+            "elv": 2,
+            "innsjø": 53,
+            "innsjøregulert": 5
+          },
+          "geometry": "MultiPolygon"
+        },
+        {
+          "layer": "N50_Arealdekke_senterlinje",
+          "counts": {
+            "elvbekk": 279
+          },
+          "geometry": "MultiLineString"
+        }
+      ],
+      "orderDate": "2026-11-28T19:27:41.4394857Z"
+    },
+    {
+      "municipality": "3224",
+      "file": "Basisdata_3224_Relingen_25832_N50Kartdata_FGDB.zip",
+      "bytes": 1063172,
+      "sha256": "1435c51274b9a8cb4d70fe6ae587873a110d1c09f8f03caa7b95630efa9e95c3",
+      "layers": [
+        {
+          "layer": "N50_Arealdekke_omrade",
+          "counts": {
+            "elv": 4,
+            "innsjø": 74,
+            "innsjøregulert": 4
+          },
+          "geometry": "MultiPolygon"
+        },
+        {
+          "layer": "N50_Arealdekke_senterlinje",
+          "counts": {
+            "elvbekk": 254
+          },
+          "geometry": "MultiLineString"
+        }
+      ],
+      "orderDate": "2026-11-28T19:27:41.4394857Z"
+    },
+    {
+      "municipality": "3230",
+      "file": "Basisdata_3230_Gjerdrum_25832_N50Kartdata_FGDB.zip",
+      "bytes": 1062195,
+      "sha256": "6ed252815b8ac88507b245a4e1c6c57630afc812062383f0ba5d0b3ac081822d",
+      "layers": [
+        {
+          "layer": "N50_Arealdekke_omrade",
+          "counts": {
+            "elv": 5,
+            "innsjø": 23,
+            "innsjøregulert": 2
+          },
+          "geometry": "MultiPolygon"
+        },
+        {
+          "layer": "N50_Arealdekke_senterlinje",
+          "counts": {
+            "elvbekk": 146
+          },
+          "geometry": "MultiLineString"
+        }
+      ],
+      "orderDate": "2026-11-28T19:27:41.4394857Z"
+    },
+    {
+      "municipality": "3232",
+      "file": "Basisdata_3232_Nittedal_25832_N50Kartdata_FGDB.zip",
+      "bytes": 2376015,
+      "sha256": "8251e9a9674ed3ebfed2ce7f1d480a533949ea7f904ab8a1211324e0f20fb1db",
+      "layers": [
+        {
+          "layer": "N50_Arealdekke_omrade",
+          "counts": {
+            "elv": 4,
+            "innsjø": 85,
+            "innsjøregulert": 6
+          },
+          "geometry": "MultiPolygon"
+        },
+        {
+          "layer": "N50_Arealdekke_senterlinje",
+          "counts": {
+            "elvbekk": 400
+          },
+          "geometry": "MultiLineString"
+        }
+      ],
+      "orderDate": "2026-11-28T19:27:41.4394857Z"
+    },
+    {
+      "municipality": "3305",
+      "file": "Basisdata_3305_Ringerike_25832_N50Kartdata_FGDB.zip",
+      "bytes": 19372878,
+      "sha256": "4017c4b95274c55b4e78c7cc2c5d9ff891bf2575389343429de090193d5c6d05",
+      "layers": [
+        {
+          "layer": "N50_Arealdekke_omrade",
+          "counts": {
+            "innsjøregulert": 1
+          },
+          "geometry": "MultiPolygon"
+        },
+        {
+          "layer": "N50_Arealdekke_senterlinje",
+          "counts": {
+            "elvbekk": 8
+          },
+          "geometry": "MultiLineString"
+        }
+      ],
+      "orderDate": "2026-11-28T19:27:41.4394857Z"
+    }
+  ],
+  "errors": [],
+  "outputs": {
+    "water-area": {
+      "file": "water-area.geojson",
+      "bytes": 4461504,
+      "sha256": "5d77e890205785c3bbb2c99bb687c05076060306da71063c164a1e119296908a",
+      "inputFeatures": 869,
+      "repairedInputs": 0,
+      "outsideOrWrongType": 143,
+      "outputFeatures": 429
+    },
+    "water-line": {
+      "file": "water-line.geojson",
+      "bytes": 3084101,
+      "sha256": "4d87def2cf9d14227f15ccfd611c0929419ba13508ee584f4bac7bc3b48513b6",
+      "inputFeatures": 2992,
+      "repairedInputs": 0,
+      "outsideOrWrongType": 476,
+      "outputFeatures": 1972
+    }
+  },
+  "coverage": "unverified; simplified municipal bbox selection"
+}

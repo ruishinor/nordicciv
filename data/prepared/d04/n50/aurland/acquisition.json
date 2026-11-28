@@ -1,0 +1,93 @@
+{
+  "region": "aurland",
+  "candidateMunicipalities": [
+    "4639",
+    "4641",
+    "4642"
+  ],
+  "startedUtc": "2026-11-28T19:27:50.673861+00:00",
+  "licence": "CC BY 4.0",
+  "attribution": "Kartverket, N50 Kartdata, CC BY 4.0; clipped and transformed",
+  "inputs": [
+    {
+      "municipality": "4639",
+      "file": "Basisdata_4639_Vik_25832_N50Kartdata_FGDB.zip",
+      "bytes": 13280335,
+      "sha256": "aded6e264d15f113ef3add9d37d922096801c3c2ee57009988e7eb99d328dcfe",
+      "layers": [],
+      "orderDate": "2026-11-28T19:27:52.8310959Z"
+    },
+    {
+      "municipality": "4641",
+      "file": "Basisdata_4641_Aurland_25832_N50Kartdata_FGDB.zip",
+      "bytes": 21623549,
+      "sha256": "32b6b4ab437c36b0d0eee85d6daa19c0de80648b4baa4ee5b445f8d075f63898",
+      "layers": [
+        {
+          "layer": "N50_Arealdekke_omrade",
+          "counts": {
+            "elv": 16,
+            "havflate": 12,
+            "innsjø": 988,
+            "innsjøregulert": 1
+          },
+          "geometry": "MultiPolygon"
+        },
+        {
+          "layer": "N50_Arealdekke_senterlinje",
+          "counts": {
+            "elvbekk": 1752
+          },
+          "geometry": "MultiLineString"
+        }
+      ],
+      "orderDate": "2026-11-28T19:27:52.8310959Z"
+    },
+    {
+      "municipality": "4642",
+      "file": "Basisdata_4642_Lerdal_25832_N50Kartdata_FGDB.zip",
+      "bytes": 13542896,
+      "sha256": "c01745d3d39379dae9f39d337c417850f38fea9d08f4bd56e35b0ef8e74ad674",
+      "layers": [
+        {
+          "layer": "N50_Arealdekke_omrade",
+          "counts": {
+            "elv": 2,
+            "innsjø": 86
+          },
+          "geometry": "MultiPolygon"
+        },
+        {
+          "layer": "N50_Arealdekke_senterlinje",
+          "counts": {
+            "elvbekk": 140
+          },
+          "geometry": "MultiLineString"
+        }
+      ],
+      "orderDate": "2026-11-28T19:27:52.8310959Z"
+    }
+  ],
+  "errors": [],
+  "outputs": {
+    "water-area": {
+      "file": "water-area.geojson",
+      "bytes": 1902843,
+      "sha256": "ea40b21c0802e623e5c66dc96910ed6d068cba6845b0096ab81acd76cb2ce643",
+      "inputFeatures": 1105,
+      "repairedInputs": 0,
+      "outsideOrWrongType": 273,
+      "outputFeatures": 483
+    },
+    "water-line": {
+      "file": "water-line.geojson",
+      "bytes": 3646819,
+      "sha256": "13fcb83b9477a40e968a347659f184f326f2e7971b2b78aa4a6b3e2ac343f9ba",
+      "inputFeatures": 1892,
+      "repairedInputs": 0,
+      "outsideOrWrongType": 272,
+      "outputFeatures": 1012
+    }
+  },
+  "coverage": "unverified; simplified municipal bbox selection"
+}

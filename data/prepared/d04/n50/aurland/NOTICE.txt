@@ -1,0 +1,2 @@
+Kartverket, N50 Kartdata, CC BY 4.0. https://creativecommons.org/licenses/by/4.0/
+Clipped, transformed, dissolved and export topology repaired. Water-line-visible excludes mapped water areas.
