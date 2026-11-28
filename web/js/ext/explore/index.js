@@ -4,11 +4,17 @@
 import { FACETS, discoveries } from "../../explore.js";
 import { esc } from "../../format.js";
 import { buildJourneys, contextLinks, resolveJourney } from "./journeys.js";
+import { placeLists } from "./places.js";
 
 export function install(app) {
   const { cities, nation } = app.data;
   const all = discoveries(cities, nation);
   const journeys = buildJourneys(app.data);
+  let storage = null;
+  try { storage = localStorage; } catch { /* browser storage unavailable */ }
+  const places = placeLists(id => app.cityById.has(id), storage);
+  const country = {NO:"Norway",SE:"Sweden",DK:"Denmark"};
+  places.visit(app.state.selectedCity?.id);
   let active = null, moving = false;
   let order = shuffle(all.map((_, k) => k), Date.now() % 100000);
   let pos = 0;
@@ -22,7 +28,7 @@ export function install(app) {
   btn.setAttribute("aria-label", "Discover journeys and places");
   btn.innerHTML = `<span aria-hidden="true">✦</span><span class="lbl">Discover</span>`;
   bar?.insertBefore(btn, bar.firstChild);
-  const openDiscover = () => journeys.length ? menu() : surprise();
+  const openDiscover = () => menu();
   btn.onclick = openDiscover;
   // phones: the top bar scrolls, so Discover also gets a place in the bottom navigation
   const mnav = document.getElementById("mobile-nav");
@@ -63,12 +69,57 @@ export function install(app) {
     card.innerHTML = '<h2 class="disc-t" tabindex="-1">Discover Scandinavia</h2><p class="muted small">Pick a theme to explore places on the map.</p><div class="journey-list">' +
       journeys.map(j => '<button type="button" class="chip" data-journey="' + esc(j.id) + '">' + esc(j.title) + ' · ' + j.stops.length + ' stops<br><span class="muted small">' +
         j.stops.map(s => esc(app.cityById.get(s.city)?.name || s.city)).join(' → ') + '</span></button>').join("") +
-      '</div><div class="chips"><button type="button" class="chip" data-d="next">Surprise me</button><button type="button" class="chip" data-d="close">Close</button></div>';
+      '</div><div class="chips"><button type="button" class="chip" data-d="saved">Saved places (' + places.saved.length + ')</button>' +
+      '<button type="button" class="chip" data-d="recent">Recent places (' + places.recent.length + ')</button></div>' +
+      '<div class="chips"><button type="button" class="chip" data-d="next">Surprise me</button><button type="button" class="chip" data-d="close">Close</button></div>';
     card.hidden = false;
+    card.querySelector('[data-d="saved"]').onclick = () => placeMenu("saved");
+    card.querySelector('[data-d="recent"]').onclick = () => placeMenu("recent");
     card.querySelectorAll("[data-journey]").forEach(b => b.onclick = () => step(b.dataset.journey, 0));
     card.querySelector('[data-d="next"]').onclick = surprise;
     card.querySelector('[data-d="close"]').onclick = closeCard;
     card.querySelector("h2").focus({preventScroll: true});
+  }
+  function saveButton(b, id) {
+    const saved = places.has(id);
+    b.setAttribute("aria-pressed", String(saved));
+    b.textContent = saved ? "Remove saved place" : "Save this place";
+  }
+  function placeMenu(kind) {
+    clearJourney();
+    const saved = kind === "saved", ids = saved ? places.saved : places.recent;
+    card.dataset.journeys = "places";
+    card.innerHTML = '<h2 class="disc-t" tabindex="-1">' + (saved ? "Saved places" : "Recent places") + '</h2>' +
+      '<p class="muted small">' + (saved ? (places.persistent ? "Saved on this browser." : "Available until this page closes.") :
+        "Municipalities visited on this page. Cleared when you reload.") + '</p>' +
+      (ids.length ? '<div class="journey-list">' + ids.map(id => {
+        const c = app.cityById.get(id);
+        return '<div class="chips"><button class="chip" type="button" data-place-open="' + esc(id) + '">' +
+          esc(c.name) + ' · ' + esc(country[c.country] || c.country) + '</button>' +
+          (saved ? '<button class="chip" type="button" data-place-remove="' + esc(id) +
+          '" aria-label="Remove ' + esc(c.name) + '">Remove</button>' : '') + '</div>';
+      }).join("") + '</div>' : '<p>No places yet.</p>') +
+      '<div class="chips">' + (!saved && ids.length ? '<button class="chip" type="button" data-place-clear>Clear recent places</button>' : '') +
+      '<button class="chip" type="button" data-place-back>Back</button><button class="chip" type="button" data-d="close">Close</button></div>';
+    card.hidden = false;
+    card.querySelectorAll("[data-place-open]").forEach(b => b.onclick = () => {
+      const c = app.cityById.get(b.dataset.placeOpen);
+      if (!c) return;
+      closeCard();
+      app.setHighlight(null);
+      app.selectCity(c, {fly:true});
+    });
+    card.querySelectorAll("[data-place-remove]").forEach(b => b.onclick = () => {
+      places.remove(b.dataset.placeRemove);
+      const current = app.panels.element.querySelector("[data-save-city]");
+      if (current) saveButton(current, current.dataset.saveCity);
+      placeMenu("saved");
+    });
+    const clear = card.querySelector("[data-place-clear]");
+    if (clear) clear.onclick = () => { places.clearRecent(); placeMenu("recent"); };
+    card.querySelector("[data-place-back]").onclick = menu;
+    card.querySelector('[data-d="close"]').onclick = closeCard;
+    card.querySelector("h2").focus({preventScroll:true});
   }
   function step(id, index, navigate = true) {
     const journey = journeys.find(j => j.id === id);
@@ -112,12 +163,15 @@ export function install(app) {
     },
   });
   app.on("select", () => {
+    places.visit(app.state.selectedCity?.id);
     if (active && !moving && app.state.selectedCity?.id !== active.city) {
       clearJourney(); card.hidden = true;
     }
   });
   app.addCitySections(city => {
-    const sections = [];
+    const sections = [{tab:"Overview",title:"Save this municipality",
+      html:'<button type="button" class="chip" data-save-city="' + esc(city.id) + '" aria-pressed="' + places.has(city.id) + '">' +
+        (places.has(city.id) ? "Remove saved place" : "Save this place") + '</button>'}];
     const related = journeys.flatMap(j => {
       const index = j.stops.findIndex(s => s.city === city.id);
       return index < 0 ? [] : [{j, index}];
@@ -130,6 +184,16 @@ export function install(app) {
     if (html) sections.push({tab: "Overview", title: "Weather and satellite imagery", html});
     return sections;
   }, (panel, city) => {
+    const save = panel.querySelector("[data-save-city]");
+    if (save) save.onclick = () => {
+      if (app.state.selectedCity?.id !== city.id) return;
+      if (!places.has(city.id) && places.saved.length >= places.maxSaved) {
+        app.ui.toast("Your saved places list is full. Remove a place first.");
+        return;
+      }
+      places.toggle(city.id);
+      saveButton(save, city.id);
+    };
     panel.querySelectorAll("[data-discover-journey]").forEach(b => {
       b.onclick = () => {
         const parsed = resolveJourney(journeys, b.dataset.discoverJourney);
