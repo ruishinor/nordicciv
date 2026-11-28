@@ -1,16 +1,20 @@
 // Optional WebGL surface: Existing hex elevations plus bounded Copernicus elevation tiles.
 import { ElevationTiles } from "./elevation-tiles.js";
 import { buildSurfaceMesh, surfaceHeight, intersectSurface } from "./terrain-surface.js";
+import { createSurfaceContract, physicalLodForWidth } from "./surface-contract.js";
 export const TERRAIN_LAYER_TYPES = Object.freeze([
   "elevation", "vegetation", "buildings", "agriculture", "infrastructure",
 ]);
 export const VERTICAL_EXAGGERATION = 1;
+export const BASE_SURFACE_OPACITY = 0.30;
+export const DETAIL_SURFACE_OPACITY = 0.48;
 
 const VERTEX_SHADER = `#version 300 es
 in vec3 a_position;
 in vec3 a_color;
 in float a_shade;
 in float a_coverage;
+in float a_land;
 uniform vec2 u_origin;
 uniform vec4 u_view; // x0, y0, css width, css height
 uniform vec3 u_camera; // horizontal scale, vertical scale, vertical exaggeration
@@ -18,6 +22,7 @@ uniform vec2 u_pitch; // cosine, sine
 out vec3 v_color;
 out float v_shade;
 out float v_coverage;
+out float v_land;
 void main() {
   vec2 p = a_position.xy + u_origin;
   float x = (p.x - u_view.x) * u_camera.x;
@@ -29,6 +34,7 @@ void main() {
   v_color = a_color;
   v_shade = a_shade;
   v_coverage = a_coverage;
+  v_land = a_land;
 }`;
 
 const FRAGMENT_SHADER = `#version 300 es
@@ -36,9 +42,11 @@ precision mediump float;
 in vec3 v_color;
 in float v_shade;
 in float v_coverage;
+in float v_land;
 uniform float u_opacity;
 out vec4 out_color;
 void main() {
+  if (v_land < 0.5) discard;
   out_color = vec4(v_color * v_shade, u_opacity * v_coverage);
 }`;
 
@@ -243,8 +251,9 @@ export class WebGLTerrainRenderer {
         origin: gl.getUniformLocation(this.program, "u_origin"),
         opacity: gl.getUniformLocation(this.program, "u_opacity"),
         coverage: gl.getAttribLocation(this.program, "a_coverage"),
+        land: gl.getAttribLocation(this.program, "a_land"),
       };
-      this.detailBuffers = Object.fromEntries(["position", "color", "shade", "coverage", "index"].map(k => [k, gl.createBuffer()]));
+      this.detailBuffers = Object.fromEntries(["position", "color", "shade", "coverage", "land", "index"].map(k => [k, gl.createBuffer()]));
       if (Object.values(this.detailBuffers).some(b => !b)) throw new Error("Could not create terrain detail buffers");
       this.available = true;
       this.tiles = new ElevationTiles(world.raw.projection, onChange);
@@ -274,7 +283,20 @@ export class WebGLTerrainRenderer {
   }
 
   elevationAt(x, y) {
-    return surfaceHeight(this.detailMesh, x, y) ?? terrainElevationAt(this.world, x, y);
+    return this.surfaceAt(x, y).elevationM;
+  }
+
+  surfaceAt(x, y) {
+    const cell = this.world.grid.cellAt(x, y);
+    const water = cell < 0 || !!this.world.water[cell];
+    const fallback = (px, py) => terrainElevationAt(this.world, px, py);
+    const sampled = this.tiles?.sampleAt(x, y, fallback) ??
+      { elevationM: surfaceHeight(this.detailMesh, x, y) ?? fallback(x, y), coverage: 0 };
+    return {
+      elevationM: water ? 0 : (surfaceHeight(this.detailMesh, x, y) ?? sampled.elevationM),
+      coverage: water ? 0 : sampled.coverage,
+      water,
+    };
   }
 
   raycast(x, groundY, heightScale) {
@@ -290,17 +312,26 @@ export class WebGLTerrainRenderer {
 
   prepareDetail(vp, pitch) {
     this.tiles.update(vp, pitch);
-    const signature = `${vp.x0},${vp.y0},${vp.x1},${vp.y1},${vp.s},${pitch},${this.tiles.revision}`;
+    const widthKm = vp.widthKm ?? (vp.cssW / vp.s);
+    const signature = `${vp.x0},${vp.y0},${vp.x1},${vp.y1},${vp.s},${widthKm},${pitch},${this.tiles.revision}`;
     if (signature === this.detailSignature) return;
     this.detailSignature = signature;
     this.surfaceRevision = (this.surfaceRevision || 0) + 1;
     const start = performance.now();
-    this.detailMesh = buildSurfaceMesh(this.tiles, (x, y) => terrainElevationAt(this.world, x, y), vp, pitch, VERTICAL_EXAGGERATION);
+    this.detailMesh = buildSurfaceMesh(this.tiles, (x, y) => terrainElevationAt(this.world, x, y), vp, pitch,
+      VERTICAL_EXAGGERATION, (x, y) => {
+        const cell = this.world.grid.cellAt(x, y);
+        return cell < 0 || !!this.world.water[cell];
+      }, (x, y) => {
+        const cell = this.world.grid.cellAt(x, y);
+        return cell < 0 || this.world.water[cell] ? null : this.world.terrainColors?.[cell] ?? null;
+      });
     this.meshBuildMs = performance.now() - start;
     if (!this.detailMesh) return;
     const gl = this.gl;
     for (const [name, array] of [["position", this.detailMesh.positions], ["color", this.detailMesh.colors],
-      ["shade", this.detailMesh.shades], ["coverage", this.detailMesh.coverage], ["index", this.detailMesh.indices]]) {
+      ["shade", this.detailMesh.shades], ["coverage", this.detailMesh.coverage], ["land", this.detailMesh.land],
+      ["index", this.detailMesh.indices]]) {
       const target = name === "index" ? gl.ELEMENT_ARRAY_BUFFER : gl.ARRAY_BUFFER;
       gl.bindBuffer(target, this.detailBuffers[name]); gl.bufferData(target, array, gl.DYNAMIC_DRAW);
     }
@@ -362,8 +393,10 @@ export class WebGLTerrainRenderer {
       gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.indexBuffer);
       gl.disableVertexAttribArray(this.locations.coverage);
       gl.vertexAttrib1f(this.locations.coverage, 1);
+      gl.disableVertexAttribArray(this.locations.land);
+      gl.vertexAttrib1f(this.locations.land, 1);
       gl.uniform2f(this.locations.origin, 0, 0);
-      gl.uniform1f(this.locations.opacity, 0.38);
+      gl.uniform1f(this.locations.opacity, BASE_SURFACE_OPACITY);
       const radians = (pitch * Math.PI) / 180;
       gl.uniform4f(this.locations.view, vp.x0, vp.y0, vp.cssW, vp.cssH);
       gl.uniform3f(this.locations.camera, vp.s, vp.yScale ?? vp.s, VERTICAL_EXAGGERATION);
@@ -377,19 +410,27 @@ export class WebGLTerrainRenderer {
           // A single regular grid shares every edge. Clear coarse depth so an inaccurate hex height cannot hide it.
           gl.clear(gl.DEPTH_BUFFER_BIT);
           for (const [name, size, type, normalized] of [["position", 3, gl.FLOAT, false], ["color", 3, gl.UNSIGNED_BYTE, true],
-            ["shade", 1, gl.FLOAT, false], ["coverage", 1, gl.FLOAT, false]]) {
+            ["shade", 1, gl.FLOAT, false], ["coverage", 1, gl.FLOAT, false], ["land", 1, gl.FLOAT, false]]) {
             gl.bindBuffer(gl.ARRAY_BUFFER, this.detailBuffers[name]);
             gl.enableVertexAttribArray(this.locations[name]);
             gl.vertexAttribPointer(this.locations[name], size, type, normalized, 0, 0);
           }
           gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.detailBuffers.index);
           gl.uniform2f(this.locations.origin, this.detailMesh.x0, this.detailMesh.y0);
-          gl.uniform1f(this.locations.opacity, 1);
+          gl.uniform1f(this.locations.opacity, DETAIL_SURFACE_OPACITY);
           gl.enable(gl.BLEND); gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
           gl.drawElements(gl.TRIANGLES, this.detailMesh.indices.length, gl.UNSIGNED_INT, 0);
           gl.disable(gl.BLEND);
         }
+        const viewWidthKm = vp.widthKm ?? (vp.cssW / vp.s);
+        const surface = createSurfaceContract({
+          projection: world.raw.projection,
+          widthKm: viewWidthKm,
+          sample: (x, y) => this.surfaceAt(x, y),
+          project: (x, y, elevationM) => projectTerrainPoint(vp, x, y, elevationM, pitch),
+        });
         const frame = { world, view: vp, pitch, scale: vp.s, verticalExaggeration: VERTICAL_EXAGGERATION,
+          surface, physicalLod: physicalLodForWidth(viewWidthKm),
           project: (x, y, elevationM = 0) => projectTerrainPoint(vp, x, y, elevationM, pitch) };
         for (const [id, layer] of this.layers) {
           try {
@@ -447,7 +488,9 @@ export class WebGLTerrainRenderer {
       detailTriangles: this.detailMesh?.triangles ?? 0,
       detailSpacingM: this.detailMesh ? this.detailMesh.step * 1000 : null,
       meshBuildMs: this.meshBuildMs ?? null,
-      detailBytes: this.detailMesh ? ["positions", "colors", "shades", "coverage", "indices", "heights"].reduce((n, k) => n + this.detailMesh[k].byteLength, 0) : 0,
+      detailBytes: this.detailMesh ? ["positions", "colors", "shades", "coverage", "land", "indices", "heights"].reduce((n, k) => n + this.detailMesh[k].byteLength, 0) : 0,
+      surfaceOpacity: DETAIL_SURFACE_OPACITY,
+      landVertices: this.detailMesh ? this.detailMesh.land.reduce((n, v) => n + (v > 0.5), 0) : 0,
     };
   }
 }

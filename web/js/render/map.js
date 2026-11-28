@@ -17,6 +17,7 @@ import { drawTerrainGlyphs, GLYPHS_MIN_RPX } from "./art/terrain.js";
 import { drawCityTile, cityTileVisible, cityIsDot, metroSpill } from "./art/city.js";
 import { drawWater, drawRivers, strokeSegs } from "./art/water.js";
 import { lodFor } from "./art/lod.js";
+import { canPlaceLegacySettlement, legacySettlementPosition, legacySettlementRadiusKm } from "./surface-contract.js";
 import { drawRelief, drawReliefTextured, drawSea, seaReady, reliefReady, fallbackHexes, drawBorderLines, bordersReady, drawCoast, munisReady, muniFeatures, muniFeature, muniPath, muniLevel } from "./art/relief.js";
 
 // Water under the relief image where a hex is land but the ground is sea (fjords, sounds, skerry belts).
@@ -200,10 +201,9 @@ export function drawStatic(ctx, vp, w, opts) {
   // 2. Land: the relief image (Explore), lens colours clipped to the land and shaded by the relief (Analyze), or tiles.
   upTo(Z.LAND);
   const useTerrain = !opts.lens && opts.terrainRenderer?.available;
-  if (useTerrain && !opts.terrainRenderer.covers(vp, opts.pitch ?? 0)) {
-    // At close terrain scales the existing artwork has no finer geographical information.
-    if (s <= 48) drawReliefTextured(ctx, vp);
-    else drawRelief(ctx, vp);
+  if (useTerrain) {
+    // Keep the existing land-cover image beneath the translucent height surface at every scale.
+    drawReliefTextured(ctx, vp);
     worldT();
   }
   const terrainGround = useTerrain && opts.terrainRenderer.draw(ctx, vp, w, opts.pitch ?? 0);
@@ -262,6 +262,7 @@ export function drawStatic(ctx, vp, w, opts) {
   lap("rivers+borders");
   upTo(Z.CITIES);
   if (!terrainGround || s <= 48) drawCityTiles(ctx, w, Rpx, s, lod, opts.selectedCity || null, vp);
+  else drawCityTiles(ctx, w, Rpx, s, lod, opts.selectedCity || null, vp, 18);
   lap("cities");
 
   // 7. Sea mist around the edges of the known world.
@@ -283,30 +284,37 @@ export function drawStatic(ctx, vp, w, opts) {
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 }
 
-function drawCityTiles(ctx, w, Rpx, s, lod, selectedCity, vp) {
+function drawCityTiles(ctx, w, Rpx, s, lod, selectedCity, vp, closeRadiusPx = null) {
   const { grid } = w;
   const R = grid.R;
+  const cityR = closeRadiusPx == null ? R : legacySettlementRadiusKm(R, s, closeRadiusPx);
+  const cityRpx = cityR * s;
   // Only cities near the viewport: every tile is a cached sprite, and painting sprites for the whole country at a
   // new zoom is what made the first render at each zoom slow. 3R covers the tallest skyline and the capital dome.
-  const m = 3 * R;
+  const m = 3 * cityR;
   for (const [cell, city] of w.cityByCell) {
     if (!cityTileVisible(city, Rpx)) continue;
+    const [x, y] = legacySettlementPosition(city, { x: grid.cx(cell), y: grid.cy(cell) }, closeRadiusPx != null);
+    if (closeRadiusPx != null) {
+      const location = grid.cellAt(x, y);
+      if (!canPlaceLegacySettlement(location, w.water)) continue;
+    }
     if (vp) {
-      const x = grid.cx(cell), y = grid.cy(cell);
       if (x < vp.x0 - m || x > vp.x1 + m || y < vp.y0 - m || y > vp.y1 + m) continue;
     }
     const stateColor = w.stateColor[w.raw.owner[cell]] || [200, 200, 200];
-    const x = grid.cx(cell), y = grid.cy(cell);
-    drawCityTile(ctx, city, x, vp?.surfaceY ? vp.surfaceY(x, y) : y, R, { Rpx, s, lod, stateColor, seed: cell, selected: city === selectedCity });
+    drawCityTile(ctx, city, x, vp?.surfaceY ? vp.surfaceY(x, y) : y, cityR,
+      { Rpx: cityRpx, s, lod, stateColor, seed: cell, selected: city === selectedCity });
   }
   // Big metros spill their mid-rise blocks into the most built-up neighbouring hexes, so a skyline reads as a
   // cluster across several hexes rather than one tower hex in a ring of suburbs.
-  for (const [cell, spill] of metroSpill(w)) {
+  for (const [cell, spill] of closeRadiusPx == null ? metroSpill(w) : []) {
     if (cityIsDot(spill, Rpx) || !cityTileVisible(spill.of, Rpx) || cityIsDot(spill.of, Rpx)) continue;
     const x = grid.cx(cell), y = grid.cy(cell);
     if (vp && (x < vp.x0 - m || x > vp.x1 + m || y < vp.y0 - m || y > vp.y1 + m)) continue;
     const stateColor = w.stateColor[w.raw.owner[cell]] || [200, 200, 200];
-    drawCityTile(ctx, spill, x, vp?.surfaceY ? vp.surfaceY(x, y) : y, R, { Rpx, s, lod, stateColor, seed: cell });
+    drawCityTile(ctx, spill, x, vp?.surfaceY ? vp.surfaceY(x, y) : y, cityR,
+      { Rpx: cityRpx, s, lod, stateColor, seed: cell });
   }
 }
 

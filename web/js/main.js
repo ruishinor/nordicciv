@@ -221,6 +221,7 @@ async function main() {
     let vp = {
       x0: v.x0 - m + ox, y0: v.y0 - my + oy, x1: v.x1 + m + ox, y1: v.y1 + my + oy, s, yScale: cam.yScale, dpr,
       cssW: cam.w + 2 * CACHE_MARGIN, cssH: cam.h + 2 * CACHE_MARGIN,
+      widthKm: cam.w / s, cameraCenterKm: [cam.x, cam.y],
       surfaceY: terrainRenderer?.available && !state.lens ? (x, y) => cam.toSurfaceY(x, y) : null,
     };
     if (terrainRenderer?.available && !state.lens) {
@@ -231,7 +232,7 @@ async function main() {
       if (anchor) {
         [cam.x, cam.y] = cam.centerAt(...anchor, cam.w / 2, cam.h / 2);
         cam.clamp(); v = cam.view();
-        vp = { ...vp, x0:v.x0-m+ox, y0:v.y0-my+oy, x1:v.x1+m+ox, y1:v.y1+my+oy };
+        vp = { ...vp, x0:v.x0-m+ox, y0:v.y0-my+oy, x1:v.x1+m+ox, y1:v.y1+my+oy, cameraCenterKm:[cam.x,cam.y] };
       }
     }
     const W = Math.ceil(vp.cssW * dpr), H = Math.ceil(vp.cssH * dpr);
@@ -1389,6 +1390,7 @@ async function main() {
     // selection, lenses, camera
     terrain: {
       layerTypes: TERRAIN_LAYER_TYPES,
+      surfaceContractVersion: 1,
       registerLayer(layer) {
         if (!terrainRenderer?.available) throw new Error("enable the WebGL renderer with ?renderer=webgl before registering terrain layers");
         const remove = terrainRenderer.registerLayer(layer);
@@ -1398,6 +1400,7 @@ async function main() {
       },
       stats: () => terrainRenderer?.stats() ?? null,
       elevationAt: (x, y) => terrainRenderer?.elevationAt(x, y) ?? null,
+      surfaceAt: (x, y) => terrainRenderer?.surfaceAt(x, y) ?? null,
     },
     setPitch(degrees) {
       if (!terrainRenderer?.available) throw new Error("enable the WebGL renderer with ?renderer=webgl before setting camera pitch");

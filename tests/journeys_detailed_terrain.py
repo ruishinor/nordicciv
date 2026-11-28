@@ -18,6 +18,11 @@ async def ready(page):
 
 async def settle(page):
     await page.wait_for_function("() => __app.terrain.stats().detailVertices > 0", timeout=30000)
+    await page.wait_for_function("""() => {
+        const stats=__app.terrain.stats(), width=__app.cam.w/__app.cam.scale, center=stats.tiles?.centerKm;
+        return stats.tiles && center && Math.abs(stats.tiles.widthKm-width)<0.05
+          && Math.abs(center[0]-__app.cam.x)<0.05 && Math.abs(center[1]-__app.cam.y)<0.05;
+    }""", timeout=30000)
     await page.wait_for_function("() => __app.terrain.stats().tiles.pending === 0", timeout=30000)
     await page.wait_for_timeout(180)
 
@@ -45,9 +50,38 @@ async def run(browser, url, ok, errors, out):
             }""")
             observations.append({"place":case["id"],**result})
             await page.screenshot(path=str(Path(out)/f"d02-{case['id']}.png"))
+        # Oslo–Lillestrøm is the integrated composition benchmark. Hold the geographic
+        # centre fixed while the visible map width selects the four physical LOD bands.
+        composition = []
+        bands = [
+            (100, "regional", 480), (30, "local", 120),
+            (10, "neighbourhood", 30), (2, "close", 30),
+        ]
+        for width_km, _, _ in bands:
+            await page.evaluate("""async ({widthKm}) => {
+                const a=__app, city=a.data.cities.find(c=>c.name==='Oslo');
+                a.cam.stop(); a.cam.scale=a.cam.clampScale(1440/widthKm);
+                [a.cam.x,a.cam.y]=a.cam.centerAt(city.x,city.y,a.cam.w/2,a.cam.h/2);
+                a.invalidate();
+            }""", {"widthKm": width_km})
+            await settle(page)
+            observation = await page.evaluate("""() => {
+                const a=__app, stats=a.terrain.stats();
+                return {widthKm:a.cam.w/a.cam.scale, terrain:stats,
+                  center:a.terrain.surfaceAt(...a.cam.toWorld(a.cam.w/2,a.cam.h/2))};
+            }""")
+            composition.append(observation)
+            await page.screenshot(path=str(Path(out)/f"d03-oslo-{round(width_km)}km.png"))
+        ok("69 Oslo–Lillestrøm composition transitions at 100, 30, 10 and 2 km",
+           all(abs(item["widthKm"]-width) < 0.1 and item["terrain"]["tiles"]["physicalLod"] == lod
+               and item["terrain"]["tiles"]["spacingM"] == spacing and item["center"]["coverage"] > 0
+               and not item["center"]["water"]
+               for item, (width,lod,spacing) in zip(composition, bands)),
+           composition)
         ok("63 Close terrain uses 30 m samples and aligned triangle picking in all four fixed views",
            all(1 <= x["widthKm"] <= 3 and x["error"] < 0.1 and x["stats"]["tiles"]["loadedByLevel"][2] > 0
-               and x["stats"]["detailSpacingM"] == 30 for x in observations), observations)
+               and x["stats"]["detailSpacingM"] == 30 and x["stats"]["landVertices"] > 0
+               and 0 < x["stats"]["surfaceOpacity"] < 1 for x in observations), observations)
 
         tour = []
         for _ in range(2):
@@ -69,7 +103,7 @@ async def run(browser, url, ok, errors, out):
             [a.cam.x,a.cam.y]=a.cam.centerAt(c.x,c.y,a.cam.w/2,a.cam.h/2);a.invalidate();return [a.cam.w/2,a.cam.h/2];}""")
         await page.wait_for_timeout(250)
         await page.mouse.click(*point)
-        await page.wait_for_timeout(300)
+        await page.wait_for_function("() => __app.state.selectedCity?.name === 'Lillestrøm'", timeout=5000)
         state = await page.evaluate("""() => {const a=__app, selected=a.state.selectedCity?.name;
             a.setLens('density');const flat=a.cam.elevationAt===null;
             a.setLens(null);const restored=typeof a.cam.elevationAt==='function';

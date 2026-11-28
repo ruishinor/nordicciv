@@ -31,7 +31,7 @@ export function intersectSurface(mesh, x, groundY, heightScale) {
   return null;
 }
 
-export function buildSurfaceMesh(tiles, fallback, vp, pitch, exaggeration = 1) {
+export function buildSurfaceMesh(tiles, fallback, vp, pitch, exaggeration = 1, isWaterAt = () => false, landColorAt = () => null) {
   if (!tiles.index || vp.s < 8 || !tiles.wanted.size) return null;
   let step = [0.48, 0.12, 0.03][tiles.level];
   const pad = 4 * exaggeration * Math.tan(pitch * Math.PI / 180);
@@ -45,7 +45,7 @@ export function buildSurfaceMesh(tiles, fallback, vp, pitch, exaggeration = 1) {
     step *= 2;
   } while (true);
   const n = cols * rows;
-  const heights = new Float32Array(n), coverage = new Float32Array(n);
+  const heights = new Float32Array(n), coverage = new Float32Array(n), land = new Float32Array(n);
   // Extra ring keeps lighting identical on neighbouring viewport meshes.
   const ring = new Float32Array((cols + 2) * (rows + 2));
   for (let r = -1; r <= rows; r++) for (let c = -1; c <= cols; c++) {
@@ -54,10 +54,12 @@ export function buildSurfaceMesh(tiles, fallback, vp, pitch, exaggeration = 1) {
   const positions = new Float32Array(n * 3), colors = new Uint8Array(n * 3), shades = new Float32Array(n);
   const indices = new Uint32Array((cols - 1) * (rows - 1) * 6);
   for (let r = 0; r < rows; r++) for (let c = 0; c < cols; c++) {
-    const i = r * cols + c, k = (r + 1) * (cols + 2) + c + 1, h = ring[k];
+    const i = r * cols + c, k = (r + 1) * (cols + 2) + c + 1;
+    const x = x0 + c * step, y = y0 + r * step, h = ring[k];
     heights[i] = h;
+    land[i] = isWaterAt(x, y) ? 0 : 1;
     positions.set([c * step, r * step, h / 1000], i * 3);
-    coverage[i] = tiles.coverage(x0 + c * step, y0 + r * step);
+    coverage[i] = land[i] ? tiles.coverage(x, y) : 0;
     const gx = (ring[k + 1] - ring[k - 1]) / (step * 2000);
     const gy = (ring[k + cols + 2] - ring[k - cols - 2]) / (step * 2000);
     const length = Math.hypot(gx * exaggeration, gy * exaggeration, 1);
@@ -66,13 +68,18 @@ export function buildSurfaceMesh(tiles, fallback, vp, pitch, exaggeration = 1) {
     const rock = Math.min(1, Math.max(Math.hypot(gx, gy) * 0.8, (h - 700) / 800));
     const snow = Math.min(1, Math.max(0, (h - 1550) / 450));
     const grass = [120, 145, 92], stone = [155, 153, 138], ice = [222, 229, 225];
-    for (let j = 0; j < 3; j++) colors[i * 3 + j] = h <= 0 ? [38, 92, 138][j] :
-      (grass[j] * (1 - rock) + stone[j] * rock) * (1 - snow) + ice[j] * snow;
+    const landColor = land[i] ? landColorAt(x, y) : null;
+    for (let j = 0; j < 3; j++) {
+      const terrainColor = (grass[j] * (1 - rock) + stone[j] * rock) * (1 - snow) + ice[j] * snow;
+      colors[i * 3 + j] = land[i]
+        ? (landColor?.length === 3 ? 0.35 * terrainColor + 0.65 * landColor[j] : terrainColor)
+        : [38, 92, 138][j];
+    }
     if (c < cols - 1 && r < rows - 1) {
       const at = (r * (cols - 1) + c) * 6;
       indices.set([i, i + cols, i + 1, i + 1, i + cols, i + cols + 1], at);
     }
   }
-  return { positions, colors, shades, coverage, indices, heights, cols, rows, step, x0, y0,
+  return { positions, colors, shades, coverage, land, indices, heights, cols, rows, step, x0, y0,
     x1: x0 + (cols - 1) * step, y1: y0 + (rows - 1) * step, vertices: n, triangles: indices.length / 3 };
 }

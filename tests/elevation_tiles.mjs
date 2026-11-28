@@ -5,6 +5,10 @@ import { Camera } from "../web/js/camera.js";
 import { parseHash, formatHash } from "../web/js/app/urlstate.js";
 import { ElevationTiles, validateTerrainIndex, decodeElevation, triangleHeight } from "../web/js/render/elevation-tiles.js";
 import { buildSurfaceMesh, surfaceHeight, intersectSurface, MAX_SURFACE_VERTICES } from "../web/js/render/terrain-surface.js";
+import {
+  SURFACE_LOD, createSurfaceContract, legacySettlementRadiusKm, physicalLodForWidth, terrainLevelForWidth,
+  legacySettlementPosition, canPlaceLegacySettlement,
+} from "../web/js/render/surface-contract.js";
 
 const root = new URL("../web/terrain/", import.meta.url);
 const doc = JSON.parse(readFileSync(new URL("index.json", root)));
@@ -29,6 +33,34 @@ test("manifest rejects a foreign projection, paths, duplicate keys and oversized
   assert.throws(() => decodeElevation(bad, t, 11));
 });
 
+test("physical surface LOD follows viewport width without inventing sub-30 m detail", () => {
+  assert.deepEqual([101, 100, 30, 10, 2, 1].map(physicalLodForWidth), [
+    SURFACE_LOD.OVERVIEW, SURFACE_LOD.REGIONAL, SURFACE_LOD.LOCAL,
+    SURFACE_LOD.NEIGHBOURHOOD, SURFACE_LOD.CLOSE, SURFACE_LOD.CLOSE,
+  ]);
+  assert.deepEqual([101, 100, 30, 10, 2, 1].map(terrainLevelForWidth), [-1, 0, 1, 2, 2, 2]);
+  const projection = { ...doc.projection };
+  const surface = createSurfaceContract({
+    projection, widthKm: 2,
+    sample: (x, y) => ({ elevationM: x + y, coverage: 1.5, water: false }),
+    project: (x, y, z) => [x, y, z],
+  });
+  assert.equal(surface.version, 1);
+  assert.equal(surface.horizontalUnit, "km");
+  assert.equal(surface.verticalUnit, "m");
+  assert.equal(surface.lod, SURFACE_LOD.CLOSE);
+  assert.equal(terrainLevelForWidth(0), -1);
+  assert.deepEqual(surface.sample(2, 3), { elevationM: 5, coverage: 1, water: false });
+  assert.deepEqual(surface.project(2, 3), [2, 3, 5]);
+  assert.ok(legacySettlementRadiusKm(6, 720) * 720 <= 18);
+  assert.ok(legacySettlementRadiusKm(6, 12) * 12 <= 18);
+  assert.deepEqual(legacySettlementPosition({ x: 4, y: 7 }, { x: 1, y: 2 }, true), [4, 7]);
+  assert.deepEqual(legacySettlementPosition({ x: 4, y: 7 }, { x: 1, y: 2 }), [1, 2]);
+  assert.equal(canPlaceLegacySettlement(1, Uint8Array.from([0, 0])), true);
+  assert.equal(canPlaceLegacySettlement(1, Uint8Array.from([0, 1])), false);
+  assert.equal(canPlaceLegacySettlement(-1, Uint8Array.from([0, 0])), false);
+});
+
 test("fine tiles contain additional measured height variation and continuous shared edges", () => {
   const field = loaded(), fallback = () => 100;
   for (const r of doc.regions) {
@@ -45,13 +77,32 @@ test("fine tiles contain additional measured height variation and continuous sha
   }
 });
 
-test("rectangular meshes, normals and triangle picking use the same heights", () => {
+test("tile coverage follows usable samples and falls back when fine tiles are missing", () => {
+  const field = loaded(), fallback = () => 137;
+  const [x0, y0, x1, y1] = doc.regions[0].bounds, x = (x0 + x1) / 2 + 0.13, y = (y0 + y1) / 2 + 0.17;
+  const key = `2-${Math.floor(x / 3.84)}-${Math.floor(y / 3.84)}`;
+  const fine = field.cache.get(key);
+  field.cache.delete(key);
+  assert.ok(field.sampleAt(x, y, fallback).coverage > 0, "coarser parent remains visible");
+  for (const id of [...field.cache.keys()]) field.cache.delete(id);
+  assert.deepEqual(field.sampleAt(x, y, fallback), { elevationM: 137, coverage: 0 });
+  field.cache.set(key, fine);
+  assert.ok(field.sampleAt(x, y, fallback).coverage > 0);
+});
+
+test("rectangular meshes preserve one sampled surface, keep water transparent and align picking", () => {
   const field = loaded(), b = doc.regions[1].bounds;
   const vp = {x0:b[0]+5,y0:b[1]+5,x1:b[0]+7,y1:b[1]+6.2,s:720};
-  const mesh = buildSurfaceMesh(field, () => 100, vp, 35);
+  const waterLine = (x) => x > b[0] + 6;
+  const mesh = buildSurfaceMesh(field, () => 100, vp, 35, 1, (x) => waterLine(x),
+    (x) => waterLine(x) ? null : [200, 30, 40]);
   assert.ok(mesh.vertices <= MAX_SURFACE_VERTICES);
   assert.notEqual(mesh.cols, mesh.rows);
   assert.ok(mesh.positions.every(Number.isFinite)); assert.ok(mesh.shades.every(Number.isFinite));
+  assert.ok(mesh.land.some(v => v === 0)); assert.ok(mesh.land.some(v => v === 1));
+  for (let i=0;i<mesh.vertices;i++) if (waterLine(mesh.x0+(i%mesh.cols)*mesh.step)) assert.equal(mesh.coverage[i],0);
+  const coveredVertex = mesh.land.findIndex((v,i) => v === 1 && mesh.heights[i] > 0);
+  assert.ok(mesh.colors[coveredVertex*3] > 150, "the existing land-cover colour remains in the detailed mesh");
   const cam = new Camera(2000, 3000); cam.resize(1440, 900); cam.scale = 720; cam.setPitch(35);
   cam.elevationAt = (x, y) => surfaceHeight(mesh, x, y);
   cam.surfaceRay = (x, y, k) => intersectSurface(mesh, x, y, k);
@@ -92,14 +143,14 @@ test("request concurrency, eviction, cancellation and failure retries stay bound
   const settled = async () => { for (let i=0;i<300 && field.stats().pending;i++) await new Promise(r=>setTimeout(r,3)); assert.equal(field.stats().pending,0); };
   for (const region of [...doc.regions, ...doc.regions]) {
     const b=region.bounds;
-    field.update({x0:b[0]+3,y0:b[1]+3,x1:b[0]+8,y1:b[1]+8,s:720},24); await settled();
+    field.update({x0:b[0]+3,y0:b[1]+3,x1:b[0]+8,y1:b[1]+8,s:720,widthKm:2},24); await settled();
     assert.ok(field.bytes <= 450000); assert.ok(field.cache.size <= 12);
   }
   assert.ok(peak <= 2); assert.ok(field.evictions > 0);
   field.fetcher = async () => { throw new Error("Unavailable"); };
   field.cache.clear(); field.bytes=0;
   const b=doc.regions[0].bounds;
-  field.update({x0:b[0]+3,y0:b[1]+3,x1:b[0]+4,y1:b[1]+4,s:720}); await settled();
+  field.update({x0:b[0]+3,y0:b[1]+3,x1:b[0]+4,y1:b[1]+4,s:720,widthKm:2}); await settled();
   assert.ok(field.failed.size > 0);
   assert.equal(field.sample(b[0]+3.5,b[1]+3.5,()=>123),123);
   field.dispose(); assert.equal(field.bytes,0); assert.equal(field.cache.size,0);
