@@ -12,12 +12,7 @@ GROUPS = {
     "flood200": ("Flomsoner2/MapServer/17", "Flomsone_200arsflom",
                  "gjentaksinterval=200 AND statuskartlegging IN (1,5) AND symbolflom=1",
                  "objectid,flomsoneid,gjentaksinterval,statuskartlegging,symbolflom"),
-    "glacier_old": ("Bre2/MapServer/16", "Breflate_Historisk",
-                    "produktid='1999_2006' AND hovedbrenavn='Jostedalsbreen'",
-                    "objectid,breid,brenavn,hovedbrenavn,produktid"),
-    "glacier_new": ("Bre2/MapServer/9", "Breflate",
-                    "produktid='2018_2019' AND hovedbrenavn='Jostedalsbreen'",
-                    "objectid,breid,brenavn,hovedbrenavn,produktid"),
+
 }
 BATCH = 80
 
@@ -28,12 +23,12 @@ def request(group, query=None):
 
 
 class NveEnvironment(Source):
-    info = SourceInfo(id="nve_environment", title="NVE flood zones and Jostedalsbreen outlines",
+    info = SourceInfo(id="nve_environment", title="NVE flood zones",
         publisher="Norwegian Water Resources and Energy Directorate (NVE)",
         homepage="https://www.nve.no/kart/",
         license="NLOD 1.0 (Norwegian Licence for Open Government Data)",
-        description="Selected published flood polygons for the 200-year modelled event; Jostedalsbreen glacier outlines from the 1999–2006 and 2018–2019 inventories.",
-        used_for=["optional flood and glacier outline layers"], country="NO")
+        description="Published current and updated flood polygons for the 200-year modelled event.",
+        used_for=["optional flood extent layer"], country="NO")
 
     def initial(self, group):
         return [File(f"{group}/metadata.json", request(group)),
@@ -86,8 +81,6 @@ class NveEnvironment(Source):
                     props = {k.lower():v for k,v in row["properties"].items()}
                     if group == "flood200" and (props.get("gjentaksinterval") != 200 or props.get("statuskartlegging") not in (1,5) or props.get("symbolflom") != 1):
                         raise ValueError("Unexpected flood classification")
-                    if group != "flood200" and (props.get("produktid") != ("1999_2006" if group=="glacier_old" else "2018_2019") or props.get("hovedbrenavn") != "Jostedalsbreen"):
-                        raise ValueError("Unexpected glacier inventory/complex")
                     if row.get("geometry",{}).get("type") not in ("Polygon","MultiPolygon"):
                         raise ValueError(f"{group}: unexpected geometry")
                     rows.append({"properties":props,"geometry":row["geometry"]})

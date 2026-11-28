@@ -8,6 +8,7 @@ on:
       - pipeline/build/nve_environment.py
 permissions:
   contents: write
+  actions: read
 jobs:
   generate:
     if: github.ref == 'refs/heads/feature/nve-environment-maps'
@@ -21,7 +22,12 @@ jobs:
         with:
           python-version: '3.12'
       - run: pip install -r requirements.txt
-      - run: python -m pipeline.build.nve_environment --fetch
+      - uses: actions/download-artifact@v4
+        with:
+          name: nve-environment-source-and-generated
+          run-id: 46093615578
+          github-token: ${{ github.token }}
+      - run: python -m pipeline.build.nve_environment
       - run: python -m pipeline check --mode built
       - uses: actions/upload-artifact@v4
         if: always()
@@ -36,5 +42,5 @@ jobs:
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add web/data/nve_environment.json web/data/sources.json
-          git diff --cached --quiet || git commit -m "Publish verified NVE flood and glacier outlines"
+          git diff --cached --quiet || git commit -m "Publish verified NVE southeast flood extent"
           git push origin HEAD:refs/heads/feature/nve-environment-maps

@@ -2,14 +2,10 @@ import { esc } from "../../format.js";
 
 const SPECS = [
   {id:"nve-flood200", groups:["flood200"], label:"NVE 200-year flood zones", icon:"map",
-    title:"Modelled 200-year flood extent at selected mapped locations in Norway"},
-  {id:"nve-glacier-outlines", groups:["glacier_old","glacier_new"], label:"Jostedalsbreen outlines", icon:"terrain",
-    title:"NVE glacier outlines from 1999–2006 and 2018–2019"},
+    title:"Modelled 200-year flood extent in the southeast Norway pilot area"},
 ];
 const PAINT = {
   flood200:{fill:"rgba(40,142,220,.46)", stroke:"#68c5ff"},
-  glacier_old:{fill:null, stroke:"#e5a33d"},
-  glacier_new:{fill:"rgba(145,224,244,.20)",stroke:"#9ee8f8"},
 };
 
 export function install(app) {
@@ -52,16 +48,14 @@ export function install(app) {
   }
   function section() {
     if (!data()) return "";
-    return '<div class="nve-environment"><p>Blue areas show NVE’s modelled 200-year flood extent at selected mapped locations. Areas outside are not assessed here. This is not a current warning or a property-level map.</p>'+
+    return '<div class="nve-environment"><p>Blue areas show NVE’s modelled 200-year flood extent at mapped locations in a southeast Norway pilot area (9–12.8°E, 58.8–61.5°N). Only polygons fully inside that area are shown. Other areas may also flood. This is not a current warning or a property-level map.</p>'+
       '<div class="chips"><button class="chip" data-nve-map="nve-flood200">Show 200-year flood zones</button></div>'+
-      '<p>Compare Jostedalsbreen outlines: ochre for 1999–2006, light blue for 2018–2019. Zoom in to see the outlines.</p>'+
-      '<div class="chips"><button class="chip" data-nve-map="nve-glacier-outlines">Compare glacier outlines</button></div>'+
-      '<p class="muted small">Source: NVE (NLOD 1.0). The display uses simplified outlines. <a href="https://temakart.nve.no/tema/breatlas" target="_blank" rel="noopener noreferrer external" referrerpolicy="no-referrer">NVE glacier atlas ↗</a></p></div>';
+      '<p class="muted small">Source: NVE (NLOD 1.0). The display uses simplified outlines. <a href="https://temakart.nve.no/tema/flomsone" target="_blank" rel="noopener noreferrer external" referrerpolicy="no-referrer">NVE flood map ↗</a></p></div>';
   }
   app.nveEnvironment = {on, groups, advisor(city,region) {
     if (city && city.country !== "NO" || region && region.country !== "NO") return "";
     const html=section();
-    return html ? '<div class="obs"><h4>Norwegian flood and glacier maps</h4>'+html+'</div>' : "";
+    return html ? '<div class="obs"><h4>Norwegian flood zones</h4>'+html+'</div>' : "";
   }};
   document.addEventListener("click",event=>{
     const b=event.target.closest("[data-nve-map]");
@@ -69,11 +63,9 @@ export function install(app) {
     const id=b.dataset.nveMap;
     app.setLens(null);
     app.ui.setMapToggle(id,true);
-    if(id==="nve-glacier-outlines"){
-      const boxes=["glacier_old","glacier_new"].flatMap(k=>groups.get(k)||[]).map(f=>f.bbox);
-      if(boxes.length) app.fitBounds(Math.min(...boxes.map(b=>b[0])),Math.min(...boxes.map(b=>b[1])),
-        Math.max(...boxes.map(b=>b[2])),Math.max(...boxes.map(b=>b[3])),{maxScale:8});
-    } else app.ui.toast("Zoom in to see mapped flood zones");
+    const boxes=(groups.get("flood200")||[]).map(f=>f.bbox);
+    if(boxes.length) app.fitBounds(Math.min(...boxes.map(b=>b[0])),Math.min(...boxes.map(b=>b[1])),
+      Math.max(...boxes.map(b=>b[2])),Math.max(...boxes.map(b=>b[3])),{maxScale:8});
   });
   app.loadData("nve_environment").then(packet=>{
     if(!packet) return;

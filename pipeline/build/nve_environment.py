@@ -14,6 +14,8 @@ from .catalog import update_source
 
 PATH = WEB_DATA / "nve_environment.json"
 TOLERANCE_KM = 0.025
+# Display only the southeast pilot area to keep the initial layer compact.
+DISPLAY_BOUNDS = (9.0, 58.8, 12.8, 61.5)
 
 
 def polygons(g):
@@ -67,9 +69,15 @@ def build(write=True):
     packet = {"source":{"publisher":"NVE","license":source.info.license,"files":files},
               "simplification_km":TOLERANCE_KM, "groups":{}}
     for group, rows in data.items():
-        features = [encode_feature(row,frame) for row in sorted(rows,key=lambda r:r["properties"]["objectid"])]
-        packet["groups"][group] = {"source_count":len(rows),"features":features}
-        print(f"{group}: {len(features)} published polygons",flush=True)
+        selected = [row for row in rows if
+                    (lambda b: b[0] >= DISPLAY_BOUNDS[0] and b[1] >= DISPLAY_BOUNDS[1]
+                     and b[2] <= DISPLAY_BOUNDS[2] and b[3] <= DISPLAY_BOUNDS[3])(shape(row["geometry"]).bounds)]
+        features = [encode_feature(row,frame) for row in sorted(selected,key=lambda r:r["properties"]["objectid"])]
+        if not features:
+            raise ValueError("No flood polygons in the display selection")
+        packet["groups"][group] = {"source_count":len(rows),"display_count":len(features),
+                                   "display_bounds_lonlat":list(DISPLAY_BOUNDS),"features":features}
+        print(f"{group}: {len(features)} displayed of {len(rows)} source polygons",flush=True)
     if len(json.dumps(packet,separators=(",",":")).encode()) > 3_000_000:
         raise ValueError("NVE map packet exceeds 3 MB budget")
     if write:
