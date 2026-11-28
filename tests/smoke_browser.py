@@ -631,30 +631,44 @@ async def main():
            and "Wikidata" in da["page"] and "OSIRIS" in da["page"], {k: (v[:80] if isinstance(v, str) else v) for k, v in da.items()})
         await pg5.close()
         # 32. phone: tapping an uplink opens its card fully on screen with the link visible; it closes
-        mctx2 = await b.new_context(viewport={"width": 390, "height": 844}, is_mobile=True, has_touch=True, device_scale_factor=2)
+        mctx2 = await b.new_context(viewport={"width": 390, "height": 844}, is_mobile=True, has_touch=True, device_scale_factor=2, reduced_motion="reduce")
         await mctx2.add_init_script("try { localStorage.setItem('nc-intro', '1') } catch (e) {}")
         mq = await mctx2.new_page()
         mq.on("pageerror", lambda e: errors.append("uplinks mobile: " + str(e)))
         await mq.goto(URL, wait_until="networkidle")
         await mq.wait_for_function("window.__app && __app.uplinks && __app.uplinks.data", timeout=30000)
         await mq.evaluate("(() => { const a = __app, c = a.uplinks.data.byId.get('ln-gaustabanen'); a.ui.setMapToggle('uplinks', true); a.flyTo(c.x, c.y, 40 / a.w.grid.R, 0); })()")
-        await mq.wait_for_timeout(1500)
+        await mq.wait_for_function("() => !__app.cam.moving && !document.getElementById('opening')", timeout=15000)
+        # Wait for the settled camera and drawn hit regions; check the actual tap point,
+        # not the unshifted marker centre. Other map layers or banners can own that point.
+        await mq.evaluate("new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)))")
         mqt = await mq.evaluate("""(() => { const a = __app, R = a.cam.scale * a.w.grid.R;
-            const it = a.uplinks.items(R).filter((i) => i.kind === 'one').map((i) => [i, ...a.cam.toScreen(i.x, i.y)])
-              .filter(([, x, y]) => x > 30 && x < 360 && y > 100 && y < 700 && !a.hitCity(x, y))[0];
-            return it ? { x: it[1], y: it[2] - a.uplinks.symbolPx(R) * 0.15 } : null; })()""")
+            const points = a.uplinks.items(R).filter(i => i.kind === 'one').map(i => {
+                const [x, y] = a.cam.toScreen(i.x, i.y);
+                return {x: Math.round(x), y: Math.round(y - a.uplinks.symbolPx(R) * 0.15), id: i.members[0].id};
+            });
+            return points.find(p => {
+                if (p.x <= 30 || p.x >= 360 || p.y <= 100 || p.y >= 700 || a.hitCity(p.x,p.y)) return false;
+                const hit = a.hitLayer(p.x,p.y);
+                return document.elementFromPoint(p.x,p.y)?.id === 'map' &&
+                  hit?.layer === 'uplinks' && hit.item.kind === 'one' && hit.item.members[0].id === p.id;
+            }) || null; })()""")
         mqc = {}
         if mqt:
             await mq.touchscreen.tap(mqt["x"], mqt["y"])
-            await mq.wait_for_timeout(800)
-            mqc = await mq.evaluate("""(() => { const c = document.getElementById('uplink-card'), r = c.getBoundingClientRect(), l = c.querySelector('a.uplink-open')?.getBoundingClientRect();
-                return { shown: !c.hidden, inView: r.left >= 0 && r.right <= innerWidth && r.top >= 0 && r.bottom <= innerHeight,
-                         linkVisible: !!l && l.bottom <= innerHeight && l.width > 40 }; })()""")
-            await mq.tap("#uplink-card [data-uc='close']")
-            mqc["closed"] = await mq.evaluate("document.getElementById('uplink-card').hidden")
+            try:
+                await mq.locator("#uplink-card").wait_for(state="visible", timeout=5000)
+                mqc = await mq.evaluate("""(() => { const c = document.getElementById('uplink-card'), r = c.getBoundingClientRect(), l = c.querySelector('a.uplink-open')?.getBoundingClientRect();
+                    return { shown: !c.hidden, inView: r.left >= 0 && r.right <= innerWidth && r.top >= 0 && r.bottom <= innerHeight,
+                             linkVisible: !!l && l.bottom <= innerHeight && l.width > 40, selected: __app.uplinks.selected }; })()""")
+                await mq.tap("#uplink-card [data-uc='close']", timeout=5000)
+                mqc["closed"] = await mq.evaluate("document.getElementById('uplink-card').hidden")
+            except Exception as exc:
+                mqc["error"] = str(exc)
         await mctx2.close()
         ok("32 phone: tapping a camera uplink opens its card fully on screen with the link visible; it closes",
-           bool(mqt) and mqc.get("shown") and mqc.get("inView") and mqc.get("linkVisible") and mqc.get("closed"), {**(mqt or {}), **mqc})
+           bool(mqt) and mqc.get("shown") and mqc.get("inView") and mqc.get("linkVisible") and mqc.get("closed")
+           and mqc.get("selected") == mqt["id"], {**(mqt or {}), **mqc})
 
         # 33–42. opening screen and Open in Maps (tests/journeys_opening_maps.py)
         from pyproj import Transformer

@@ -36,7 +36,8 @@ async def run(browser, url, ok, errors, out):
             assert before["kmPerPx"] == after["kmPerPx"] == 0.125, (before, after)
             assert after["raster"] > before["raster"], (before, after)
             assert after["cachedPixels"] <= 12000000, after
-            assert await page.evaluate("() => [__app.cam.x, __app.cam.y]") == centre
+            actual = await page.evaluate("() => [__app.cam.x, __app.cam.y]")
+            assert all(abs(a - b) < 1e-8 for a, b in zip(actual, centre)), (actual, centre)
             await page.screenshot(path=str(out / f"close-zoom-{'phone' if mobile else 'desktop'}-bergen.png"))
             # Lenses remain available at the deeper zoom; turning one on does not reset the camera.
             await page.evaluate("__app.setLens('farmland')")
