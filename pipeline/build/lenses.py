@@ -265,4 +265,6 @@ def build():
            "packed_note": "values[k] belongs to the k-th hex (in cell order) whose world.json owner is >= 0",
            "groups": GROUPS, "lenses": lenses}
     write_json(WEB_DATA / "lenses.json", out)
+    from .land_history import build as build_land_history
+    build_land_history()
     print(f"    {len(lenses)} lenses: " + ", ".join(l["id"] for l in lenses))
