@@ -64,7 +64,7 @@ test("camera pitch preserves screen-to-world round trips and zoom anchors", () =
   cam.x = 420;
   cam.y = 310;
   cam.scale = 4;
-  assert.equal(cam.maxScale, 6);
+  assert.equal(cam.maxScale, 12);
   assert.equal(cam.setPitch(28), 28);
   assert.ok(Math.abs(cam.yScale - 4 * Math.cos(28 * Math.PI / 180)) < 1e-12);
   cam.elevationAt = (x, y) => 1000 + x * 0.1 + y * 0.2;

@@ -20,12 +20,12 @@ MOBILE = {"width": 390, "height": 844}
 
 
 def cam(x, y, s):
-    return f"__app.cam.stop?.(); __app.cam.x={x}; __app.cam.y={y}; __app.cam.scale={s}; __app.invalidate();"
+    return f"__app.cam.stop?.(); __app.cam.x={x}; __app.cam.y={y}; __app.cam.scale=__app.cam.clampScale({s}); __app.invalidate();"
 
 
 def at_city(name, s):
     return (f"(() => {{ const c = __app.data.cities.find(x => x.name === {json.dumps(name)}); "
-            f"__app.cam.stop?.(); __app.cam.x = c.x; __app.cam.y = c.y; __app.cam.scale = {s}; __app.invalidate(); }})()")
+            f"__app.cam.stop?.(); __app.cam.x = c.x; __app.cam.y = c.y; __app.cam.scale = __app.cam.clampScale({s}); __app.invalidate(); }})()")
 
 
 def select(name, s=None):
@@ -114,8 +114,14 @@ STATES = [
      "setTimeout(() => document.querySelector('#city-panel .site-list')?.scrollIntoView({block: 'center'}), 200); }, 300);", 0),
     ("45-maps-region", DESKTOP, "__app.selectState('NO-15', {fly: false});" + SCROLL_TO("The real place"), 0),
     ("46-maps-mobile-municipality", MOBILE, select("Stranda", 5) + SCROLL_TO("The real place"), 0),
-    ("47-webgl-terrain-pitch", DESKTOP, at_city("Lom", 28) + ";__app.setPitch(24);", 0),
-    ("48-canvas-lom-overview", DESKTOP, at_city("Lom", 6), 0),
+    ("47-close-fjord", DESKTOP, at_city("Bergen", 12), 0),
+    ("48-close-islands", DESKTOP, at_city("Vågan", 12), 0),
+    ("49-close-forest", DESKTOP, at_city("Tingsryd", 12), 0),
+    ("50-close-farmland", DESKTOP, at_city("Skurup", 12), 0),
+    ("51-close-city", DESKTOP, at_city("Copenhagen", 12), 0),
+    ("52-close-phone", MOBILE, at_city("Värmdö", 12), 0),
+    ("53-webgl-terrain-pitch", DESKTOP, at_city("Lom", 28) + ";__app.setPitch(24);", 0),
+    ("54-canvas-lom-overview", DESKTOP, at_city("Lom", 6), 0),
 ]
 
 
@@ -131,7 +137,7 @@ async def main():
         for name, vp, js, extra in STATES:
             if only and name not in only:
                 continue
-            ctx = await b.new_context(viewport=vp, device_scale_factor=1, is_mobile=vp is MOBILE, has_touch=vp is MOBILE)
+            ctx = await b.new_context(viewport=vp, device_scale_factor=2 if vp is MOBILE else 1, is_mobile=vp is MOBILE, has_touch=vp is MOBILE)
             pg = await ctx.new_page()
             if "first-run" not in name:  # the one-time hint would otherwise cover every after-state
                 await pg.add_init_script("try { localStorage.setItem('nc-intro', '1'); } catch (e) {}")
@@ -161,18 +167,18 @@ async def main():
                 await ctx.close()
                 continue
             url = base
-            if name == "47-webgl-terrain-pitch":
+            if name == "53-webgl-terrain-pitch":
                 url += ("&" if "?" in url else "?") + "renderer=webgl&pitch=24"
             await pg.goto(url, wait_until="networkidle")
             await pg.wait_for_function("window.__app && window.__app.data && window.__app.data.cities", timeout=30000)
-            if name == "47-webgl-terrain-pitch":
+            if name == "53-webgl-terrain-pitch":
                 await pg.wait_for_function("window.__app.terrain.stats()?.available", timeout=30000)
             await pg.wait_for_timeout(2500 + extra)
             try:
                 await pg.evaluate(js)
             except Exception as e:  # a state the old version cannot show
                 errs.append(f"state: {e}")
-            if name == "47-webgl-terrain-pitch":
+            if name == "53-webgl-terrain-pitch":
                 ready = await pg.evaluate("""() => __app.cam.scale === 28 && __app.cam.pitch === 24 &&
                   __app.terrain.stats().cells > 0 && __app.terrain.stats().triangles > 0""")
                 if not ready:
@@ -180,7 +186,7 @@ async def main():
             await pg.wait_for_timeout(2600)
             await pg.screenshot(path=str(out / f"{name}.png"))
             perf = await pg.evaluate("window.__perf ? window.__perf() : null")
-            timings[name] = {"wall_s": round(time.time() - t0, 2), "perf": perf, "errors": errs}
+            timings[name] = {"wall_s": round(time.time() - t0, 2), "perf": perf, "errors": errs, "zoom": await pg.evaluate("__app.cam.scale")}
             print(f"{name}: {timings[name]['wall_s']}s {errs[:1]}")
             await ctx.close()
         await b.close()

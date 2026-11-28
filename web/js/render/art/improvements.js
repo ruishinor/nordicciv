@@ -129,7 +129,7 @@ const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 
 /** Road widths in css px at a zoom (exported for the legend / gallery). */
 export function roadWidths(Rpx) {
-  return { inter: clamp(Rpx * 0.095, 1.7, 9), major: clamp(Rpx * 0.06, 1.1, 5.5) };
+  return { inter: clamp(Rpx * 0.072, 1.5, 5.5), major: clamp(Rpx * 0.045, 1, 3.4) };
 }
 
 /** Paved Interstates (stone kerbs, pale paving, cobble joints when close) and dirt-track major highways. */
@@ -198,8 +198,8 @@ export function drawRail(ctx, net, vp, o) {
   const tiers = Rpx >= RAIL2_MIN_RPX ? [1, 0] : [0];
   for (const tier of tiers) {
     const k = tier === 0 ? 1 : 0.72;
-    const tie = clamp(Rpx * 0.11, 2.6, 9) * k; // sleeper length (css px)
-    const steel = clamp(Rpx * 0.022, 0.9, 2.4) * k;
+    const tie = clamp(Rpx * 0.075, 2.3, 5.5) * k; // sleeper length (css px)
+    const steel = clamp(Rpx * 0.018, 0.8, 1.8) * k;
     // ballast bed: a pale casing, so the line reads on dark forest as well as on pale plains
     ctx.lineCap = "round";
     ctx.strokeStyle = Rpx >= 16 ? "rgba(168,154,132,.55)" : "rgba(226,214,190,.5)";

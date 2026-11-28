@@ -1,3 +1,4 @@
+import { terrainGrain } from "./landscape.js";
 // Continuous landscape and administrative geometry for the static map (NC-V01–V03, NC-T04).
 //
 //  * relief: a shaded-relief land-cover image painted by the pipeline (pipeline/build/relief.py) from the same 1 km
@@ -115,32 +116,12 @@ export function drawRelief(ctx, vp, { gray = false } = {}) {
 let grain = null;
 function grainCanvas() {
   if (grain) return grain;
-  const N = 256;
-  const c = document.createElement("canvas");
-  c.width = c.height = N;
-  const g = c.getContext("2d");
-  g.fillStyle = "rgb(128,128,128)";
-  g.fillRect(0, 0, N, N);
-  let seed = 1234567;
-  const rnd = () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
-  const dot = (x, y, r, col) => {
-    for (const dx of [-N, 0, N]) for (const dy of [-N, 0, N]) {
-      const gr = g.createRadialGradient(x + dx, y + dy, 0, x + dx, y + dy, r);
-      gr.addColorStop(0, col);
-      gr.addColorStop(1, "rgba(128,128,128,0)");
-      g.fillStyle = gr;
-      g.fillRect(x + dx - r, y + dy - r, 2 * r, 2 * r);
-    }
-  };
-  for (let k = 0; k < 900; k++) dot(rnd() * N, rnd() * N, 1.6 + rnd() * 2.6, `rgba(40,40,40,${0.35 + rnd() * 0.3})`);
-  for (let k = 0; k < 700; k++) dot(rnd() * N, rnd() * N, 1.2 + rnd() * 1.8, `rgba(225,225,225,${0.25 + rnd() * 0.3})`);
-  const id = g.getImageData(0, 0, N, N);
-  for (let i = 0; i < id.data.length; i += 4) {
-    const n = (rnd() - 0.5) * 18;
-    id.data[i] += n; id.data[i + 1] += n; id.data[i + 2] += n;
-  }
-  g.putImageData(id, 0, 0);
-  grain = c;
+  const N=256,c=document.createElement("canvas");
+  c.width=c.height=N;
+  const g=c.getContext("2d"),id=g.createImageData(N,N);
+  id.data.set(terrainGrain(N));
+  g.putImageData(id,0,0);
+  grain=c;
   return c;
 }
 

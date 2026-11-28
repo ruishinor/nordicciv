@@ -29,3 +29,6 @@ export function popShort(n) {
 
 export const esc = (s) =>
   String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
+
+// Use only on natural-language sentences, not URLs, identifiers or units.
+export const sentenceCase = text => String(text).replace(/(^|[.!?]\s+|:\s+)([\p{Ll}])/gu, (_, prefix, letter) => prefix + letter.toLocaleUpperCase("en"));

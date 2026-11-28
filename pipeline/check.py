@@ -60,7 +60,7 @@ KNOWN_PLACES = {  # name: (lon, lat) of the main town, for a placement check (±
     "Tromsø": (18.96, 69.65), "Kiruna": (20.23, 67.86), "Luleå": (22.15, 65.58), "Stavanger": (5.73, 58.97),
 }
 DATA_FILES = ["world", "cities", "states", "nation", "lenses", "sources", "resources", "infrastructure", "wonders",
-              "detail", "munis", "climate"]
+              "detail", "munis", "climate", "nve_environment", "commuting", "commuting_se", "commuting_dk", "transport", "cross_border"]
 
 
 class Report:
@@ -390,6 +390,56 @@ def _jsonstat_by(path, keydims):
     return out, dup
 
 
+def regional_source_totals(raw, year=2023):
+    """Read official regional accounts directly; do not depend on a previous build's interim totals."""
+    from .core import jsonstat
+    from .sources.stats import estat_records
+
+    ra = raw / "regional_accounts"
+    rates = {}
+    for row in estat_records(json.loads((ra / "ert_bil_eur_a.json").read_text(encoding="utf-8"))):
+        if row["time"] == str(year) and row["currency"] in ("NOK", "SEK", "DKK"):
+            cur, rate = row["currency"], row["value"]
+            if cur in rates or not isinstance(rate, (int, float)) or not math.isfinite(rate) or rate <= 0:
+                raise ValueError(f"invalid or duplicate exchange rate: {cur}")
+            rates[cur] = rate
+    if set(rates) != {"NOK", "SEK", "DKK"}:
+        raise ValueError("missing regional accounts exchange rates")
+    totals = {}
+
+    def add(country, code, value, currency):
+        key = f"{country}-{code}"
+        if key in totals or not isinstance(value, (int, float)) or not math.isfinite(value) or value <= 0:
+            raise ValueError(f"invalid or duplicate regional total: {key}")
+        totals[key] = value / rates[currency] * 1e6
+
+    for d, value, _ in jsonstat.records(jsonstat.load(ra / "ssb_09391.json")):
+        code = d["Region"]
+        # The table also contains historical/new territorial codes without a 2023 observation.
+        # Match the builder's selection of populated regional accounts; coverage is checked separately.
+        if d["ContentsCode"] == "BNPB" and value is not None and value != 0 and len(code) == 2 and code not in ("21", "22", "23", "25", "26", "88", "99"):
+            add("NO", code, value, "NOK")
+    for d, value, _ in jsonstat.records(jsonstat.load(ra / "scb_TAB3138.json")):
+        code = d["Region"]
+        if d["ContentsCode"] == "NR0105AH" and len(code) == 2 and code not in ("00", "90"):
+            add("SE", code, value, "SEK")
+    with (ra / "dst_NRHP.csv").open(encoding="utf-8-sig", newline="") as stream:
+        for row in csv.DictReader(stream, delimiter=";"):
+            if row["PRISENHED"] == "V_T" and len(row["OMRÅDE"]) == 2:
+                add("DK", row["OMRÅDE"], float(row["INDHOLD"]), "DKK")
+    if {key.split("-")[0] for key in totals} != {"NO", "SE", "DK"}:
+        raise ValueError("missing national regional accounts")
+    return totals, rates
+
+
+def reconcile_regional_totals(expected, actual):
+    """Keep the existing €50,001 tolerance for regional totals and require coverage in both directions."""
+    missing = sorted(set(expected) - set(actual))
+    extra = sorted(set(actual) - set(expected))
+    worst = max((abs(actual[k] - expected[k]) for k in set(expected) & set(actual)), default=0)
+    return not missing and not extra and bool(expected) and worst <= 50_001, worst, missing, extra
+
+
 def check_source(r, cities, nation, states, gdp_by_region):
     raw_missing = [p for p in ("ssb/07459_pop_age.json", "ssb/07459_pop_country.json", "scb/TAB628_pop_area.json",
                                "dst/FOLK1A_pop.csv", "regional_accounts/ssb_09391.json") if not (RAW / p).exists()]
@@ -461,13 +511,15 @@ def check_source(r, cities, nation, states, gdp_by_region):
     mism = [c["name"] for c in cities if c["country"] == "DK" and dk.get((c["id"][3:], 2026)) != c["population"]]
     r.ok(not mism, f"source join: every Danish municipality's 2026 population equals DST FOLK1A ({len(mism)} off)")
     # --- regional output: Σ municipal estimates = published region totals (in euro)
-    g = json.loads((INTERIM / "_gdp_regions.json").read_text(encoding="utf-8"))["regions"] if (INTERIM / "_gdp_regions.json").exists() else None
-    if g:
-        # the interim file stores regional totals rounded to €0.1 million
-        worst = max(abs(gdp_by_region.get(k, 0) - v["eur"] * 1e6) for k, v in g.items())
-        r.ok(worst <= 0.05e6 + 1, f"economy: Σ municipal estimates reconcile with all {len(g)} published regional totals (worst Δ €{worst:,.0f}; totals stored to €0.1 m)")
-    else:
-        r.skip("economy: regional totals not available", mandatory_in=("source", "release"))
+    try:
+        g, rates = regional_source_totals(RAW)
+        valid, worst, missing, extra = reconcile_regional_totals(g, gdp_by_region)
+        r.ok(valid, f"economy: Σ municipal estimates reconcile with all {len(g)} published regional totals "
+             f"(worst Δ €{worst:,.0f}; missing {missing}, unexpected {extra})")
+        r.ok(all(abs(nation["fx"].get(cur, 0) - rate) <= 1e-9 for cur, rate in rates.items()),
+             "economy: published exchange rates equal the cached Eurostat rates")
+    except (OSError, ValueError, KeyError, TypeError) as error:
+        r.add("FAIL", f"economy: regional source totals unavailable or invalid: {error}")
     from .core import jsonstat
     js = jsonstat.load(RAW / "regional_accounts/ssb_09391.json")
     shelf = next(v for d, v, _ in jsonstat.records(js) if d["Region"] == "23" and d["ContentsCode"] == "BNPB")
@@ -610,6 +662,11 @@ def main(argv=None):
     check_shelters(r, load("shelters"), cities, world, lenses, mode)
     check_uplinks(r, load("uplinks"), cities, world, mode)
     check_climate(r, load("climate"), sources, mode)
+    check_nve_environment(r, load("nve_environment"), sources, mode)
+    for country, name in (("NO", "commuting"), ("SE", "commuting_se"), ("DK", "commuting_dk")):
+        check_commuting(r, load(name), cities, sources, mode, country)
+    check_transport(r, load("transport"), cities, sources, mode)
+    check_cross_border(r, load("cross_border"))
     check_version(r, load("version"))
     if res:
         check_resources(r, res, world)
@@ -624,6 +681,29 @@ def main(argv=None):
         cr = argv[argv.index("--candidate") + 1] if "--candidate" in argv else None
         check_release(r, cities, nation, accept="--accept" in argv, evidence=ev, candidate_root=cr)
     return _finish(r)
+
+
+def check_cross_border(r, data):
+    """Verify both selected COMP53 cells against the retained source response."""
+    try:
+        raw = (ROOT / "tests/fixtures/comp53_2023.json").read_bytes()
+        js = json.loads(raw)
+        codes = js["dimension"]["reporting country"]["category"]["index"]
+        cells = {k: js["value"][i] for k, i in codes.items()}
+        rows = data["flows"]
+        expected = {"DK": "SE", "SE": "DK"}
+        valid = (data["schema"] == 1 and data["period"] == "2023"
+                 and data["region"] == "Øresund" and data["source"]["table"] == "COMP53"
+                 and js["size"] == [2, 1]
+                 and js["dimension"]["time"]["category"]["index"] == {"2023": 0}
+                 and hashlib.sha256(raw).hexdigest() == data["source"]["sha256"]
+                 and len(rows) == 2 and set(cells) == set(expected)
+                 and {f["residence"]: f["work"] for f in rows} == expected
+                 and {f["residence"]: f["value"] for f in rows} == cells
+                 and all(type(f["value"]) is int and f["value"] > 0 for f in rows))
+        r.ok(valid, "cross-border commuting: both 2023 COMP53 counts match the pinned source response")
+    except (OSError, ValueError, KeyError, TypeError, IndexError) as error:
+        r.add("FAIL", f"cross-border commuting: invalid or missing source response: {error}")
 
 
 def check_shelters(r, sh, cities, world, lenses, mode):
@@ -696,12 +776,18 @@ def check_shelters(r, sh, cities, world, lenses, mode):
             txt = raw.read_text(encoding="utf-8")
             recs = re.findall(r"<app:lokalId>([^<]+)</app:lokalId>.*?<gml:pos>([-\d.]+) ([-\d.]+)</gml:pos>.*?<app:romnr>(\d+)</app:romnr>\s*"
                               r"<app:plasser>(\d*)</app:plasser>", txt, re.S)
-            src = {i: (float(la), float(lo), int(rm), int(pl) if pl else None) for i, la, lo, rm, pl in recs}
+            src = {i: (round(float(la), 6), round(float(lo), 6), int(rm), int(pl) if pl else None) for i, la, lo, rm, pl in recs}
             built = {x["id"]: (x["lat"], x["lon"], x["room"], x["places"]) for x in rows}
             diff = [i for i in set(src) | set(built) if src.get(i) != built.get(i)]
             hits = re.search(r'numberMatched="(\d+)"', (raw.parent / "hits.xml").read_text(encoding="utf-8"))
-            r.ok(not diff and len(src) == int(hits.group(1)), f"source: every shelter record (id, position, room, places) equals the cached WFS answer "
-                 f"({len(src)} read independently, {len(diff)} differ; WFS reports {hits.group(1)} matched)")
+            r.ok(bool(hits) and not diff and len(src) == len(recs) == len(rows) == int(hits.group(1)), f"source: every shelter record (id, position rounded to six decimals, room, places) equals the cached WFS answer "
+                 f"({len(src)} read independently, {len(diff)} differ; WFS reports {hits.group(1) if hits else 'unknown'} matched)")
+            digest = hashlib.sha256(raw.read_bytes()).hexdigest()
+            catalogue = next((s for s in load("sources") if s["id"] == "dsb_shelters"), {})
+            entry = next((f for f in catalogue.get("files", []) if f["file"] == raw.name), {})
+            r.ok(digest == sh["source"].get("sha256") == entry.get("sha256") and
+                 sh["source"].get("retrieved") == entry.get("retrieved"),
+                 "source: shelter dataset and catalogue identify the exact cached WFS snapshot")
         else:
             r.add("FAIL", "source: cached WFS answer for shelters missing")
     lens = next((l for l in lenses["lenses"] if l["id"] == "shelter_places"), None)
@@ -887,5 +973,179 @@ def _finish(r):
     return 1 if r.failed else 0
 
 
+
+def check_nve_environment(r, packet, sources, mode):
+    from .build.nve_environment import DISPLAY_BOUNDS, TOLERANCE_KM, build
+    from .sources.nve_environment import BATCH
+    if not packet:
+        r.add("FAIL", "NVE: flood extent data missing")
+        return
+    group = packet.get("groups", {}).get("flood200", {})
+    features = group.get("features", [])
+    count = group.get("source_count", 0)
+    ids = [f.get("id") for f in features]
+    r.ok(set(packet.get("groups", {})) == {"flood200"} and
+         group.get("display_bounds_lonlat") == list(DISPLAY_BOUNDS) and
+         packet.get("simplification_km") == TOLERANCE_KM and
+         len(features) == group.get("display_count") and 0 < len(features) <= count and
+         len(set(ids)) == len(ids) and all(type(i) is int for i in ids),
+         f"NVE: {len(features)} unique southeast pilot polygons from {count} selected source records")
+    invalid = []
+    for f in features:
+        b, rings = f.get("bbox", []), f.get("rings", [])
+        valid = len(b) == 4 and all(math.isfinite(x) for x in b) and b[0] <= b[2] and b[1] <= b[3] and bool(rings)
+        if valid:
+            for ring in rings:
+                if (len(ring) < 4 or ring[0] != ring[-1] or
+                    any(len(p) != 2 or not all(math.isfinite(x) for x in p) or
+                        not (b[0]-.001 <= p[0] <= b[2]+.001 and b[1]-.001 <= p[1] <= b[3]+.001)
+                        for p in ring)):
+                    valid = False
+                    break
+        if not valid:
+            invalid.append(f.get("id"))
+    r.ok(not invalid and (WEB_DATA / "nve_environment.json").stat().st_size <= 3_000_000,
+         f"NVE: finite closed rings, matching bounding boxes, 3 MB budget ({len(invalid)} invalid)")
+    files = packet.get("source", {}).get("files", [])
+    expected = math.ceil(count / BATCH) + 2
+    catalogue = next((s for s in sources if s["id"] == "nve_environment"), {})
+    r.ok(len(files) == expected and len({f["file"] for f in files}) == expected
+         and catalogue.get("file_count") == expected and
+         catalogue.get("license") == packet["source"].get("license")
+         and all(f["file"].startswith("flood200/") and
+                 f["url"].startswith("https://kart.nve.no/enterprise/rest/services/Flomsoner2/MapServer/17")
+                 and re.fullmatch(r"[a-f0-9]{64}", f["sha256"]) and f["bytes"] > 0 for f in files),
+         "NVE: source catalogue and complete flood request/hash inventory agree")
+    if mode != "built":
+        try:
+            actual = build(write=False)
+            def without_dates(data):
+                return {**data, "source": {**data["source"], "files": [
+                    {k:v for k,v in f.items() if k != "retrieved"} for f in data["source"]["files"]]}}
+            r.ok(without_dates(actual) == without_dates(packet), "NVE: published geometry equals verified source snapshot")
+        except (OSError, ValueError) as error:
+            r.add("FAIL", f"NVE: {error}")
+
+
+
+def check_commuting(r, packet, cities, sources, mode, country="NO"):
+    from .sources.commuting import Commuting, MIN_COMMUTERS
+    from .sources.nordic_commuting import NordicCommuting
+    source = Commuting() if country == "NO" else NordicCommuting(country)
+    period = {"NO":"2024 Q4", "SE":"2024 annual register", "DK":"2024 end November"}[country]
+    if not packet:
+        r.add("FAIL", "commuting: data missing")
+        return
+    ids = {c["id"] for c in cities if c["country"] == country}
+    flows = packet.get("flows", [])
+    pairs = set()
+    bad = 0
+    for f in flows:
+        if len(f) != 3:
+            bad += 1
+            continue
+        a,b,n = f
+        if a not in ids or b not in ids or a==b or type(n) is not int or n < MIN_COMMUTERS or (a,b) in pairs:
+            bad += 1
+        pairs.add((a,b))
+    audit = packet.get("audit", {})
+    counts = sum(audit.get(k,0) for k in ("published","within_municipality","below_threshold","missing"))
+    r.ok(packet.get("country")==country and packet.get("period")==period and
+         packet.get("unit")=="employed people" and packet.get("minimum")==MIN_COMMUTERS and
+         packet.get("municipality_count")==len(ids) and len(ids)=={"NO":357,"SE":290,"DK":98}[country] and
+         audit.get("published")==len(flows) and counts==len(ids)**2 and len(flows)>0 and not bad,
+         f"commuting {country}: {len(flows)} unique directed qualifying pairs from {counts:,} requested municipality pairs")
+    files = packet.get("source",{}).get("files",[])
+    expected = {f.rel_path:f.url for f in source.files()}
+    catalogue = next((s for s in sources if s["id"]==source.id),{})
+    r.ok({f["file"]:f["url"] for f in files}==expected and len(files)==len(expected) and
+         catalogue.get("file_count")==len(expected) and
+         catalogue.get("license")==packet["source"].get("license") and
+         all(re.fullmatch(r"[a-f0-9]{64}",f["sha256"]) for f in files),
+         "commuting: complete pinned request set, hashes and source catalogue")
+    if mode!="built":
+        try:
+            actual=source.process()
+            def without_dates(p):
+                return {**p,"source":{**p["source"],"files":[{k:v for k,v in f.items() if k!="retrieved"} for f in p["source"]["files"]]}}
+            r.ok(without_dates(actual)==without_dates(packet),"commuting: shipped values equal verified national observations")
+        except (OSError,ValueError) as error:
+            r.add("FAIL",f"commuting: {error}")
+
+def check_transport(r, packet, cities, sources, mode):
+    from .sources.transport import Transport, SELECTIONS, AIRPORTS, FERRIES
+    import itertools
+    import math
+    if not packet:
+        r.add("FAIL", "transport: data missing")
+        return
+    source = Transport()
+    nodes = packet.get("nodes", {})
+    flows = packet.get("flows", [])
+    city_ids = {c["id"]: c["country"] for c in cities}
+    valid_nodes = all(
+        n.get("kind") == k.split(":")[0] and n.get("name") and
+        (n.get("country") in ("NO", "SE", "DK")) and
+        (n.get("kind") == "country" and k in ("country:NO", "country:SE") and
+         "city" not in n and "x" not in n and "y" not in n or
+         n.get("kind") != "country" and city_ids.get(n.get("city")) == n.get("country") and
+         (k == "port:DK_0DKNDB" and "x" not in n and "y" not in n or
+          all(isinstance(n.get(coord), (float, int)) and math.isfinite(n[coord]) for coord in ("x", "y"))))
+        for k, n in nodes.items())
+    expected = {t: set(itertools.product(*sel.values())) for t, sel in SELECTIONS.items()}
+    counts = {t: 0 for t in expected}
+    seen, used, bad = set(), set(), 0
+    for f in flows:
+        table = f.get("table")
+        key = tuple(f.get("id", "").split(":")[1:])
+        if table not in expected or key not in expected[table] or f["id"] != table + ":" + ":".join(key):
+            bad += 1
+            continue
+        counts[table] += 1
+        if table == "FLYV33":
+            a, b = ["airport:" + AIRPORTS[k[1:]] for k in key[:2]]
+        elif table == "FLYV34":
+            a, b = "airport:" + AIRPORTS[key[0]], "country:" + key[1]
+            if key[2] == "0003":
+                a, b = b, a
+        else:
+            a, b = FERRIES[table][key[0]]
+        aviation = table.startswith("FLYV")
+        category = "aviation" if aviation else "ferry" if key[1] == "8005" else "freight"
+        unit = "tonnes" if category == "freight" else "passenger movements"
+        n = f.get("value")
+        if (f.get("origin"), f.get("destination")) != (a, b) or a == b or a not in nodes or b not in nodes or \
+                f.get("directed") is not aviation or f.get("category") != category or f.get("unit") != unit or \
+                type(n) is not int or n <= 0 or f["id"] in seen:
+            bad += 1
+        seen.add(f["id"])
+        used.update((a, b))
+    audit = packet.get("audit", {})
+    valid_audit = set(audit) == set(expected) and all(
+        set(audit[t]) == {"requested", "unavailable_or_zero", "same_airport", "published"} and
+        all(type(v) is int and v >= 0 for v in audit[t].values()) and
+        audit[t]["requested"] == len(expected[t]) and
+        audit[t]["requested"] == sum(audit[t][k] for k in ("unavailable_or_zero", "same_airport", "published")) and
+        audit[t]["published"] == counts[t] for t in expected)
+    r.ok(packet.get("schema") == 1 and packet.get("period") == "2024" and valid_nodes and
+         valid_audit and not bad and used == set(nodes) and len(flows) > 0,
+         f"transport: {len(flows)} bounded observations, endpoints, units, directions and coverage")
+    files = packet.get("files", [])
+    catalogue = next((s for s in sources if s.get("id") == source.id), {})
+    expected_files = {f.rel_path: f.url for f in source.files()}
+    r.ok({f["file"]: f["url"] for f in files} == expected_files and len(files) == len(expected_files) and
+         catalogue.get("file_count") == len(expected_files) and catalogue.get("license") == source.info.license and
+         {f["file"]: (f["url"], f["sha256"]) for f in files} ==
+         {f["file"]: (f["url"], f["sha256"]) for f in catalogue.get("files", [])} and
+         all(re.fullmatch(r"[a-f0-9]{64}", f["sha256"]) for f in files),
+         "transport: pinned requests and matching catalogue hashes")
+    if mode != "built":
+        try:
+            r.ok(source.process() == packet, "transport: shipped values equal verified source observations")
+        except (OSError, ValueError, KeyError, TypeError) as error:
+            r.add("FAIL", f"transport: {error}")
+
+
 if __name__ == "__main__":
     sys.exit(main(sys.argv[1:]))
+

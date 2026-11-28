@@ -93,7 +93,28 @@ async def desktop(page, url):
     await expect(page).to_have_url(re.compile(r"^(?!.*[#&]daylight=).*$"))
     assert await page.evaluate("""() => __app.state.selectedCity.id === "DK-101" &&
       __app.state.lens.id === "income" && !__app.staticLayers().find(l => l.id === "daylight").visible()"""), "Turning off changed the selection or lens"
-    return {"summer_alpha_north_south": summer, "winter_alpha_north_south": winter, "raster_reused_on_zoom": True}
+    await page.locator("#btn-daylight").click()
+    await select_place(page, "Tromsø")
+    await expect(page.locator("[data-seasonal-city]")).to_contain_text("24 h daylight")
+    await expect(page.locator("[data-seasonal-city]")).to_contain_text("0 h astronomical darkness")
+    aurora = page.get_by_role("link", name="Aurora forecast (NOAA)")
+    await expect(aurora).to_have_attribute("href", "https://www.spaceweather.gov/products/aurora-30-minute-forecast")
+    await expect(aurora).to_have_attribute("target", "_blank")
+    await page.locator(".daylight-seasons summary").click()
+    artwork = page.get_by_label("Seasonal landscape artwork")
+    await expect(artwork).not_to_be_checked()
+    await artwork.check()
+    await page.get_by_role("button", name="Winter", exact=True).click()
+    assert await page.evaluate("async () => (await import('/js/render/art/illustrate.js')).illustrationSeason()") == "winter"
+    await expect(page.locator(CITY)).to_contain_text("Polar night")
+    await page.get_by_role("button", name="Summer", exact=True).click()
+    assert await page.evaluate("async () => (await import('/js/render/art/illustrate.js')).illustrationSeason()") == "summer"
+    await artwork.uncheck()
+    assert await page.evaluate("async () => (await import('/js/render/art/illustrate.js')).illustrationSeason()") == "off"
+    await page.get_by_role("button", name="Midnight", exact=True).click()
+    await expect(page.locator(CITY)).to_contain_text("Midnight sun")
+    return {"summer_alpha_north_south": summer, "winter_alpha_north_south": winter, "raster_reused_on_zoom": True,
+            "seasonal_comparison": True, "aurora_reference": True}
 
 
 async def time_and_link(page, url):

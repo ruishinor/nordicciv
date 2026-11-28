@@ -17,7 +17,7 @@ export class Camera {
     this.w = 1;
     this.h = 1;
     this.minScale = 0.05;
-    this.maxScale = 6;
+    this.maxScale = 12; // close exploration: 12 CSS pixels per map kilometre
     this.pitch = 0;
     this.elevationAt = null;
     this.verticalExaggeration = 1;

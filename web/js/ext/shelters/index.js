@@ -1,3 +1,4 @@
+import { overview, nationalOverview } from "./overview.js";
 // Public civil-defence shelters (NordicCiv v0.4): Norway's public shelters as published by DSB, as one optional map
 // layer ("Public shelters" in the Map menu, off by default), a compact card for a selected shelter, a section in the
 // municipality panel's Society tab, notes for the Council's Resilience advisor and an Almanac page.
@@ -240,8 +241,7 @@ export function install(app) {
   // ---- municipality panel: Society tab ------------------------------------------------------------------------------
   function muniSection(city) {
     if (city.country !== "NO") {
-      const cov = data?.coverage?.[city.country];
-      return [{ tab: "Society", title: "Civil preparedness · public shelters", html: `<p class="muted small"><b>Shelter data unavailable for ${COUNTRY[city.country]}</b>. ${esc(cov?.reason || "")}</p>` }];
+      return [{ tab: "Society", title: "Civil preparedness · shelters", html: overview(city.country, [city.id]) }];
     }
     if (!data) return [{ tab: "Society", title: "Civil preparedness · public shelters", html: `<p class="muted small">Loading the public shelter register…</p>` }];
     const list = data.byMuni.get(city.id) || [];
@@ -264,6 +264,7 @@ export function install(app) {
       <div class="chips"><button class="chip" data-shelter-show="${esc(city.id)}">Show public shelters on the map</button>${guide}</div>${src}` }];
   }
   app.addCitySections?.((city) => muniSection(city));
+  app.addStateSections?.(r => r.country === "NO" ? [] : [{title:"Civil preparedness · shelters", html:overview(r.country,app.data.cities.filter(c=>c.states[0]===r.fips).map(c=>c.id))}]);
 
   // one delegated handler for buttons in panels, the Council and cards
   document.addEventListener("click", (e) => {
@@ -297,21 +298,21 @@ export function install(app) {
     const src = `DSB public shelter register, extracted ${data.source.extracted}`;
     const btn = (id) => `<button class="chip" data-shelter-show="${esc(id || "")}">Show public shelters</button>`;
     if (c) {
-      if (c.country !== "NO") return [obs(`Public shelter data is <b>unavailable</b> for ${COUNTRY[c.country]}.`, {})];
+      if (c.country !== "NO") return [overview(c.country,[c.id])];
       const a = data.munis[c.id];
       if (!a) return [obs(`DSB's register lists no public shelter in ${esc(c.name)}. Private shelters and other protective spaces are not shown.`, { source: src })];
       return [obs(`DSB's register lists <b>${int(a.n)} public shelter${a.n === 1 ? "" : "s"}</b> in ${esc(c.name)} with <b>${int(a.places)}</b> registered places. Anyone nearby can use a public shelter. Private shelters are not shown. ${btn(c.id)}`, { source: src })];
     }
     if (r) {
-      if (r.country !== "NO") return [obs(`Public shelter data is <b>unavailable</b> for ${COUNTRY[r.country]}.`, {})];
+      if (r.country !== "NO") return [overview(r.country,app.data.cities.filter(c=>c.states[0]===r.fips).map(c=>c.id))];
       const a = data.regions[r.fips];
       const total = app.data.cities.filter((x) => x.states[0] === r.fips).length;
       if (!a) return [obs(`DSB's register lists no public shelter in ${esc(r.name)}.`, { source: src })];
       return [obs(`${esc(r.name)}: <b>${int(a.n)}</b> public shelters with <b>${int(a.places)}</b> registered places, in ${a.munis} of ${total} municipalities. The register holds public shelters only. ${btn("")}`, { source: src })];
     }
     const t = data.totals;
-    return [obs(`Norway: DSB's register lists <b>${int(t.shelters)} public shelters</b> with <b>${int(t.places)}</b> registered places, in ${t.munis_with} of ${t.munis_no} municipalities. DSB puts Norway's total at about 20,000 shelters with room for about 2.5 million people, most of them private and not published. Public shelter data is unavailable for Sweden and Denmark. ${btn("")}`,
-      { source: `${src}; national total from DSB's guidance page` })];
+    return [obs(`Norway: DSB's register lists <b>${int(t.shelters)} public shelters</b> with <b>${int(t.places)}</b> registered places, in ${t.munis_with} of ${t.munis_no} municipalities. DSB puts Norway's total at about 20,000 shelters with room for about 2.5 million people, most of them private and not published. ${btn("")}`,
+      { source: `${src}; national total from DSB's guidance page` }), nationalOverview("SE"), nationalOverview("DK")];
   }
 
   // ---- Almanac ------------------------------------------------------------------------------------------------------
@@ -325,7 +326,7 @@ export function install(app) {
       <p><b>Registered places</b> show how many people the shelter is designed to hold, as listed by DSB. Anyone nearby can use a public shelter when the authorities open it. The register does not show current access or readiness.</p>
       <p><b>Current shelter information.</b> DSB and local authorities provide instructions about shelter use. This register covers public shelters only.</p>
       <p><b>Municipality.</b> ${esc(data.rules.municipality)} ${t.assigned_nearest} record(s) were assigned this way.</p>
-      <p><b>Sweden and Denmark.</b> Public shelter data is unavailable. Sweden: ${esc(data.coverage.SE.reason)} Denmark: ${esc(data.coverage.DK.reason)}</p>
+      <h3>Sweden</h3>${nationalOverview("SE")}<h3>Denmark</h3>${nationalOverview("DK")}<p>These national figures have different definitions and dates. The existing point layer and public shelter lens remain Norway-only; use the Swedish authority’s map for Swedish locations. Danish capacity figures have no location coordinates.</p>
       <p class="sc-note">${esc(EMERGENCY)}</p>
       <h4>Sources</h4>
       <ul><li><a href="${esc(s.dataset_url)}" target="_blank" rel="noopener">${esc(s.dataset)}</a> — ${esc(s.authority)}, ${esc(s.license)}. ${esc(s.attribution)}</li>

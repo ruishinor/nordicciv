@@ -40,10 +40,10 @@ def summarise(t):
 
 
 TOUR = [("overview", None, 0.42), ("regional", "Oslo", 1.2), ("regional", "Umeå", 1.6), ("mid", "Bergen", 2.6),
-        ("mid", "Jönköping", 3.0), ("close", "Bergen", 9), ("close", "Tingsryd", 8), ("close", "Skurup", 9),
-        ("very_close", "Tinn", 18), ("very_close", "Lom", 16), ("very_close", "Frederiksberg", 20), ("mid", "Narvik", 2.4)]
+        ("mid", "Jönköping", 3.0), ("close", "Bergen", 6), ("close", "Tingsryd", 6), ("close", "Skurup", 6),
+        ("max_zoom", "Tinn", 12), ("max_zoom", "Lom", 12), ("max_zoom", "Frederiksberg", 12), ("mid", "Narvik", 2.4)]
 TOUR_JS = """async ([name, s]) => { const c = name ? __app.data.cities.find(x => x.name === name) : null;
-  __app.cam.stop?.(); if (c) { __app.cam.x = c.x; __app.cam.y = c.y; __app.cam.scale = s; } else { __app.home(); __app.cam.stop?.(); __app.cam.scale = s; }
+  __app.cam.stop?.(); if (c) { __app.cam.x = c.x; __app.cam.y = c.y; __app.cam.scale = __app.cam.clampScale(s); } else { __app.home(); __app.cam.stop?.(); __app.cam.scale = __app.cam.clampScale(s); }
   const t0 = performance.now(); __app.invalidate();
   await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r))); return performance.now() - t0; }"""
 
@@ -66,6 +66,7 @@ async def measure(b, url, throttle):
     await pg.goto(url, wait_until="load")
     await pg.wait_for_function("window.__app && __app.data && __app.data.cities", timeout=60000)
     out["data_ready_ms"] = round(await pg.evaluate("performance.now()"))
+    out["max_zoom"] = await pg.evaluate("__app.cam.maxScale")
     try:
         await pg.wait_for_function("import('./js/render/art/relief.js').then(m => m.reliefReady())", timeout=60000)
         out["relief_ready_ms"] = round(await pg.evaluate("performance.now()"))
@@ -136,7 +137,7 @@ async def measure(b, url, throttle):
         illus.append([cls, name, st])
     out["tour_cold"], out["tour_warm"], out["tour_illustration"] = cold, settled, illus
     # close-zoom panning (illustrated ground in v0.3)
-    await pg.evaluate("(() => { const c = __app.data.cities.find(x => x.name === 'Bergen'); __app.cam.stop?.(); __app.cam.x = c.x; __app.cam.y = c.y; __app.cam.scale = 9; __app.invalidate(); })()")
+    await pg.evaluate("(() => { const c = __app.data.cities.find(x => x.name === 'Bergen'); __app.cam.stop?.(); __app.cam.x = c.x; __app.cam.y = c.y; __app.cam.scale = __app.cam.clampScale(6); __app.invalidate(); })()")
     await pg.wait_for_timeout(2000)
     fut = asyncio.ensure_future(pg.evaluate(FRAMES_JS))
     await pg.wait_for_timeout(50)
@@ -163,7 +164,7 @@ def aggregate(runs):
         if not v:
             return None
         return {"n": len(v), "median_ms": round(statistics.median(v), 1), "p95_ms": round(v[min(len(v) - 1, int(len(v) * 0.95))], 1), "worst_ms": round(v[-1], 1)}
-    out = {"runs": len(runs)}
+    out = {"runs": len(runs), "max_zoom": runs[-1].get("max_zoom")}
     for k in ("data_ready_ms", "relief_ready_ms", "lcp_ms", "heap_mb"):
         out[k] = pool([r.get(k) for r in runs])
     for k in ("pan", "zoom", "close_pan"):
@@ -204,7 +205,7 @@ async def main():
             for n, u in (builds if k % 2 == 0 else list(reversed(builds))):
                 r = await measure(b, u, throttle)
                 raw[n].append(r)
-                print(f"run {k + 1} {n}: pan {r['pan']['median_ms'] if r.get('pan') else None} ms, close pan {r['close_pan']['median_ms'] if r.get('close_pan') else None} ms")
+                print(f"run {k + 1} {n}: max zoom {r['max_zoom']}; pan {r['pan']['median_ms'] if r.get('pan') else None} ms, close pan {r['close_pan']['median_ms'] if r.get('close_pan') else None} ms", flush=True)
         await b.close()
     for n, _ in builds:
         res[n] = aggregate(raw[n])

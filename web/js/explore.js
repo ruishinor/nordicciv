@@ -4,7 +4,7 @@
 // "among the most …" only when it is in the top or bottom 5 % of the municipalities that have the figure (competition
 // ranks, the same convention as everywhere else), and a discovery names its exact value, rank and the population
 // filter used. Nothing is a composite score; estimates keep their ≈ and their definition.
-import { compact, esc, int, pct } from "./format.js";
+import { compact, esc, int, pct, sentenceCase } from "./format.js";
 import { rankList } from "./stats.js";
 
 const fin = Number.isFinite;
@@ -22,12 +22,12 @@ export const FACETS = [
     hi: "one of the highest shares of residents aged 65+", lo: "one of the lowest shares of residents aged 65+",
     value: (v) => `${pct(v, 0)} of residents aged 65 or over`, def: "Share of residents aged 65+, 1 Jan 2026." },
   { id: "jobs", lens: "jobs_ratio", get: (c) => c.jobs_per_100,
-    hi: "a job centre: one of the most jobs located here per resident", lo: "a commuter home: one of the fewest jobs located here per resident",
+    hi: "a job centre: One of the highest numbers of jobs per resident", lo: "a commuter home: One of the lowest numbers of jobs per resident",
     value: (v) => `${v.toFixed(0)} jobs located here per 100 residents`, def: "Jobs at workplaces in the municipality (2024) per 100 residents (2026). Above 100 means people commute in; it is not an employment rate." },
   // distance to a larger municipality says something about small places only (for Copenhagen it is the distance to
   // Oslo), so it is measured among municipalities under 50,000 residents
   { id: "remote", lens: null, get: (c) => ((c.population || 0) < 50000 ? c.nearest_bigger_km : null),
-    hi: "remote: unusually far from any larger municipality (among those under 50,000 residents)", lo: null,
+    hi: "remote: Unusually far from any larger municipality (among those under 50,000 residents)", lo: null,
     value: (v) => `${int(v)} km to the nearest more populous municipality`, def: "Straight-line distance between the main settlements of this and the nearest municipality with more residents." },
   { id: "area", lens: null, get: (c) => c.land_km2,
     hi: "one of the largest by land area", lo: "one of the smallest by land area",
@@ -80,10 +80,10 @@ export function distinctiveHtml(c, cities) {
   const items = distinctive(c, cities);
   if (!items.length) {
     return `<p class="muted">Close to the Scandinavian middle on every measure checked here (growth, density, age, jobs per resident,
-      distance, area, specialisation): no figure is in the top or bottom 5%. The similar-municipality and Council views show how it compares.</p>`;
+      distance, area, specialisation): No figure is in the top or bottom 5%. The similar-municipality and Council views show how it compares.</p>`;
   }
   return `<ul class="standout">${items.map((it) => `<li title="${esc(it.facet.def)}">
-      <div><b>${esc(it.text)}</b> <span class="muted">${esc(it.detail)}</span></div>
+      <div><b>${esc(sentenceCase(it.text))}</b> <span class="muted">${esc(it.detail)}</span></div>
       <div class="chips">${it.facet.lens ? `<button class="chip sm" data-facet="${esc(it.facet.id)}" title="Colour the map by this measure">Map ›</button>` : ""}
         ${it.group ? `<button class="chip sm" data-spec="${esc(it.group)}" title="Where else this industry concentrates">Where else ›</button>` : ""}
         ${(it.near || []).map((x) => `<button class="chip sm" data-city="${esc(x.id)}" title="${esc(x.full || x.name)}">${esc(x.name)}</button>`).join("")}</div></li>`).join("")}</ul>

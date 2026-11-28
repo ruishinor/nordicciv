@@ -13,9 +13,9 @@ future work.
 
 The WebGL surface is drawn into the existing cached map. Water, selection, municipality borders, city labels, map
 navigation, lenses and the minimap continue to use their existing paths. Statistical lenses use the Canvas renderer
-so their colours remain unchanged. The feature flag also raises the camera limit from 6 to 48 screen pixels per km;
-the normal map keeps its existing limit. Existing borders and map symbols remain on the flat map plane above the
-terrain surface.
+so their colours remain unchanged. The feature flag raises the camera limit from the normal 12 to 48 screen pixels
+per km; the standard map keeps its existing limit. Existing borders and map symbols remain on the flat map plane
+above the terrain surface.
 
 `window.__app.terrain.registerLayer({id, type, draw})` accepts future WebGL layers with one of these types:
 `elevation`, `vegetation`, `buildings`, `agriculture` or `infrastructure`. The draw callback receives the WebGL
@@ -23,5 +23,5 @@ context and a frame with the world data, view and a map-coordinate projection he
 the preview does not add finer elevation, trees, buildings, fields or transport features.
 
 Run the focused checks with `python -m unittest discover -s tests -p test_webgl_terrain.py`. The visual capture script
-includes `47-webgl-terrain-pitch`:
-`python tests/visual_states.py BASE_URL OUT_DIR 47-webgl-terrain-pitch`.
+includes `53-webgl-terrain-pitch`:
+`python tests/visual_states.py BASE_URL OUT_DIR 53-webgl-terrain-pitch`.

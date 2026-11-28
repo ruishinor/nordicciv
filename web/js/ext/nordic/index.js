@@ -114,7 +114,7 @@ export function install(app) {
     if (dockEl && tab === "advisors") render();
   });
   app.on("data", ({ name }) => {
-    if (name === "climate" && tab === "advisors" && advisor === "environment") render();
+    if (["climate", "nve_environment"].includes(name) && tab === "advisors" && advisor === "environment") render();
   });
   // mobile navigation bar (index.html #mobile-nav)
   const nav = document.getElementById("mobile-nav");
@@ -457,6 +457,8 @@ export function install(app) {
       if (hazards) out.push(`<div class="obs">${hazards}</div>`);
       const climate = app.climate?.advisor(c, r);
       if (climate) out.push(climate);
+      const nve = app.nveEnvironment?.advisor(c, r);
+      if (nve) out.push(nve);
       return out;
     },
     resilience(c, r) {

@@ -86,3 +86,24 @@ To update this dataset alone, run `python -m pipeline fetch climate_normals`, `p
 ## Historical CORINE land cover
 
 `lenses.json.land_history` contains the paired observation years (1990, 2018), pinned upstream revision, tile paths, Git blob IDs and SHA-256 hashes. `paired_cells` and each group's `gain` / `loss` arrays use the existing owned-hex packing. Forest classes are 23–25, agricultural classes 12–22. Net change is gain minus loss, null where no cell has both observations. Counts are 1 km cell classes, not polygon-based municipal areas. The builder checks all existing urban-growth values before writing new layers.
+
+## Optional NVE flood extent
+
+`nve_environment.json` contains a source inventory (request URLs, SHA-256, byte counts, retrieval timestamps), map simplification tolerance (km), and one group `flood200` with source and displayed record counts, the southeast pilot bounds (WGS84 degrees), and simplified closed polygon rings in map kilometres. Only current/updated modelled 200-year inundation polygons fully inside the pilot bounds are shown. Permanent water and low-point classes are excluded. No inference about unshown areas, live warnings, or property-level risk is made. Source: NVE, NLOD 1.0.
+
+## Norwegian commuting
+
+`commuting.json`: one 2024 Q4 SSB 03321 snapshot for 357 Norwegian municipalities. `flows` contains `[home municipality ID, workplace municipality ID, employed people]` for directed, intermunicipal pairs with at least 25 people; `audit` counts the full requested Cartesian matrix (published, within municipality, below threshold, missing). `source.files` stores request identity and SHA-256. The municipality panel lists up to eight partners in each direction. Map lines connect municipal centres; they are schematic, not transport routes, trips or travel-mode statistics. No cross-border commuting or unshown totals are inferred.
+## Scandinavian shelter overview
+
+The shelter overview data module contains separate source figures. DK: the official 19 June 2024 municipal inventory (FOU 2023–24, annex 205), all 98 municipality codes, four capacity categories and the published total. Each row and national column reconciles to the published totals. SE: MCF national guidance and official location map; Swedish municipal totals may be added from its downloadable register. The DSB point layer and Norway-only lens remain unchanged. The national definitions are different; no cross-country ranking or coverage ratio is computed.
+
+## `transport.json`
+
+Schema 1, period 2024. Selected Statistics Denmark tables FLYV33, FLYV34, SKIB31 and SKIB32. Each flow names its source table, endpoints, value, unit, category and direction. Values are published in rounded thousands and multiplied by 1,000. Ferry totals combine directions; aviation is directed. Zero/suppressed cells and same-airport observations are not displayed. Airport-to-country observations have no foreign airport or map coordinates. Læsø uses its labelled municipality centre; Fanø's port position is withheld pending verification. Map lines join endpoints, not actual routes. `audit` reconciles the requested matrices; `files` identifies the exact eight requests and hashes. Source/release checks compare the shipped packet with the cached source processor.
+
+## Cross-border commuting
+
+`cross_border.json` contains two selected 2023 regional counts from Nordic Statistics COMP53 (Örestat), attributed to the table with the recovered response and metadata SHA-256 values. DK reports residents of Denmark working in Skåne (1,391); SE reports residents of Sweden working in eastern Denmark (20,038). These are not municipality pairs. The owner approved publication of these two attributed observations; no blanket licence is asserted. The original recovery packets are retained locally. Discover uses Copenhagen and Malmö as places to explore the region, not as endpoints of measured routes.
+
+The two selected COMP53 source cells are retained in `tests/fixtures/comp53_2023.json`; unit tests verify the exact response hash and values. This is not a copy of the full table.
