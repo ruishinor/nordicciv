@@ -12,7 +12,7 @@ async def run(browser, url, ok, errors):
     label = "51 NVE flood pilot: scoped source, default off, real drawn polygons"
     try:
         await page.goto(url.split("#")[0],wait_until="domcontentloaded")
-        await page.wait_for_function("() => __app?.nveEnvironment?.groups?.has('flood200')")
+        await page.wait_for_function("() => window.__app?.nveEnvironment?.groups?.has('flood200')")
         assert await page.evaluate("!__app.nveEnvironment.on['nve-flood200']")
         await page.evaluate("__app.selectCity('NO-0301',{fly:false})")
         section=page.locator("#city-panel .nve-environment")

@@ -12,7 +12,7 @@ async def run(browser,url,ok,errors):
     label="52 Commuting: SSB direction, actual counts, map toggle and partner navigation"
     try:
         await page.goto(url.split("#")[0],wait_until="domcontentloaded")
-        await page.wait_for_function("() => !!__app?.commuting")
+        await page.wait_for_function("() => !!window.__app?.commuting")
         assert not await page.evaluate("__app.commuting.on")
         await page.evaluate("__app.selectCity('NO-3205',{fly:false})")
         section=page.locator("#city-panel .commuting-section")
