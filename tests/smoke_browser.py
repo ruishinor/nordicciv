@@ -41,7 +41,7 @@ URL = _pos[0] if _pos else "http://127.0.0.1:8765/"
 CANDIDATE = Path(_arg("--candidate", str(ROOT))).resolve()
 OUT = Path(_arg("--out", str(ROOT / "tests" / "results"))).resolve()
 # every journey must run and pass for a release (journey ids are the leading numbers of the names below)
-MANDATORY = [str(i) for i in range(0, 53)]  # 43–45 Daylight, 46–47 Climate, 48 Environment, 49–50 Journeys.
+MANDATORY = [str(i) for i in range(0, 56)]  # 51 NVE, 52–53 commuting, 54–55 close zoom.
 AXE = ROOT / "tests" / ".node" / "node_modules" / "axe-core" / "axe.min.js"
 AXE_ALT = Path(os.environ.get("NORDICCIV_AXE", "/nonexistent"))
 
@@ -103,9 +103,9 @@ async def main():
         # 1. open
         t0 = time.time()
         await pg.goto(URL, wait_until="networkidle")
-        await pg.wait_for_function("window.__app && window.__app.data && window.__app.data.cities", timeout=30000)
+        await pg.wait_for_function("() => window.__app && window.__app.data && window.__app.data.cities", timeout=30000)
         t_ready = time.time() - t0
-        await pg.wait_for_function("import('./js/render/art/relief.js').then(m => m.reliefReady() && m.munisReady())", timeout=30000)
+        await pg.wait_for_function("async () => await import('./js/render/art/relief.js').then(m => m.reliefReady() && m.munisReady())", timeout=30000)
         await pg.wait_for_timeout(800)
         timings["interactive_s"] = round(t_ready, 2)
         timings["relief_ready_s"] = round(time.time() - t0, 2)
@@ -277,7 +277,7 @@ async def main():
         h = await pg.evaluate("location.hash")
         pg2 = await ctx.new_page()
         await pg2.goto(URL + h, wait_until="networkidle")
-        await pg2.wait_for_function("window.__app && __app.state", timeout=30000)
+        await pg2.wait_for_function("() => window.__app && __app.state", timeout=30000)
         await pg2.wait_for_timeout(1500)
         sel = await pg2.evaluate("__app.state.selectedCity?.id || null")
         await pg2.close()
@@ -348,7 +348,7 @@ async def main():
         # this context enforces the page's Content-Security-Policy: any violation is a console error and fails journey 20
         mp.on("console", lambda msg: errors.append("mobile: " + msg.text) if msg.type == "error" else None)
         await mp.goto(URL, wait_until="networkidle")
-        await mp.wait_for_function("window.__app && __app.data && __app.data.cities", timeout=30000)
+        await mp.wait_for_function("() => window.__app && __app.data && __app.data.cities", timeout=30000)
         await mp.wait_for_timeout(1500)
         nav = await mp.evaluate("[...document.querySelectorAll('#mobile-nav button')].filter(b => b.offsetParent).map(b => b.innerText.trim())")
         dock_hidden = await mp.evaluate("getComputedStyle(document.getElementById('lens-dock')).display === 'none'")
@@ -380,7 +380,7 @@ async def main():
         await pg3.goto(URL, wait_until="networkidle")
         await pg3.evaluate("localStorage.removeItem('nc-intro')")
         await pg3.reload(wait_until="networkidle")
-        await pg3.wait_for_function("window.__app && __app.explore", timeout=30000)
+        await pg3.wait_for_function("() => window.__app && __app.explore", timeout=30000)
         intro = await pg3.evaluate("!!document.getElementById('intro')")
         axe3 = AXE if AXE.exists() else AXE_ALT if AXE_ALT.exists() else None
         a11y = []
@@ -395,7 +395,7 @@ async def main():
         disc = await pg3.evaluate("""(() => { const c = document.getElementById('discovery'); const sel = __app.state.selectedCity;
             return { shown: !c.hidden, text: c.querySelector('.disc-t')?.innerText || '', city: sel?.name || null }; })()""")
         await pg3.reload(wait_until="networkidle")
-        await pg3.wait_for_function("window.__app && __app.explore", timeout=30000)
+        await pg3.wait_for_function("() => window.__app && __app.explore", timeout=30000)
         intro_after = await pg3.evaluate("!!document.getElementById('intro')")
         await pg3.evaluate("__app.selectCity('NO-1856', {fly: false})")
         await pg3.wait_for_timeout(600)
@@ -415,7 +415,7 @@ async def main():
         pg4.on("console", lambda m: errors.append("shelters: " + m.text) if m.type == "error" else None)
         await pg4.goto(URL, wait_until="networkidle")
         await pg4.evaluate("localStorage.setItem('nc-intro', '1'); document.getElementById('intro')?.remove()")
-        await pg4.wait_for_function("window.__app && __app.shelters && __app.shelters.data", timeout=30000)
+        await pg4.wait_for_function("() => window.__app && __app.shelters && __app.shelters.data", timeout=30000)
         lay = await pg4.evaluate("""(async () => { const a = __app, sh = a.shelters, R = a.w.grid.R;
             const def = sh.on; const t = (rpx) => sh.items(rpx);
             const far = t(2.5), mid = t(9), near = t(40), close = t(90);
@@ -492,7 +492,7 @@ async def main():
         mp = await mctx.new_page()
         mp.on("pageerror", lambda e: errors.append("shelters mobile: " + str(e)))
         await mp.goto(URL, wait_until="networkidle")
-        await mp.wait_for_function("window.__app && __app.shelters && __app.shelters.data", timeout=30000)
+        await mp.wait_for_function("() => window.__app && __app.shelters && __app.shelters.data", timeout=30000)
         await mp.evaluate("(() => { const a = __app; a.ui.setMapToggle('shelters', true); a.flyTo(598, 1436, 40 / a.w.grid.R, 0); })()")
         await mp.wait_for_timeout(1500)
         mpt = await mp.evaluate("""(() => { const a = __app, R = a.cam.scale * a.w.grid.R;
@@ -520,7 +520,7 @@ async def main():
         pg5.on("request", lambda r: reqs5.append(r.url))
         await pg5.goto(URL, wait_until="networkidle")
         await pg5.evaluate("localStorage.setItem('nc-intro', '1'); document.getElementById('intro')?.remove()")
-        await pg5.wait_for_function("window.__app && __app.uplinks && __app.uplinks.data", timeout=30000)
+        await pg5.wait_for_function("() => window.__app && __app.uplinks && __app.uplinks.data", timeout=30000)
         ul = await pg5.evaluate("""(async () => { const a = __app, u = a.uplinks, R = a.w.grid.R, n = u.data.cameras.length;
             const lay = a.staticLayers().find((l) => l.id === 'uplinks');
             const def = u.on, before = lay.visible();
@@ -631,30 +631,62 @@ async def main():
            and "Wikidata" in da["page"] and "OSIRIS" in da["page"], {k: (v[:80] if isinstance(v, str) else v) for k, v in da.items()})
         await pg5.close()
         # 32. phone: tapping an uplink opens its card fully on screen with the link visible; it closes
-        mctx2 = await b.new_context(viewport={"width": 390, "height": 844}, is_mobile=True, has_touch=True, device_scale_factor=2)
+        mctx2 = await b.new_context(viewport={"width": 390, "height": 844}, is_mobile=True, has_touch=True, device_scale_factor=2, reduced_motion="reduce")
         await mctx2.add_init_script("try { localStorage.setItem('nc-intro', '1') } catch (e) {}")
         mq = await mctx2.new_page()
         mq.on("pageerror", lambda e: errors.append("uplinks mobile: " + str(e)))
         await mq.goto(URL, wait_until="networkidle")
-        await mq.wait_for_function("window.__app && __app.uplinks && __app.uplinks.data", timeout=30000)
-        await mq.evaluate("(() => { const a = __app, c = a.uplinks.data.byId.get('ln-gaustabanen'); a.ui.setMapToggle('uplinks', true); a.flyTo(c.x, c.y, 40 / a.w.grid.R, 0); })()")
-        await mq.wait_for_timeout(1500)
-        mqt = await mq.evaluate("""(() => { const a = __app, R = a.cam.scale * a.w.grid.R;
-            const it = a.uplinks.items(R).filter((i) => i.kind === 'one').map((i) => [i, ...a.cam.toScreen(i.x, i.y)])
-              .filter(([, x, y]) => x > 30 && x < 360 && y > 100 && y < 700 && !a.hitCity(x, y))[0];
-            return it ? { x: it[1], y: it[2] - a.uplinks.symbolPx(R) * 0.15 } : null; })()""")
+        await mq.wait_for_function("() => window.__app && __app.uplinks && __app.uplinks.data", timeout=30000)
+        await mq.wait_for_function("() => !document.getElementById('opening') && !document.getElementById('map').inert", timeout=15000)
+        await mq.evaluate("__app.ui.setMapToggle('uplinks', true)")
+        mqt, attempts = None, []
+        # Frame several known cameras at the pre-upgrade zoom. A banner or another
+        # layer may cover one marker; keep the real touchscreen interaction.
+        for anchor in ("ln-gaustabanen", "cs-425493061", "cs-701055294"):
+            framed = await mq.evaluate("""id => {
+                const a = __app, c = a.uplinks.data.byId.get(id);
+                if (!c) return false;
+                a.clearSelection(); a.cam.stop();
+                a.cam.scale = Math.min(6, 40 / a.w.grid.R);
+                a.cam.centerOn(c.x, c.y); a.invalidate(); return true;
+            }""", anchor)
+            if not framed:
+                continue
+            await mq.evaluate("new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)))")
+            result = await mq.evaluate("""() => {
+                const a = __app, R = a.cam.scale * a.w.grid.R;
+                const points = a.uplinks.items(R).filter(i => i.kind === 'one').map(i => {
+                    const [x, y] = a.cam.toScreen(i.x, i.y);
+                    return {x: Math.round(x), y: Math.round(y - a.uplinks.symbolPx(R) * 0.15), id: i.members[0].id};
+                }).filter(p => p.x > 30 && p.x < 360 && p.y > 100 && p.y < 700);
+                for (const p of points) {
+                    p.banner = !!a.hitCity(p.x,p.y);
+                    p.layer = a.hitLayer(p.x,p.y)?.layer;
+                    p.element = document.elementFromPoint(p.x,p.y)?.id;
+                }
+                return {point:points.find(p => !p.banner && p.element === 'map' && p.layer === 'uplinks') || null,
+                        points:points.slice(0,10),scale:a.cam.scale};
+            }""")
+            attempts.append({"anchor":anchor,**result})
+            if result["point"]:
+                mqt = result["point"]
+                break
         mqc = {}
         if mqt:
             await mq.touchscreen.tap(mqt["x"], mqt["y"])
-            await mq.wait_for_timeout(800)
-            mqc = await mq.evaluate("""(() => { const c = document.getElementById('uplink-card'), r = c.getBoundingClientRect(), l = c.querySelector('a.uplink-open')?.getBoundingClientRect();
-                return { shown: !c.hidden, inView: r.left >= 0 && r.right <= innerWidth && r.top >= 0 && r.bottom <= innerHeight,
-                         linkVisible: !!l && l.bottom <= innerHeight && l.width > 40 }; })()""")
-            await mq.tap("#uplink-card [data-uc='close']")
-            mqc["closed"] = await mq.evaluate("document.getElementById('uplink-card').hidden")
+            try:
+                await mq.locator("#uplink-card").wait_for(state="visible", timeout=5000)
+                mqc = await mq.evaluate("""(() => { const c = document.getElementById('uplink-card'), r = c.getBoundingClientRect(), l = c.querySelector('a.uplink-open')?.getBoundingClientRect();
+                    return { shown: !c.hidden, inView: r.left >= 0 && r.right <= innerWidth && r.top >= 0 && r.bottom <= innerHeight,
+                             linkVisible: !!l && l.bottom <= innerHeight && l.width > 40, selected: __app.uplinks.selected }; })()""")
+                await mq.tap("#uplink-card [data-uc='close']", timeout=5000)
+                mqc["closed"] = await mq.evaluate("document.getElementById('uplink-card').hidden")
+            except Exception as exc:
+                mqc["error"] = str(exc)
         await mctx2.close()
         ok("32 phone: tapping a camera uplink opens its card fully on screen with the link visible; it closes",
-           bool(mqt) and mqc.get("shown") and mqc.get("inView") and mqc.get("linkVisible") and mqc.get("closed"), {**(mqt or {}), **mqc})
+           bool(mqt) and mqc.get("shown") and mqc.get("inView") and mqc.get("linkVisible") and mqc.get("closed")
+           and mqc.get("selected") == mqt["id"], {**(mqt or {}), **mqc, "attempts":attempts})
 
         # 33–42. opening screen and Open in Maps (tests/journeys_opening_maps.py)
         from pyproj import Transformer
@@ -678,6 +710,8 @@ async def main():
         await run_nve(b, URL, ok, errors)
         from journeys_commuting import run as run_commuting
         await run_commuting(b, URL, ok, errors)
+        from journeys_close_zoom import run as run_close_zoom
+        await run_close_zoom(b, URL, ok, errors, OUT)
 
         ok("20 no console errors", not errors, errors[:3])
         await b.close()
@@ -701,4 +735,5 @@ async def main():
     sys.exit(1 if failed or skipped or missing or after != cand["id"] else 0)
 
 
-asyncio.run(main())
+if __name__ == "__main__":
+    asyncio.run(main())

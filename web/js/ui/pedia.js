@@ -125,8 +125,9 @@ export function initPedia(data) {
       plus the local detail) under one north-west light. Below 1 km it only interpolates.</p>
       <p><b>Illustrations.</b> Closer in, the map paints trees, fields, scree, mire, heath and rooftops through the 1 km
       CORINE class masks (forest weighted by tree-cover density). They show what covers the ground in that square kilometre
-      — forest, farmland, bare rock, built-up land — not where any real tree, field or house stands, and their colours (crop
-      tones, roof colours) are illustrative. The analysis view (any lens) drops them so the data colours stay legible.</p>
+      — forest, farmland, bare rock, built-up land — not where any real tree, field or house stands. Zoom in further to
+      see sharper, larger illustrations of the same landscape. The underlying map still uses 1 km grids. The analysis
+      view (any lens) drops the illustrations so the data colours stay legible.</p>
       <h4>For developers</h4>
       <p>See the <a href="https://github.com/ruishinor/nordicciv" target="_blank" rel="noopener noreferrer">NordicCiv source code</a> for data processing, test commands and release checks.</p>`,
     Terrain: () => {

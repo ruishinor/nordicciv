@@ -8,7 +8,7 @@ async def run(browser,url,ok,errors):
         await ctx.add_init_script("localStorage.setItem('nc-intro','1')")
         page=await ctx.new_page()
         page.on("pageerror",lambda e:errors.append(str(e)))
-        label="52 Commuting: three national sources, directions and partner navigation" + (" phone" if mobile else " desktop")
+        label=f"{53 if mobile else 52} Commuting: three national sources, directions and partner navigation" + (" phone" if mobile else " desktop")
         try:
             await page.goto(url.split("#")[0],wait_until="domcontentloaded")
             await expect(page.locator("#opening")).to_have_count(0,timeout=15000)

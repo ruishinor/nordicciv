@@ -77,6 +77,8 @@ async def run(browser, url, ok, errors):
             await expect(saved).to_have_attribute("data-place-open", second)
             await saved.click()
             assert await page.evaluate("__app.state.selectedCity.id") == second
+            if mobile:
+                await page.locator("#city-panel .close").click()
             await discover.click()
             await card.get_by_role("button", name="Recent places", exact=False).click()
             await expect(card.locator("[data-place-open]").first).to_have_attribute("data-place-open", second)
