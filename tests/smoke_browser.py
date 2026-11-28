@@ -637,22 +637,40 @@ async def main():
         mq.on("pageerror", lambda e: errors.append("uplinks mobile: " + str(e)))
         await mq.goto(URL, wait_until="networkidle")
         await mq.wait_for_function("window.__app && __app.uplinks && __app.uplinks.data", timeout=30000)
-        await mq.evaluate("(() => { const a = __app, c = a.uplinks.data.byId.get('ln-gaustabanen'); a.ui.setMapToggle('uplinks', true); a.flyTo(c.x, c.y, 40 / a.w.grid.R, 0); })()")
-        await mq.wait_for_function("() => !__app.cam.moving && !document.getElementById('opening')", timeout=15000)
-        # Wait for the settled camera and drawn hit regions; check the actual tap point,
-        # not the unshifted marker centre. Other map layers or banners can own that point.
-        await mq.evaluate("new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)))")
-        mqt = await mq.evaluate("""(() => { const a = __app, R = a.cam.scale * a.w.grid.R;
-            const points = a.uplinks.items(R).filter(i => i.kind === 'one').map(i => {
-                const [x, y] = a.cam.toScreen(i.x, i.y);
-                return {x: Math.round(x), y: Math.round(y - a.uplinks.symbolPx(R) * 0.15), id: i.members[0].id};
-            });
-            return points.find(p => {
-                if (p.x <= 30 || p.x >= 360 || p.y <= 100 || p.y >= 700 || a.hitCity(p.x,p.y)) return false;
-                const hit = a.hitLayer(p.x,p.y);
-                return document.elementFromPoint(p.x,p.y)?.id === 'map' &&
-                  hit?.layer === 'uplinks' && hit.item.kind === 'one' && hit.item.members[0].id === p.id;
-            }) || null; })()""")
+        await mq.wait_for_function("() => !document.getElementById('opening') && !document.getElementById('map').inert", timeout=15000)
+        await mq.evaluate("__app.ui.setMapToggle('uplinks', true)")
+        mqt, attempts = None, []
+        # Frame several known cameras at the pre-upgrade zoom. A banner or another
+        # layer may cover one marker; keep the real touchscreen interaction.
+        for anchor in ("ln-gaustabanen", "cs-425493061", "cs-701055294"):
+            framed = await mq.evaluate("""id => {
+                const a = __app, c = a.uplinks.data.byId.get(id);
+                if (!c) return false;
+                a.clearSelection(); a.cam.stop();
+                a.cam.scale = Math.min(6, 40 / a.w.grid.R);
+                a.cam.centerOn(c.x, c.y); a.invalidate(); return true;
+            }""", anchor)
+            if not framed:
+                continue
+            await mq.evaluate("new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)))")
+            result = await mq.evaluate("""() => {
+                const a = __app, R = a.cam.scale * a.w.grid.R;
+                const points = a.uplinks.items(R).filter(i => i.kind === 'one').map(i => {
+                    const [x, y] = a.cam.toScreen(i.x, i.y);
+                    return {x: Math.round(x), y: Math.round(y - a.uplinks.symbolPx(R) * 0.15), id: i.members[0].id};
+                }).filter(p => p.x > 30 && p.x < 360 && p.y > 100 && p.y < 700);
+                for (const p of points) {
+                    p.banner = !!a.hitCity(p.x,p.y);
+                    p.layer = a.hitLayer(p.x,p.y)?.layer;
+                    p.element = document.elementFromPoint(p.x,p.y)?.id;
+                }
+                return {point:points.find(p => !p.banner && p.element === 'map' && p.layer === 'uplinks') || null,
+                        points:points.slice(0,10),scale:a.cam.scale};
+            }""")
+            attempts.append({"anchor":anchor,**result})
+            if result["point"]:
+                mqt = result["point"]
+                break
         mqc = {}
         if mqt:
             await mq.touchscreen.tap(mqt["x"], mqt["y"])
@@ -668,7 +686,7 @@ async def main():
         await mctx2.close()
         ok("32 phone: tapping a camera uplink opens its card fully on screen with the link visible; it closes",
            bool(mqt) and mqc.get("shown") and mqc.get("inView") and mqc.get("linkVisible") and mqc.get("closed")
-           and mqc.get("selected") == mqt["id"], {**(mqt or {}), **mqc})
+           and mqc.get("selected") == mqt["id"], {**(mqt or {}), **mqc, "attempts":attempts})
 
         # 33–42. opening screen and Open in Maps (tests/journeys_opening_maps.py)
         from pyproj import Transformer

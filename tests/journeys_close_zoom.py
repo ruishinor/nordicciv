@@ -23,9 +23,9 @@ async def run(browser, url, ok, errors, out):
                 a.cam.zoomAt(a.cam.w / 2, a.cam.h / 2, 6 / a.cam.scale);
                 a.cam.centerOn(c.x, c.y); a.invalidate();
             }""")
-            stats = """async (zoom) => {
-                const m = await import('/js/render/art/illustrate.js');
-                const s = m.illustrationState()?.last;
+            await page.evaluate("async () => {window.__zoomArt = await import('/js/render/art/illustrate.js')}")
+            stats = """(zoom) => {
+                const s = window.__zoomArt.illustrationState()?.last;
                 return s && Math.abs(s.zoom - zoom) < 0.001 && s.classes > 0 ? s : false;
             }"""
             before = await (await page.wait_for_function(stats, arg=6, timeout=30000)).json_value()
@@ -48,9 +48,8 @@ async def run(browser, url, ok, errors, out):
                     const a = __app, c = a.cityById.get('DK-751');
                     a.cam.centerOn(c.x - 20, c.y); a.invalidate();
                 }""")
-                await page.wait_for_function("""async (at) => {
-                    const m = await import('/js/render/art/illustrate.js');
-                    const s = m.illustrationState()?.last;
+                await page.wait_for_function("""(at) => {
+                    const s = window.__zoomArt.illustrationState()?.last;
                     return s && s.at > at && s.classes > 0;
                 }""", arg=after["at"], timeout=30000)
                 await page.screenshot(path=str(out / "close-zoom-desktop-danish-farmland.png"))
