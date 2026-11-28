@@ -169,3 +169,6 @@ Not affiliated with any game publisher; all art is drawn in code.
 
 ### Landscape history
 The Environment advisor and Norwegian county panels include selected glacier area comparisons from NVE's [2024 glacier overview](https://publikasjoner.nve.no/fakta/2024/fakta2024_01.pdf). Timeline links to the existing CORINE 1990–2018 built-up-land lens and displays glacier observations for the selected area, with their own observation years. NVE flood and landslide maps open on NVE's site; no hazard zones or live warnings are drawn by NordicCiv.
+
+### Connected discovery journeys
+Open Discover, then Journeys, to follow hydropower, industry, farmland, winter daylight or built-up land changes across municipalities with figures in the map. Previous and Next stop keep the municipality and map lens in view; a shared link restores the current stop. Municipality panels link to Copernicus satellite imagery around the map location and to Yr's forecast search, with local coordinates. The sites open separately; NordicCiv does not load imagery or forecasts from them.
