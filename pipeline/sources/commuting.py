@@ -86,6 +86,24 @@ class Commuting(Source):
     def files(self):
         return [File("metadata.json",BASE+"/metadata?lang=en")]+[f for f,_,_ in self.batches()]
 
+    def fetch(self, force=False):
+        import urllib.error
+        for f in self.files():
+            try:
+                fetch.download(self.id,f.url,f.rel_path,force=force,relay=False)
+            except urllib.error.HTTPError as err:
+                print(f"{f.rel_path}: HTTP {err.code} {err.read().decode('utf-8',errors='replace')[:3000]}",flush=True)
+                raise
+            if f.rel_path == "metadata.json":
+                meta=jsonstat.load(self.path(f.rel_path))
+                for dim in ("ArbstedKomm","Bokommuen"):
+                    known=set(meta["dimension"][dim]["category"]["index"])
+                    missing=set(municipality_codes())-known
+                    if missing:
+                        raise ValueError(f"Municipality codes unavailable in {dim}: {sorted(missing)}")
+            print(f"Acquired {f.rel_path}",flush=True)
+        return []
+
     def process(self):
         for f in self.files():
             ok, why = fetch.verify(self.id, f.rel_path, url=f.url, method=f.method, body=f.body)
