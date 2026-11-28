@@ -105,3 +105,5 @@ Schema 1, period 2024. Selected Statistics Denmark tables FLYV33, FLYV34, SKIB31
 ## Cross-border commuting
 
 `cross_border.json` contains two selected 2023 regional counts from Nordic Statistics COMP53 (Örestat), attributed to the table with the recovered response and metadata SHA-256 values. DK reports residents of Denmark working in Skåne (1,391); SE reports residents of Sweden working in eastern Denmark (20,038). These are not municipality pairs. The owner approved publication of these two attributed observations; no blanket licence is asserted. The original recovery packets are retained locally. Discover uses Copenhagen and Malmö as places to explore the region, not as endpoints of measured routes.
+
+The two selected COMP53 source cells are retained in `tests/fixtures/comp53_2023.json`; unit tests verify the exact response hash and values. This is not a copy of the full table.

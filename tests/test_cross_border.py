@@ -1,3 +1,4 @@
+import hashlib
 import json
 import unittest
 from pathlib import Path
@@ -13,4 +14,11 @@ class CrossBorderTests(unittest.TestCase):
                          {("DK","SE"):1391, ("SE","DK"):20038})
         self.assertEqual(len(data["flows"]), 2)
         self.assertEqual(data["source"]["table"], "COMP53")
-        self.assertRegex(data["source"]["sha256"], r"^[a-f0-9]{64}$")
+        raw = (ROOT / "tests/fixtures/comp53_2023.json").read_bytes()
+        self.assertEqual(hashlib.sha256(raw).hexdigest(), data["source"]["sha256"])
+        source = json.loads(raw)
+        self.assertEqual(source["size"], [2,1])
+        self.assertEqual(source["dimension"]["time"]["category"]["index"], {"2023":0})
+        codes = source["dimension"]["reporting country"]["category"]["index"]
+        self.assertEqual({f["residence"]:f["value"] for f in data["flows"]},
+                         {code:source["value"][index] for code,index in codes.items()})
