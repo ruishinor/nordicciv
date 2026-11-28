@@ -10,7 +10,7 @@ Natural Earth and Wikidata — and every number says what it measures, where it 
 
 Explore your hometown, see what stands out, compare it with nearby municipalities,
 press **Discover** for a surprising fact or follow a short journey through Norwegian hydropower, Swedish industrial
-towns, Danish farmland, commuting connections or the Øresund. Save places to return to later.
+towns, Danish farmland, commuting connections or the Øresund. Save places to return to later. Collapse the minimap or municipality details to see more of the map. Turn on Wonders & landmarks in Map layers when you want to explore those sites.
 
 ## What's in it
 

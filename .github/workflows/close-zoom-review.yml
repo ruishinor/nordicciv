@@ -4,7 +4,10 @@ on:
   push:
     branches: [integration/roadmap-2026-11-28]
     paths:
+      - 'web/css/style.css'
+      - 'web/index.html'
       - 'web/js/render/art/**'
+      - 'web/js/render/art/improvements.js'
       - 'web/js/render/banners.js'
       - 'tests/perf.py'
       - 'tests/visual_states.py'

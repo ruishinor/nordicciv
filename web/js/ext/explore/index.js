@@ -2,7 +2,7 @@
 // (flies there, opens its panel, colours the map by the measure), the "what stands out" links from the municipality
 // panel, and a short, dismissible first-run hint. Facts and rules: ../../explore.js.
 import { FACETS, discoveries } from "../../explore.js";
-import { esc } from "../../format.js";
+import { esc, sentenceCase } from "../../format.js";
 import { buildJourneys, buildConnectionJourneys, contextLinks, resolveJourney } from "./journeys.js";
 import { placeLists } from "./places.js";
 
@@ -145,7 +145,7 @@ export async function install(app) {
     }
     card.dataset.journeys = "step";
     card.innerHTML = '<div class="disc-k">' + esc(journey.title) + ' · ' + (index + 1) + ' of ' + journey.stops.length + '</div>' +
-      '<h2 class="disc-t" tabindex="-1">' + esc(city.name) + '</h2><p>' + esc(stop.text) + '</p><p class="muted small">' + esc(stop.source) + '</p>' +
+      '<h2 class="disc-t" tabindex="-1">' + esc(city.name) + '</h2><p>' + esc(sentenceCase(stop.text)) + '</p><p class="muted small">' + esc(stop.source) + '</p>' +
       '<div class="chips" role="group" aria-label="Journey stops">' + journey.stops.map((s, i) =>
         '<button type="button" class="chip" data-journey-stop="' + i + '"' + (i === index ? ' aria-current="step" disabled' : '') + '>' +
         (i + 1) + '. ' + esc(app.cityById.get(s.city)?.name || s.city) + '</button>').join("") + '</div>' +
@@ -232,7 +232,7 @@ export async function install(app) {
     const f = FACETS.find((x) => x.id === d.facet);
     const def = d.def || f?.def;
     card.innerHTML = `<div class="disc-k">Discovery ${pos}/${all.length}</div>
-      <p class="disc-t">${esc(d.text)}</p>
+      <p class="disc-t">${esc(sentenceCase(d.text))}</p>
       ${def ? `<p class="muted small">${esc(def)}</p>` : d.group ? `<p class="muted small">Location quotient: the industry's share of local jobs ÷ its share in the three countries combined. Concentration, not output.</p>` : ""}
       <div class="chips"><button class="chip" data-d="next">Another ›</button>${journeys.length ? '<button class="chip" data-d="journeys">Journeys</button>' : ""}<button class="chip" data-d="close">Close</button></div>`;
     card.hidden = false;

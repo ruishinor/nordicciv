@@ -916,4 +916,5 @@ body.minimap-collapsed #lens-area { left:calc(64px + var(--dock-left, 0px)); }
   .inspector-restore { top:50px; right:8px; max-width:calc(100vw - 16px); min-height:40px; }
   .maplayers-mobile { display:block; position:fixed; z-index:12; bottom:calc(64px + env(safe-area-inset-bottom)); left:56px; min-height:40px; padding:0 10px; cursor:pointer; color:var(--gold-bright); }
   body.panel-open .maplayers-mobile { display:none; }
+  #map-layers-pop { margin-bottom:52px; max-height: min(60vh, calc(100dvh - 180px)); }
 }

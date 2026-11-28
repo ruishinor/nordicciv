@@ -117,7 +117,7 @@ export function showPanel(spec) {
     <div class="sheet-grip" aria-hidden="true"></div>
     <div class="cp-head">
       <div class="stripe" style="background:${spec.stripe}"></div>
-      <button class="icon-btn cp-collapse" type="button" aria-label="Collapse details" aria-controls="city-panel" title="Collapse details">›</button>
+      <button class="icon-btn cp-collapse" type="button" aria-label="Collapse details" aria-expanded="true" aria-controls="city-panel" title="Collapse details">›</button>
       <button class="icon-btn cp-close" aria-label="Close panel (Esc)" title="Close (Esc)">${icon("close", "✕", { size: 13 })}</button>
       <div class="cp-kind">${spec.kind === "state" ? "Region" : "Municipality"}</div>
       <h2 class="cp-name">${spec.titleHtml ?? esc(spec.title)}</h2>
