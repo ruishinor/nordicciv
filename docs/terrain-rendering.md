@@ -16,10 +16,11 @@ surface tint also keeps the existing land-cover mix from each 6 km hex; the 30 m
 resolution of that colour information.
 
 Terrain detail follows the visible map width: wider than 100 km uses the fallback; at 100 km the 480 m tiles are
-available, at 30 km the 120 m level is used, and at 10 km the 30 m level is used. At 2 km and closer the same 30 m
-source is the finest available; zooming further does not add source detail. Missing or failed fine tiles blend to a
-loaded coarser tile and then to the existing hex elevations. Coverage fades at pilot and tile edges, and water cells
-are excluded from the detailed surface.
+available, at 30 km the 120 m level is used, and at 10 km the 30 m source level is selected. At 2 km and closer the
+same 30 m source is the finest available; zooming further does not add source detail. The mesh is capped at 100,000
+vertices: in a 1440 × 900 view it draws at 60 m spacing at 10 km and 30 m at 2 km. The actual mesh spacing is
+reported in terrain stats. Missing or failed fine tiles blend to a loaded coarser tile and then to the existing hex
+elevations. Coverage fades at pilot and tile edges, and water cells are excluded from the detailed surface.
 
 The WebGL surface is drawn into the existing cached map. Municipality and regional borders, coastlines, city markers,
 resource icons and selection outlines follow the sampled surface. At close zoom, settlement markers remain visible as

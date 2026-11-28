@@ -45,7 +45,7 @@ To update this dataset alone, run `python -m pipeline fetch climate_normals`, `p
 | `borders.json` | internal borders without coastline: `country`, `region`, `municipality` line lists (delta-encoded) |
 | `coast.json` | shore lines traced from the relief land mask |
 | `relief/index.json` | relief image levels (`L0` 1 km whole image, `L1` 0.5 km tiles), `gray` (Analyze), `sea`, `hex_fallback` (land hexes with no 1 km data), `sha256` |
-| `terrain/index.json` | optional elevation pilot: shared projection, Copernicus GLO-30 surface-model source and attribution, 3.84 km tile span, nested 480/120/30 m grids, coverage bounds and checksummed little-endian height tiles. The browser uses 480 m tiles at views up to 100 km wide, 120 m at 30 km and 30 m at 10 km; 30 m remains the finest level at 2 km and closer. |
+| `terrain/index.json` | optional elevation pilot: shared projection, Copernicus GLO-30 surface-model source and attribution, 3.84 km tile span, nested 480/120/30 m grids, coverage bounds and checksummed little-endian height tiles. The browser uses 480 m tiles for views over 30 and up to 100 km wide, 120 m for views over 10 and up to 30 km, and 30 m at 10 km and closer. A 100,000-vertex cap can make the rendered mesh coarser than its source tiles. |
 
 ## Added in v0.5
 
