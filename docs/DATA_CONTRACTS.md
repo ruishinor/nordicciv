@@ -101,3 +101,7 @@ The shelter overview data module contains separate source figures. DK: the offic
 ## `transport.json`
 
 Schema 1, period 2024. Selected Statistics Denmark tables FLYV33, FLYV34, SKIB31 and SKIB32. Each flow names its source table, endpoints, value, unit, category and direction. Values are published in rounded thousands and multiplied by 1,000. Ferry totals combine directions; aviation is directed. Zero/suppressed cells and same-airport observations are not displayed. Airport-to-country observations have no foreign airport or map coordinates. Læsø uses its labelled municipality centre; Fanø's port position is withheld pending verification. Map lines join endpoints, not actual routes. `audit` reconciles the requested matrices; `files` identifies the exact eight requests and hashes. Source/release checks compare the shipped packet with the cached source processor.
+
+## Cross-border commuting
+
+`cross_border.json` contains two selected 2023 regional counts from Nordic Statistics COMP53 (Örestat), attributed to the table with the recovered response and metadata SHA-256 values. DK reports residents of Denmark working in Skåne (1,391); SE reports residents of Sweden working in eastern Denmark (20,038). These are not municipality pairs. The owner approved publication of these two attributed observations; no blanket licence is asserted. The original recovery packets are retained locally. Discover uses Copenhagen and Malmö as places to explore the region, not as endpoints of measured routes.

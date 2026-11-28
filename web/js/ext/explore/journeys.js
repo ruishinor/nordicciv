@@ -86,3 +86,40 @@ export function contextLinks(city) {
   return '<div class="chips">'+link(satellite,"Satellite imagery (Copernicus)")+link("https://www.yr.no/en","Find forecast on Yr")+'</div>'+
     '<p class="muted small">For Yr, search for '+esc(city.place || city.name)+' or enter '+city.lat.toFixed(4)+', '+city.lon.toFixed(4)+'. Copernicus opens around the map location; cloud cover and sign-in may affect imagery.</p>';
 }
+
+
+/** Short tours of selected published connections; each pair is read from the loaded dataset. */
+export function buildConnectionJourneys(data) {
+  const cities = new Map((data.cities || []).map(c=>[c.id,c]));
+  const result = [];
+  for (const [key,country,label] of [["commuting","no","Norwegian"],["commuting_se","se","Swedish"],["commuting_dk","dk","Danish"]]) {
+    const p = data[key];
+    if (!p?.flows?.length) continue;
+    const f = p.flows.filter(([a,b])=>a!==b&&cities.has(a)&&cities.has(b)).reduce((best,row)=>!best||row[2]>best[2]?row:best,null);
+    if (!f) continue;
+    const [a,b,n] = f, origin=cities.get(a).name, destination=cities.get(b).name;
+    const info = int(n)+" people live in "+origin+" and work in "+destination+".";
+    result.push({id:"commuting-"+country,title:label+" commuting connections",stops:[
+      {city:a,commuting:true,text:info,source:p.source.publisher+" · "+p.source.table+" · "+p.period},
+      {city:b,commuting:true,text:info+" Explore the incoming connections here.",source:p.source.publisher+" · "+p.source.table+" · "+p.period}
+    ]});
+  }
+  const p=data.transport;
+  if(p?.flows) for(const [category,title] of [["aviation","Danish airport connections"],["ferry","Ferries across Scandinavia"]]){
+    const f=p.flows.filter(f=>f.category===category&&cities.has(p.nodes[f.origin]?.city)&&cities.has(p.nodes[f.destination]?.city)&&p.nodes[f.origin].city!==p.nodes[f.destination].city)
+      .reduce((best,row)=>!best||row.value>best.value?row:best,null);
+    if(!f)continue;
+    const a=p.nodes[f.origin],b=p.nodes[f.destination];
+    const text=a.name+(f.directed?" to ":" and ")+b.name+": "+int(f.value)+" passenger movements in "+p.period+(f.directed?".":", both directions combined.");
+    result.push({id:"transport-"+category,title,stops:[a,b].map(n=>({city:n.city,transport:true,text,source:"Statistics Denmark · "+f.table+" · rounded thousands"}))});
+  }
+  const cross=data.cross_border;
+  if(cross?.flows?.length===2&&cities.has("DK-101")&&cities.has("SE-1280")){
+    const from = code=>cross.flows.find(f=>f.residence===code)?.value;
+    result.push({id:"oresund-commuting",title:"Working across Øresund",stops:[
+      {city:"DK-101",text:int(from("SE"))+" people lived in Sweden and worked in eastern Denmark in 2023. Copenhagen is one place to explore this labour market.",source:"Nordic Statistics · COMP53 · regional total"},
+      {city:"SE-1280",text:int(from("DK"))+" people lived in Denmark and worked in Skåne in 2023. Malmö is one place to explore this labour market.",source:"Nordic Statistics · COMP53 · regional total"}
+    ]});
+  }
+  return result;
+}

@@ -25,6 +25,8 @@ async def run(browser, url, ok, errors):
             names = await page.evaluate("""__app.explore.journeys.find(j => j.id === 'daylight').stops.map(s => __app.cityById.get(s.city).name)""")
             for name in names:
                 await expect(preview).to_contain_text(name)
+            for jid in ("commuting-no", "commuting-se", "commuting-dk", "transport-aviation", "transport-ferry", "oresund-commuting"):
+                await expect(card.locator(f'[data-journey="{jid}"]')).to_be_visible()
             await preview.click()
             await expect(card).to_contain_text("1 of 3")
             await expect(card.get_by_role("button", name="Previous")).to_be_disabled()

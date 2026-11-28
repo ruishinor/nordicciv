@@ -3,13 +3,15 @@
 // panel, and a short, dismissible first-run hint. Facts and rules: ../../explore.js.
 import { FACETS, discoveries } from "../../explore.js";
 import { esc } from "../../format.js";
-import { buildJourneys, contextLinks, resolveJourney } from "./journeys.js";
+import { buildJourneys, buildConnectionJourneys, contextLinks, resolveJourney } from "./journeys.js";
 import { placeLists } from "./places.js";
 
-export function install(app) {
+export async function install(app) {
   const { cities, nation } = app.data;
   const all = discoveries(cities, nation);
-  const journeys = buildJourneys(app.data);
+  const names = ["commuting", "commuting_se", "commuting_dk", "transport", "cross_border"];
+  await Promise.all(names.map(name => app.loadData(name).catch(() => null)));
+  const journeys = [...buildJourneys(app.data), ...buildConnectionJourneys(app.data)];
   let storage = null;
   try { storage = localStorage; } catch { /* browser storage unavailable */ }
   const places = placeLists(id => app.cityById.has(id), storage);
@@ -133,6 +135,8 @@ export function install(app) {
         app.setLens(stop.lens || null);
         app.setHighlight({cities: new Set([city.id]), cells: new Set(), color: "#ffe08a"});
         if (stop.hydro) app.setShowResources(true);
+        if (stop.commuting) app.ui.setMapToggle("commuting-connections", true);
+        if (stop.transport) app.ui.setMapToggle("transport-connections", true);
         if (stop.daylight) app.panels.element.querySelector('[data-cptab="Daylight"]')?.click();
       } finally { moving = false; }
     }
@@ -180,6 +184,13 @@ export function install(app) {
       html: '<div class="journey-list">' + related.map(({j, index}) =>
         '<button type="button" class="chip" data-discover-journey="' + esc(j.id + ":" + index) + '">' +
         esc(j.title) + ' · stop ' + (index + 1) + ' of ' + j.stops.length + '</button>').join("") + '</div>'});
+    const cross = app.data.cross_border;
+    if (cross && ["DK-101","SE-1280"].includes(city.id)) {
+      const names = {DK:"Denmark",SE:"Sweden"};
+      sections.push({tab:"Overview",title:"Commuting across Øresund · "+esc(cross.period),
+        html:'<p>'+esc(cross.source.note)+'</p><ul>'+cross.flows.map(f=>'<li>'+names[f.residence]+' → '+names[f.work]+': <b>'+f.value.toLocaleString("en-GB")+'</b> commuters</li>').join("")+
+          '</ul><p class="muted small">Regional totals, not municipality pairs. <a href="'+esc(cross.source.url)+'" target="_blank" rel="noopener noreferrer">Nordic Statistics · COMP53 ↗</a></p>'});
+    }
     const html = contextLinks(city);
     if (html) sections.push({tab: "Overview", title: "Weather and satellite imagery", html});
     return sections;
