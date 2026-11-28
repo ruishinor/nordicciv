@@ -34,7 +34,8 @@ export const FACETS = [
     value: (v) => `${int(v)} km² of land`, def: "Land area (water excluded) as published by the national agency." },
 ];
 
-const TOP = 0.05; // "among the most" = top or bottom 5 %
+const TOP = 0.05;
+const ordinal = n => `${n}${n % 100 >= 11 && n % 100 <= 13 ? "th" : ({1:"st",2:"nd",3:"rd"}[n % 10] || "th")}`;
 
 function ranked(cities, facet) {
   const cache = facet._r ||= new WeakMap();
@@ -59,10 +60,9 @@ export function distinctive(c, cities, max = 4) {
       const rank = r[side].get(c.id);
       if (rank && rank <= Math.max(1, Math.floor(TOP * r.n))) {
         // the neighbours in the ranking: municipalities most alike on this measure
-        const k = r.order.findIndex((e) => e.x.id === c.id);
-        const near = r.order.slice(Math.max(0, k - 2), k + 3).filter((e) => e.x.id !== c.id).slice(0, 3).map((e) => e.x);
+        const near = r.order.filter(e => e.x.id !== c.id).map(e => ({ ...e, distance: Math.abs(f.get(e.x) - v) })).sort((a,b) => a.distance - b.distance).slice(0,3).map(e => e.x);
         out.push({ facet: f, side, rank, n: r.n, v, share: rank / r.n, near,
-          text: `${c.name} ${f[side]} in Scandinavia.`, detail: `${f.value(v)} · Rank ${rank} (${side === "hi" ? "Highest" : "Lowest"}) of ${r.n} municipalities` });
+          text: `${c.name} ${f[side]} in Scandinavia.`, detail: `${f.value(v)} · ${ordinal(rank)} ${side === "hi" ? "highest" : "lowest"} among ${r.n} municipalities` });
       }
     }
   }
@@ -80,13 +80,13 @@ export function distinctive(c, cities, max = 4) {
 export function distinctiveHtml(c, cities) {
   const items = distinctive(c, cities);
   if (!items.length) {
-    return `<p class="muted">No figure meets the selection criteria for this section. Use Compare to explore other municipalities.</p>`;
+    return `<p class="muted">No highlights for ${esc(c.name)}. Open Compare to explore its figures.</p>`;
   }
   return `<ul class="standout">${items.map((it) => `<li title="${esc(it.facet.def)}">
       <div><b>${esc(sentenceCase(it.text))}</b> <span class="muted">${esc(it.detail)}</span></div>
       <div class="chips">${it.facet.lens ? `<button class="chip sm" data-facet="${esc(it.facet.id)}" title="Colour the map by this measure">Map ›</button>` : ""}
         ${it.group ? `<button class="chip sm" data-spec="${esc(it.group)}" title="Where else this industry concentrates">Where else ›</button>` : ""}
-        ${it.near?.length ? `<span class="muted small">Nearby in this ranking:</span>` : ""}${(it.near || []).map((x) => `<button class="chip sm" data-city="${esc(x.id)}" title="${esc(x.full || x.name)}">${esc(x.name)}</button>`).join("")}</div></li>`).join("")}</ul>
+        </div>${it.near?.length ? `<details class="standout-peers"><summary>Compare municipalities with similar figures</summary><div class="chips">${it.near.map(x => `<button class="chip sm" data-city="${esc(x.id)}" title="${esc(x.full || x.name)}">${esc(x.name)}</button>`).join("")}</div></details>` : ""}</li>`).join("")}</ul>
     `;
 }
 
@@ -103,9 +103,9 @@ export function discoveries(cities, nation) {
   e = top(big, (c) => c.growth, true);
   add(e?.x, `${e?.x.name} has lost the largest share of its residents among municipalities of 5,000+: ${sgn(e?.v)} since 2016.`, "growth", { key: "shrink" });
   e = top(cities, (c) => c.jobs_per_100);
-  add(e?.x, `${e?.x.name} has ${e?.v.toFixed(0)} jobs located there for every 100 residents — the most in Scandinavia. Most of its workers live elsewhere.`, "jobs_ratio");
+  add(e?.x, `${e?.x.name} has ${e?.v.toFixed(0)} jobs located there for every 100 residents – the most in Scandinavia. Most of its workers live elsewhere.`, "jobs_ratio");
   e = top(cities, (c) => c.share_65plus);
-  add(e?.x, `In ${e?.x.name}, ${pct(e?.v, 0)} of residents are 65 or older — the oldest population in Scandinavia.`, "ageing");
+  add(e?.x, `In ${e?.x.name}, ${pct(e?.v, 0)} of residents are 65 or older – the oldest population in Scandinavia.`, "ageing");
   e = top(big, (c) => c.share_0_19);
   add(e?.x, `${e?.x.name} has the youngest population of the municipalities with 5,000+ residents: ${pct(e?.v, 0)} are under 20.`, "youth", { def: "Share of residents aged 0–19, 1 Jan 2026." });
   e = top(cities, (c) => ((c.population || 0) < 50000 ? c.nearest_bigger_km : null));
@@ -113,7 +113,7 @@ export function discoveries(cities, nation) {
   e = top(cities, (c) => c.density);
   add(e?.x, `${e?.x.name} is the most densely populated municipality: ${int(e?.v)} residents per km² of land.`, "density");
   e = top(cities, (c) => c.land_km2);
-  add(e?.x, `${e?.x.name} is the largest municipality by land area: ${int(e?.v)} km² — and has ${compact(e?.x.population)} residents.`, null, { key: "area", facet: "area" });
+  add(e?.x, `${e?.x.name} is the largest municipality by land area: ${int(e?.v)} km² – and has ${compact(e?.x.population)} residents.`, null, { key: "area", facet: "area" });
   // strongest concentration of each industry among municipalities with 250+ jobs in it
   for (const g of Object.keys(nation.industries || {})) {
     if (g === "X") continue;

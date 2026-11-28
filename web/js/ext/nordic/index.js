@@ -10,7 +10,7 @@ import { norm } from "../../app/search.js";
 import { glacierHistoryHtml, hazardLinksHtml } from "./environment-history.js";
 
 const COUNTRY = { NO: "Norway", SE: "Sweden", DK: "Denmark" };
-const FLAG = { NO: "🇳🇴", SE: "🇸🇪", DK: "🇩🇰" };
+import { flag } from "../../ui/placeDetails.js";
 const fin = Number.isFinite;
 const sgn = (g, d = 1) => (fin(g) ? `${g >= 0 ? "+" : "−"}${Math.abs(g * 100).toFixed(d)}%` : "–");
 const sum = (a) => a.reduce((p, q) => p + (fin(q) ? q : 0), 0);
@@ -165,7 +165,7 @@ export function install(app) {
         const q = norm(add.value);
         const list = dockEl.querySelector("#nc-add-list");
         const hits = q.length < 2 ? [] : cities.filter((c) => norm(c.name).startsWith(q) || norm(c.place || "").startsWith(q)).slice(0, 6);
-        list.innerHTML = hits.map((c) => `<button class="chip" data-addc="${esc(c.id)}">${FLAG[c.country]} ${esc(c.name)}</button>`).join("");
+        list.innerHTML = hits.map((c) => `<button class="chip" data-addc="${esc(c.id)}">${flag(c.country)} ${esc(c.name)}</button>`).join("");
         list.querySelectorAll("[data-addc]").forEach((b) => (b.onclick = () => { if (!compareSet.includes(b.dataset.addc)) compareSet.push(b.dataset.addc); while (compareSet.length > 4) compareSet.shift(); render(); }));
       };
     }
@@ -183,7 +183,7 @@ export function install(app) {
     if (b) app.fitBounds(b.x0, b.y0, b.x1, b.y1, { maxScale: 3 });
   }
   // shared with the top-bar search: ø, æ and diacritics folded (app/search.js)
-  const cityLink = (c) => `<button class="link" data-city="${esc(c.id)}">${FLAG[c.country] || ""} ${esc(c.name)}</button>`;
+  const cityLink = (c) => `<button class="link" data-city="${esc(c.id)}">${flag(c.country)} ${esc(c.name)}</button>`;
   const obs = (text, { evidence = "", lensId = null, hl = null, source = "" } = {}) => `<div class="obs"><p>${text}</p>
     <div class="obs-foot">${evidence ? `<span class="muted">${evidence}</span>` : ""}${source ? `<span class="src">${esc(source)}</span>` : ""}
     ${lensId && lens(lensId) ? `<button class="chip" data-lens="${lensId}">Show lens: ${esc(lens(lensId).name)}</button>` : ""}
@@ -194,7 +194,7 @@ export function install(app) {
     const a = ADVISORS.find((x) => x.id === advisor);
     const subject = context?.kind === "city" ? context.city : null;
     const region = context?.kind === "state" ? states[context.index] : null;
-    const scope = subject ? `${FLAG[subject.country]} ${esc(subject.name)}` : region ? esc(region.name) : "All of Scandinavia";
+    const scope = subject ? `${flag(subject.country)} ${esc(subject.name)}` : region ? esc(region.name) : "All of Scandinavia";
     let items = [];
     try { items = OBS[advisor](subject, region); } catch (e) { console.error(e); items = [`<p class="muted">Could not compute (${esc(e.message)}).</p>`]; }
     return `<div class="adv-row">${ADVISORS.map((x) => `<button class="adv ${x.id === advisor ? "on" : ""}" data-adv="${x.id}" title="${esc(x.name)}" style="--c:${x.color}"><span>${x.emoji}</span><small>${esc(x.name.split(" ")[0])}</small></button>`).join("")}</div>
@@ -212,7 +212,7 @@ export function install(app) {
         const maxE = Math.max(...hx.map((i) => w.raw.elev_max?.[i] ?? 0), 0);
         const areaRank = rankOf(cities, (x) => x.land_km2, c);
         const dens = c.density, sDens = totals.density;
-        out.push(obs(`${cityLink(c)} covers <b>${int(c.land_km2)} km²</b> (#${areaRank} of ${cities.length} by area) with <b>${int(c.population)}</b> residents —
+        out.push(obs(`${cityLink(c)} covers <b>${int(c.land_km2)} km²</b> (#${areaRank} of ${cities.length} by area) with <b>${int(c.population)}</b> residents –
           ${fin(dens) ? `${dens < 10 ? dens.toFixed(1) : int(dens)} per km², ${dens > sDens ? `${(dens / sDens).toFixed(1)}× denser` : `${(sDens / dens).toFixed(dens > sDens / 10 ? 1 : 0)}× sparser`} than Scandinavia as a whole (${sDens.toFixed(0)}/km²)` : ""}.`,
           { lensId: "density", hl: [c.id], source: "SSB/SCB/DST population and area" }));
         if (hx.length) {
@@ -224,7 +224,7 @@ export function install(app) {
         }
         if (c.nearest_bigger_km) {
           const big = cities.filter((x) => x.population > c.population).map((x) => [x, Math.hypot(x.x - c.x, x.y - c.y)]).sort((a, b) => a[1] - b[1])[0];
-          out.push(obs(`The nearest municipality with more people is ${cityLink(big[0])}, <b>${Math.round(big[1])} km</b> away in a straight line${big[1] > 100 ? ` — farther than for ${pct(cities.filter((x) => Number.isFinite(x.nearest_bigger_km) && x.nearest_bigger_km < big[1]).length / cities.length, 0)} of all municipalities` : ""}.`,
+          out.push(obs(`The nearest municipality with more people is ${cityLink(big[0])}, <b>${Math.round(big[1])} km</b> away in a straight line${big[1] > 100 ? ` – farther than for ${pct(cities.filter((x) => Number.isFinite(x.nearest_bigger_km) && x.nearest_bigger_km < big[1]).length / cities.length, 0)} of all municipalities` : ""}.`,
             { lensId: "remoteness", source: "municipal main settlements (Euronym)" }));
         }
         return out;
@@ -234,7 +234,7 @@ export function install(app) {
       const nPop = sum(north.map((x) => x.population)), nLand = sum(north.map((x) => x.land_km2));
       const big = [...cities].sort((a, b) => b.land_km2 - a.land_km2).slice(0, 5);
       out.push(obs(`Municipalities whose main town lies north of 63°N hold <b>${pct(nLand / totals.land_km2, 0)}</b> of Scandinavia's land but only <b>${pct(nPop / totals.population, 0)}</b> of its people.
-        The five largest by area — ${big.map(cityLink).join(", ")} — together cover ${int(sum(big.map((x) => x.land_km2)))} km² with ${int(sum(big.map((x) => x.population)))} residents.`,
+        The five largest by area – ${big.map(cityLink).join(", ")} – together cover ${int(sum(big.map((x) => x.land_km2)))} km² with ${int(sum(big.map((x) => x.population)))} residents.`,
         { lensId: "density", hl: big.map((x) => x.id), source: "SSB/SCB/DST population and land area" }));
       const coastal = cities.filter((c) => (hexesOf.get(c.id) || []).some((i) => { for (let d = 0; d < 6; d++) { const j = w.grid.neighbour(i, d); if (j >= 0 && w.water[j] && w.water[j] !== 3) return true; } return false; }));
       out.push(obs(`<b>${coastal.length}</b> of ${cities.length} municipalities touch the sea on this map, and they are home to <b>${pct(sum(coastal.map((c) => c.population)) / totals.population, 0)}</b> of Scandinavians: the coast, not the interior, is where people live.`,
@@ -285,13 +285,13 @@ export function install(app) {
         const ratio = hi.share_65plus / lo.share_65plus;
         const corr = pearson(eligible.map((x) => x.share_65plus), eligible.map((x) => x.growth));
         const strength = !fin(corr) ? "" : Math.abs(corr) < 0.2 ? "weak" : Math.abs(corr) < 0.5 ? "moderate" : "strong";
-        out.push(obs(`Ageing is uneven: the share of residents aged 65+ ranges from ${pct(lo.share_65plus, 0)} in ${cityLink(lo)} to ${pct(hi.share_65plus, 0)} in ${cityLink(hi)}${ratio >= 1.5 ? ` — ${ratio.toFixed(1)} times as high` : ""}.
+        out.push(obs(`Ageing is uneven: the share of residents aged 65+ ranges from ${pct(lo.share_65plus, 0)} in ${cityLink(lo)} to ${pct(hi.share_65plus, 0)} in ${cityLink(hi)}${ratio >= 1.5 ? ` – ${ratio.toFixed(1)} times as high` : ""}.
           ${fin(corr) && eligible.length >= 20 ? `Across the ${eligible.length} municipalities with a comparable figure, today's 65+ share and population change 2016–26 are ${strength}ly ${corr < 0 ? "negatively" : "positively"} associated (r = ${corr.toFixed(2)}).
           This compares current age structure with past growth at one point in time: it does not show that any municipality aged because it lost people, or the reverse.` : ""}`,
           { lensId: "ageing", source: "population by age, 2026; population 2016 and 2026" }));
       }
       const caps = ["NO-0301", "SE-0180", "DK-101"].map((id) => byId.get(id));
-      if (!r) out.push(obs(`The three capitals — ${caps.map(cityLink).join(", ")} — are home to ${pct(sum(caps.map((x) => x.population)) / totals.population, 0)} of Scandinavians but host ${pct(sum(caps.map((x) => x.jobs_total)) / totals.jobs_total, 0)} of the jobs.`,
+      if (!r) out.push(obs(`The three capitals – ${caps.map(cityLink).join(", ")} – are home to ${pct(sum(caps.map((x) => x.population)) / totals.population, 0)} of Scandinavians but host ${pct(sum(caps.map((x) => x.jobs_total)) / totals.jobs_total, 0)} of the jobs.`,
         { hl: caps.map((x) => x.id), source: "population 2026, jobs 2024" }));
       return out;
     },
@@ -302,7 +302,7 @@ export function install(app) {
         const v = c.hexValue ?? null;
         const i0 = (hexesOf.get(c.id) || [])[0];
         const regPps = pps && i0 != null ? pps.values[i0] : null;
-        out.push(obs(`${cityLink(c)}'s Gold (economic output) is about <b>${money(c.gdp)}</b> — an estimate: ${esc(c.gdp_region_name || c.gdp_region)}'s published ${c.gdp_year} output shared by industry value added and local jobs. Its region produces
+        out.push(obs(`${cityLink(c)}'s Gold (economic output) is about <b>${money(c.gdp)}</b> – an estimate: ${esc(c.gdp_region_name || c.gdp_region)}'s published ${c.gdp_year} output shared by industry value added and local jobs. Its region produces
           <b>${fin(regPps) ? int(regPps) : "–"} PPS per resident</b> (EU-27 purchasing power).`, { lensId: "gdp_pc", source: "SSB 09391, SCB TAB3138, DST NRHP; Eurostat PPPs" }));
         if (fin(c.income_index)) out.push(obs(`Income is <b>${Math.round(c.income_index * 100)}%</b> of ${COUNTRY[c.country]}'s own reference figure (${int(c.income)} ${c.income_currency}; ${c.country === "NO" ? "median household income after tax" : c.country === "SE" ? "median net income, 20+" : "average disposable income per person"}, 2024).`,
           { lensId: "income", source: "experimental: compare within a country" }));
@@ -323,7 +323,7 @@ export function install(app) {
       const types = {};
       cities.forEach((x) => (types[x.type.label] = (types[x.type.label] || 0) + 1));
       out.push(obs(`By their strongest specialisation, Scandinavia's municipalities divide into ${Object.entries(types).sort((a, b) => b[1] - a[1]).slice(0, 6).map(([k, v]) => `${v} ${esc(k.toLowerCase())}`).join(", ")} …`,
-        { lensId: "specialisation", source: "location quotients, jobs 2024" }));
+        { lensId: "specialisation", source: "Industry specialisation, jobs 2024" }));
       return out;
     },
     industry(c, r) {
@@ -331,12 +331,12 @@ export function install(app) {
       if (c) {
         if (c.specialisations?.length) {
           out.push(obs(`${cityLink(c)} specialises in ${c.specialisations.map((s) => `<b>${esc(s.label.toLowerCase())}</b> (×${s.lq.toFixed(1)}, ${compact(s.jobs)} jobs)`).join(", ")}: these industries hold a much larger share of local jobs than across Scandinavia.`,
-            { lensId: "specialisation", source: "location quotients vs NO+SE+DK" }));
-        } else out.push(obs(`${cityLink(c)} has no industry group with a location quotient above 1.5 and 250+ jobs: its economy mirrors the Scandinavian mix.`, { lensId: "specialisation" }));
+            { lensId: "specialisation", source: "Industry specialisation compared with Scandinavia" }));
+        } else out.push(obs(`${cityLink(c)} has no industry with at least 250 jobs and more than 1.5 times the Scandinavian share of jobs.`, { lensId: "specialisation" }));
         const d = c.jobs_detail || {};
-        if (fin(d.B) && d.B > 200) out.push(obs(`<b>${int(d.B)}</b> jobs here are in mining and quarrying — in Norway and Denmark that includes oil and gas extraction (${pct(d.B / c.jobs_total, 1)} of local jobs).`, { source: c.country === "NO" ? "SSB 07984" : "DST RAS501" }));
+        if (fin(d.B) && d.B > 200) out.push(obs(`<b>${int(d.B)}</b> jobs here are in mining and quarrying – in Norway and Denmark that includes oil and gas extraction (${pct(d.B / c.jobs_total, 1)} of local jobs).`, { source: c.country === "NO" ? "SSB 07984" : "DST RAS501" }));
         const mines = (app.data.resources?.items || []).filter((it) => it.cbsa === c.id && (it.type === "metal_mine" || it.type === "industrial_mineral"));
-        if (mines.length) out.push(obs(`Mines in ${esc(c.name)} (SGU): ${mines.slice(0, 5).map((m) => `<b>${esc(m.name)}</b> — ${esc(m.detail)}`).join("; ")}. Sweden publishes mining jobs together with manufacturing, so they sit inside the B–C group above.`,
+        if (mines.length) out.push(obs(`Mines in ${esc(c.name)} (SGU): ${mines.slice(0, 5).map((m) => `<b>${esc(m.name)}</b> – ${esc(m.detail)}`).join("; ")}. Sweden publishes mining jobs together with manufacturing, so they sit inside the B–C group above.`,
           { source: "SGU mineral resources database" }));
         const top = Object.entries(c.jobs).filter(([k]) => k !== "X").sort((a, b) => b[1] - a[1])[0];
         out.push(obs(`The largest employer group is <b>${esc(nation.industries[top[0]].toLowerCase())}</b> with ${int(top[1])} jobs (${pct(top[1] / c.jobs_total, 0)}).`, { source: "jobs at place of work, 2024" }));
@@ -349,7 +349,7 @@ export function install(app) {
       out.push(obs(`Knowledge economies: ICT jobs concentrate in ${conc("J").map((x) => `${cityLink(x)} ×${x.lq.J.toFixed(1)}`).join(", ")}. Among municipalities with 15,000+ jobs, education (schools and universities) weighs most in ${big("P").map((x) => `${cityLink(x)} ×${x.lq.P.toFixed(1)}`).join(", ")}.`,
         { lensId: "share_J", hl: conc("J").map((x) => x.id), source: "jobs 2024, NACE J and P" }));
       const petro = cities.filter((x) => fin(x.jobs_detail?.B) && x.jobs_detail.B > 1500).sort((a, b) => b.jobs_detail.B - a.jobs_detail.B);
-      if (petro.length) out.push(obs(`Oil, gas and mining employment (NACE B, published separately in Norway and Denmark) clusters in ${petro.slice(0, 5).map((x) => `${cityLink(x)} ${compact(x.jobs_detail.B)}`).join(", ")} — the onshore half of the North Sea economy.`,
+      if (petro.length) out.push(obs(`Oil, gas and mining employment (NACE B, published separately in Norway and Denmark) clusters in ${petro.slice(0, 5).map((x) => `${cityLink(x)} ${compact(x.jobs_detail.B)}`).join(", ")} – the onshore half of the North Sea economy.`,
         { hl: petro.map((x) => x.id), source: "SSB 07984, DST RAS501" }));
       return out;
     },
@@ -414,7 +414,7 @@ export function install(app) {
         if (pt.length) out.push(obs(`Ports: ${pt.slice(0, 4).map((p) => `${esc(p.short || p.name)} <b>${compact(p.tonnes)} t</b>`).join(", ")} of goods handled (2024).`, { source: "Eurostat mar_go_aa" }));
         if (!c && !r) {
           const links = (app.data.wonders?.wonders || []).filter((x) => x.rule === "fixed_link");
-          out.push(obs(`Geography is expensive to cross: ${links.length} fixed links of record length — ${links.slice(0, 4).map((l) => `${esc(l.name)} (${l.metrics.length_km} km)`).join(", ")} — and ${inf.ferries.length} mapped ferry routes cross fjords, sounds and straits. The map shows physical links only; it has no data on the traffic or commuting over them.`,
+          out.push(obs(`Geography is expensive to cross: ${links.length} fixed links of record length – ${links.slice(0, 4).map((l) => `${esc(l.name)} (${l.metrics.length_km} km)`).join(", ")} – and ${inf.ferries.length} mapped ferry routes cross fjords, sounds and straits. The map shows physical links only; it has no data on the traffic or commuting over them.`,
             { source: "Wikidata lengths; Natural Earth ferries" }));
         }
       }
@@ -475,7 +475,7 @@ export function install(app) {
       ];
       const table = `<table class="nc-table"><tr><th>Indicator</th><th>${one ? esc(one.name) : "Median"}</th><th>Scandinavian median</th><th>Reads as</th></tr>
         ${rows.map(([l, g, f, note]) => { const v = one ? g(one) : median(sel.map(g)); const m = median(cities.map(g)); return `<tr><td>${l}</td><td><b>${fin(v) ? f(v) : "–"}</b></td><td>${fin(m) ? f(m) : "–"}</td><td class="muted">${note}</td></tr>`; }).join("")}</table>`;
-      const out = [`<div class="obs"><p>Resilience is shown as separate, measurable indicators — deliberately <b>not</b> a single score, because the trade-offs between them are political, not statistical.</p>${table}
+      const out = [`<div class="obs"><p>Resilience is shown as separate, measurable indicators – deliberately <b>not</b> a single score, because the trade-offs between them are political, not statistical.</p>${table}
         <div class="obs-foot"><span class="src">population registers 2016–2026; jobs 2024</span></div></div>`];
       if (!one) {
         const exposed = sel.filter((x) => x.jobs_total > 1000).map((x) => [x, hhi(x)]).sort((a, b) => b[1] - a[1]).slice(0, 5);
@@ -543,8 +543,8 @@ export function install(app) {
     const ps = peersOf(c);
     return `<h4>Similar to ${cityLink(c)}</h4>
       <div class="nc-filters" role="group" aria-label="Similarity criteria">${crit.map(([k, l]) => `<label><input type="checkbox" data-peer="${k}" ${peerCrit[k] ? "checked" : ""}> ${l}</label>`).join("")}</div>
-      <div class="chips">${ps.map(([x, d]) => `<button class="chip" data-addc="${esc(x.id)}" title="distance ${d.toFixed(2)} — add to comparison">${FLAG[x.country]} ${esc(x.name)} · ${popShort(x.population)}</button>`).join("") || `<span class="muted">Pick at least one criterion.</span>`}</div>
-      <p class="muted small">Method: the mean of the chosen differences, each scaled so 1 is a large gap — population (log, a doubling), density (log, ×4),
+      <div class="chips">${ps.map(([x, d]) => `<button class="chip" data-addc="${esc(x.id)}" title="distance ${d.toFixed(2)} – add to comparison">${flag(x.country)} ${esc(x.name)} · ${popShort(x.population)}</button>`).join("") || `<span class="muted">Pick at least one criterion.</span>`}</div>
+      <p class="muted small">Method: the mean of the chosen differences, each scaled so 1 is a large gap – population (log, a doubling), density (log, ×4),
       industry structure (sum of share differences across 14 groups, 0.4) and 65+ share (5 points). Click a name to add it.</p>`;
   }
 
@@ -605,7 +605,7 @@ export function install(app) {
     for (const c of cities) for (const i of hexesOf.get(c.id) || []) vals[i] = mv[c.id];
     app.setLens({
       id: `lq_${group}`, name: `Concentration of ${label.toLowerCase()} jobs`, emoji: "🎯", icon: "l-specialisation", group: "economy",
-      unit: "location quotient (×)", format: "float", scale: "log", domain: [0.25, 4], ramp: ["#2b3a4f", "#4f6b8a", "#c9c9a8", "#e0a45a", "#d9542b"],
+      unit: "Industry specialisation (×)", format: "float", scale: "log", domain: [0.25, 4], ramp: ["#2b3a4f", "#4f6b8a", "#c9c9a8", "#e0a45a", "#d9542b"],
       higher_is: "neutral", resolution: "municipality", source: "ssb, scb, dst",
       description: `Share of local jobs in ${label.toLowerCase()} ÷ its share in Norway, Sweden and Denmark combined (place of work, 2024). 1 = the Scandinavian average. Relative concentration only: it says nothing about output, productivity or importance.`,
       note: "One value per municipality (polygons). Small municipalities can reach high quotients with few jobs.", values: vals, muni_values: mv,
@@ -718,7 +718,7 @@ export function install(app) {
       `# NordicCiv municipal data export (${new Date().toISOString().slice(0, 10)}), ${list.length} municipalities`,
       `# Population: 1 January 2026 (SSB 07459, SCB TAB628, DST FOLK1A). Growth 2016–26 only where both years describe the same territory.`,
       `# Jobs: place of work, Nov/Q4 2024 (SSB 07984, SCB TAB3204, DST RAS501). Yields count jobs, not output. lower_bound = the agency suppressed small cells; *_upper_bound = what they could add at most.`,
-      `# Economic output: regional accounts 2023 (NO GVA basic prices, SE GRDP market prices, DK GDP) shared to municipalities by industry value added and jobs — estimate.`,
+      `# Economic output: regional accounts 2023 (NO GVA basic prices, SE GRDP market prices, DK GDP) shared to municipalities by industry value added and jobs – estimate.`,
       `# Income: relative to each country's own figure (NO median household income after tax, SE median net income 20+, DK average disposable income); not comparable across countries.`,
       `# Licences: NLOD/CC BY 4.0 (SSB), CC0 (SCB), CC BY 4.0 (DST, Eurostat). Empty value = unavailable.`,
       head.map(q).join(","),
@@ -765,7 +765,7 @@ export function install(app) {
     const total = fin(d.a) && fin(d.b)
       ? `<p><b>${esc(d.name)}</b>: <b>${int(d.a)}</b> → <b>${int(d.b)}</b> residents (${sgn(d.b / d.a - 1)}, ${d.b >= d.a ? "+" : "−"}${int(Math.abs(d.b - d.a))}).
          <span class="muted small">${esc(d.basis)}.</span></p>`
-      : `<p><b>${esc(d.name)}</b>: no complete total for ${!fin(d.a) ? tl.a : tl.b}${d.o?.pop_coverage?.[!fin(d.a) ? tl.a : tl.b] != null ? ` — the comparable municipalities hold ${pct(d.o.pop_coverage[!fin(d.a) ? tl.a : tl.b], 0)} of today's population` : ""}; the agency published no series for this area and year.</p>`;
+      : `<p><b>${esc(d.name)}</b>: no complete total for ${!fin(d.a) ? tl.a : tl.b}${d.o?.pop_coverage?.[!fin(d.a) ? tl.a : tl.b] != null ? ` – the comparable municipalities hold ${pct(d.o.pop_coverage[!fin(d.a) ? tl.a : tl.b], 0)} of today's population` : ""}; the agency published no series for this area and year.</p>`;
     const top = d.ranked.slice(0, 5), bottom = d.ranked.slice(-5).reverse();
     const line = ([c, g]) => `${cityLink(c)} <span class="muted">${sgn(g)} (${(popIn(c, tl.b) - popIn(c, tl.a)) >= 0 ? "+" : "−"}${int(Math.abs(popIn(c, tl.b) - popIn(c, tl.a)))})</span>`;
     return `<div class="nc-timeline">

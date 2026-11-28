@@ -6,6 +6,7 @@
 import { compact, dollars, esc, int, money, pct } from "../format.js";
 import { hasIcon } from "../icons.js";
 import { rankList } from "../stats.js";
+import { sourceRef, sourceLink } from "./placeDetails.js";
 import { icon, glyph } from "./icon.js";
 import { DISTRICT_ICON } from "./infoPanel.js";
 
@@ -76,7 +77,7 @@ export function statDefs(nation, scope = "") {
   return [
     {
       key: "population", label: "Population", name: "Population", color: "#e8dcc0", iconId: "pop", emoji: "👥", unit: "people", measure: "residents, 1 Jan 2026",
-      description: `${where}: registered residents on 1 January 2026 — ${n.pop_series_source || "SSB 07459, SCB TAB628, DST FOLK1A"}.`,
+      description: `${where}: registered residents on 1 January 2026 – ${n.pop_series_source || "SSB 07459, SCB TAB628, DST FOLK1A"}.`,
       status: "published figures", source: n.pop_series_source || nation?.vintage || "", value: pubPop,
     },
     ...yields,
@@ -92,7 +93,7 @@ export const industryIcon = (k) => { k = NORDIC_IND[k] || k; return hasIcon(`i-$
 
 // Areas the leaderboards rank: regions (index into states.json = world.json states) and municipalities.
 // NordicCiv: every record in cities.json is a municipality, selected explicitly by its id (the inherited US engine
-// filtered on `metro`, which excluded every Scandinavian municipality — NC-T05).
+// filtered on `metro`, which excluded every Scandinavian municipality – NC-T05).
 function areas(states, cities, country = "") {
   const st = (Array.isArray(states) ? states : [])
     .map((o, i) => (o ? { kind: "state", ref: i, name: o.name || o.abbr || "?", sub: o.abbr || "", o } : null))
@@ -305,7 +306,7 @@ function reportJobs(rep, def, nation, n, st, metros) {
     })
     .filter(Boolean)
     .sort((a, b) => b.value - a.value);
-  if (rows.length) rep.breakdown = { title: "Jobs by industry", note: `Jobs at the place of work, November / 4th quarter 2024. ${def.label} counts ${def.yield?.measure || "jobs"} — employment, not output.`, groups: [{ rows }] };
+  if (rows.length) rep.breakdown = { title: "Jobs by industry", note: `Jobs at the place of work, November / 4th quarter 2024. ${def.label} counts ${def.yield?.measure || "jobs"} – employment, not output.`, groups: [{ rows }] };
 
   const y = (o) => o.yields?.[key];
   const lq = (o) => (nShare ? ratio(ratio(y(o), o.employed), nShare) : null);
@@ -435,7 +436,11 @@ export function initYieldReports(opts) {
       <div class="yr-total"><b style="color:${esc(def.color)}">${esc(rep.totalText)}</b>
         ${rep.context.length ? `<ul class="yr-ctx">${rep.context.map((c) => `<li>${esc(c)}</li>`).join("")}</ul>` : ""}</div>
       ${rep.definition ? `<p class="yr-def">${esc(rep.definition)}</p>` : ""}
-      ${rep.source ? `<div class="yr-src">Source: ${esc(rep.source)}</div>` : ""}
+      ${rep.source ? `<details class="yr-src"><summary>Sources</summary><p>${esc(rep.source)}</p>${(rep.scope.country ? [rep.scope.country] : ["NO","SE","DK"]).map(cc => {
+        const table = rep.key === "population" ? {NO:"07459",SE:"TAB628",DK:"FOLK1A"}[cc] : rep.key === "gold" ? {NO:"09391",SE:"TAB3138",DK:"NRHP"}[cc] : {NO:"07984",SE:"TAB3204",DK:"RAS501"}[cc];
+        const ref = sourceRef(opts.sources || [], cc, table, rep.key === "population" ? "Population" : rep.key === "gold" ? "Regional economic output" : "Jobs by industry");
+        return ref ? `<div>${esc(ref.publisher)} – Table ${esc(ref.table)} ${sourceLink(ref, "Source table " + ref.table)}</div>` : "";
+      }).join("")}</details>` : ""}
       ${rep.breakdown ? `<section class="yr-sec"><h3>${esc(rep.breakdown.title)}</h3>
         ${rep.breakdown.note ? `<p class="yr-note">${esc(rep.breakdown.note)}</p>` : ""}
         <div class="yr-bars">${barsHtml(rep.breakdown, expanded)}</div></section>` : ""}
@@ -486,6 +491,7 @@ export function initYieldReports(opts) {
       board.setAttribute("aria-labelledby", `yr-tab-${tab}`);
       board.innerHTML = boardHtml(m?.[tab]);
     }
+    window.__app?.hash?.update();
   }
 
   function open(key, btn) {
@@ -507,6 +513,7 @@ export function initYieldReports(opts) {
     // Keep the anchor visible when the bar has scrolled (narrow screens).
     btn.scrollIntoView?.({ block: "nearest", inline: "nearest" });
     pop.focus({ preventScroll: true });
+    window.__app?.hash?.update();
   }
 
   function close(restoreFocus = true) {
@@ -518,6 +525,7 @@ export function initYieldReports(opts) {
     pop.hidden = true;
     pop.innerHTML = "";
     if (restoreFocus && document.contains(btn)) btn.focus();
+    window.__app?.hash?.update();
   }
 
   bar.addEventListener("click", (e) => {
@@ -637,5 +645,16 @@ export function initYieldReports(opts) {
     build,
     get isOpen() { return !!current; },
     get key() { return current?.key ?? null; },
+    get view() { return current ? [current.key, tab, mode].join(":") : null; },
+    restoreView(value) {
+      if (!value) { close(false); return; }
+      const [key, nextTab, nextMode] = value.split(":");
+      const btn = buttons().find(b => b.dataset.report === key);
+      if (!btn) return;
+      open(key, btn);
+      if (["states", "metros"].includes(nextTab)) tab = nextTab;
+      if (current.rep.boards.modes.some(m => m.id === nextMode)) mode = nextMode;
+      render();
+    },
   };
 }

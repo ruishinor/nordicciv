@@ -8,12 +8,21 @@ let scope = "";
 try { scope = localStorage.getItem("nc-scope") || ""; } catch { /* storage blocked */ }
 if (!Object.hasOwn(SCOPE_NAME, scope)) scope = "";
 export const hudScope = () => scope;
+let scopeObserver;
+export function setHudScope(nation, value) {
+  const next = Object.hasOwn(SCOPE_NAME, value) ? value : "";
+  if (scope === next) return;
+  scope = next;
+  try { localStorage.setItem("nc-scope", scope); } catch { /* storage blocked */ }
+  window.__app?.reports?.close(false);
+  renderTopbar(nation);
+}
 
 export function renderTopbar(nation) {
   const items = statDefs(nation, scope).map((d) => {
     const ic = d.yield ? glyph(d.yield, 17) : icon(d.iconId, d.emoji, { size: 17 });
     const value = (d.key === "gold" && !scope ? "Σ" : "") + fmtStat(d, d.value);
-    const tip = `${d.name} — ${d.description} Status: ${d.status}. ${d.source ? "Source: " + d.source + "." : ""} Click for the report.`;
+    const tip = `${d.name} – ${d.description} Status: ${d.status}. ${d.source ? "Source: " + d.source + "." : ""} Click for the report.`;
     return `<button type="button" class="yield" data-report="${esc(d.key)}" aria-expanded="false" aria-haspopup="dialog" aria-controls="yield-report"
       title="${esc(tip)}" aria-label="${esc(d.name)} in ${esc(SCOPE_NAME[scope])}: ${esc(value)} ${esc(d.measure || "")}. Open the report">
       <span class="ico" style="color:${esc(d.color)}">${ic}</span><span class="yv"><span style="color:${esc(d.color)}">${esc(value)}</span><span class="ym">${esc(shortMeasure(d))}</span></span><span class="caret" aria-hidden="true"></span></button>`;
@@ -23,15 +32,15 @@ export function renderTopbar(nation) {
     <select id="hud-scope">${Object.entries(SCOPE_NAME).map(([k, v]) => `<option value="${k}" ${k === scope ? "selected" : ""}>${v}</option>`).join("")}</select></label>`;
   el.innerHTML = sel + items.join("");
   el.querySelector("#hud-scope").onchange = (e) => {
-    scope = e.target.value;
-    try { localStorage.setItem("nc-scope", scope); } catch { /* storage blocked */ }
-    renderTopbar(nation);
+    setHudScope(nation, e.target.value);
+    document.getElementById("hud-scope")?.focus({preventScroll:true});
     window.__app?.emit?.("hud-scope", { scope });
+    window.__app?.hash?.update();
   };
   // When the bar is too narrow for every yield, the row scrolls on its own (search and buttons always fit);
   // a fade on the right edge shows there is more.
   const check = () => el.classList.toggle("clipped", el.scrollWidth > el.clientWidth + 1);
-  if (typeof ResizeObserver === "function") new ResizeObserver(check).observe(el);
+  if (typeof ResizeObserver === "function") { scopeObserver?.disconnect(); scopeObserver = new ResizeObserver(check); scopeObserver.observe(el); }
   check();
   watchBarOverflow(document.getElementById("topbar"));
   document.getElementById("turn").innerHTML = `Turn <b>${esc(nation.year ?? "")}</b> · ${esc(nation.vintage || "")}`;

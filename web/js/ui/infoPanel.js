@@ -142,6 +142,7 @@ export function showPanel(spec) {
   };
   wireTabs(panel, spec);
   spec.wire?.(panel);
+  panel.querySelectorAll("a[target=_blank]").forEach(a => a.addEventListener("click", () => window.__app?.hash?.flush()));
 }
 
 // Progressive disclosure: sections may carry a `tab`; the panel shows one tab at a time and remembers the last one.
@@ -173,6 +174,7 @@ function wireTabs(panel, spec) {
     btns.forEach((x) => { const on = x === b; x.setAttribute("aria-selected", on); x.tabIndex = on ? 0 : -1; });
     panel.querySelectorAll(".cp-section[data-tab]").forEach((sec) => (sec.hidden = sec.dataset.tab !== b.dataset.cptab));
     if (focus) b.focus();
+    window.__app?.hash?.update();
   };
   btns.forEach((b, k) => {
     b.onclick = () => pick(b);

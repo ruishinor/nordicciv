@@ -2,12 +2,12 @@ import { Camera } from "./camera.js";
 import { prepareWorld, applyLens, stateIndex } from "./world.js";
 import * as mapRender from "./render/map.js";
 import { drawBanners } from "./render/banners.js";
-import { renderTopbar } from "./ui/topbar.js";
+import { renderTopbar, hudScope, setHudScope } from "./ui/topbar.js";
 import { showCellTooltip, showCityTooltip, showHtmlTooltip, showResourceTooltip, hideTooltip } from "./ui/tooltip.js";
 import { initLensDock, formatLensValue, lensValueAt } from "./ui/lenses.js";
 import { openCityPanel, closeCityPanel } from "./ui/cityPanel.js";
 import { openStatePanel } from "./ui/statePanel.js";
-import { installSheetSwipe, expandPanel } from "./ui/infoPanel.js";
+import { installSheetSwipe, expandPanel, showPanelTab } from "./ui/infoPanel.js";
 import { initPedia } from "./ui/pedia.js";
 import { initYieldReports } from "./ui/yieldReport.js";
 import { Minimap } from "./ui/minimap.js";
@@ -953,7 +953,7 @@ async function main() {
 
   // National reports under the top-bar stats.
   const reports = initYieldReports({
-    nation, states, cities, lenses: lensFile.lenses, lensVintage: lensFile.vintage,
+    nation, states, cities, sources: sources || [], lenses: lensFile.lenses, lensVintage: lensFile.vintage,
     // A row picked from a report opens the place's panel; keyboard focus follows it there.
     onState: (idx) => { selectState(idx, { fly: true }); focusPanel(); },
     onCity: (city) => { selectCity(city, { fly: true }); focusPanel(); },
@@ -1473,6 +1473,9 @@ async function main() {
 
   // --- go --------------------------------------------------------------------------------------------------------
   renderTopbar(nation);
+  url.register("hud", { get: () => hudScope() || "all", set: value => { if (value) setHudScope(nation, value === "all" ? "" : value); } });
+  url.register("panel-tab", { get: () => panelEl.hidden ? null : panelEl.querySelector("[data-cptab][aria-selected=true]")?.dataset.cptab || null, set: value => { if (value) showPanelTab(value); } });
+  url.register("report", { get: () => reports.view, set: value => reports.restoreView(value) });
   resize();
   setLens(null);
   dock.render(null, null);

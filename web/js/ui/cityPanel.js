@@ -110,7 +110,7 @@ const SOURCES = {
   SE: [["Population, area", "SCB TAB628 (31 December 2007–2025)"], ["Age", "SCB TAB5557 (2025)"],
     ["Jobs by industry", "SCB TAB3204 (employed 16–74 by place of work, November 2024)"], ["Income", "SCB TAB4840 (median net income 20+, 2024)"]],
   DK: [["Population, age", "DST FOLK1A (1st quarter 2008–2026)"], ["Area", "DST ARE207"],
-    ["Jobs by industry", "DST RAS501 (employed by place of work, November 2024)"], ["Income", "DST INDKP107 (average disposable income, 2024)"]],
+    ["Jobs by industry", "DST RAS501 (employed by place of work, November 2024)"], ["Income", "DST INDKP101 (average disposable income, 2024)"]],
 };
 
 export function openCityPanel(city, ctx) {
@@ -126,6 +126,7 @@ export function openCityPanel(city, ctx) {
   const jobsTable = {NO:"07984", SE:"TAB3204", DK:"RAS501"}[city.country];
   const popRef = sourceRef(registry, city.country, popTable, "Population");
   const jobsRef = sourceRef(registry, city.country, jobsTable, "Jobs by industry");
+  const gdpRef = sourceRef(registry, city.country, {NO:"09391",SE:"TAB3138",DK:"NRHP"}[city.country], "Regional economic output");
   const t = city.type || {};
   const badge = `<span class="ctype" style="--c:${esc(t.color || "#9aa4b0")}" title="Strongest specialisation: ${esc(t.rule || "")}">${esc(t.label || "Diversified")}</span>`;
   const gy = city.growth_years || [2016, 2026];
@@ -146,7 +147,7 @@ export function openCityPanel(city, ctx) {
     row("Income relative to national reference", fin(city.income_index) ? `${Math.round(city.income_index * 100)}%` : "–",
       city.income != null ? `${int(city.income)} ${city.income_currency}` : "",
       `${incDef}. 100% = ${COUNTRY[city.country]}'s own figure. Compare within a country only: the three statistics differ.`),
-    row("Nearest larger municipality", city.nearest_bigger_km != null ? `${Math.round(city.nearest_bigger_km)} km` : "— (largest)", "",
+    row("Nearest larger municipality", city.nearest_bigger_km != null ? `${Math.round(city.nearest_bigger_km)} km` : "– (largest)", "",
       "Straight-line distance between main settlements to the nearest municipality with more residents"),
   ].join("");
 
@@ -171,14 +172,14 @@ export function openCityPanel(city, ctx) {
   const sites = sitesIn(city);
   const siteHtml = sites.length
     ? `<div class="site-list">${sites.slice(0, 14).map((s) => `<div class="site${s.maps ? " has-maps" : ""}"><span>${s.t ? glyph(s.t, 13) : s.wonder ? "🏛️" : "•"} ${esc(s.name)}</span><span class="muted">${esc(s.kind)}${s.val ? " · " + esc(s.val) : ""}</span>${s.maps ? mapsLink(s.maps, { cls: "chip sm maps-open", label: "Open in Maps" }) : ""}</div>`).join("")}${sites.length > 14 ? `<p class="muted">+${sites.length - 14} more</p>` : ""}</div>
-       <p class="muted small">The Almanac lists the site types and minimum sizes included on the map.</p>`
+       <p class="muted small">The map guide explains which sites are included.</p>`
     : `<p class="muted">No mapped resource sites, landmarks or hubs are listed for ${esc(city.name)}.</p>`;
 
   const peers = (city.peers || []).map((id) => ctx.cities?.find((c) => c.id === id)).filter(Boolean);
   const peerHtml = peers.length ? `<div class="chips">${peers.map((p) => `<button class="chip" data-city="${esc(p.id)}" title="${esc(p.full)}">${flag(p.country)} ${esc(p.name)} · ${popShort(p.population)}</button>`).join("")}</div>
     <p class="muted small">Municipalities in Scandinavia with a similar number of residents. <button class="link" data-compare="${esc(city.id)}">Compare by other criteria</button>.</p>` : "";
   const gdpBlock = city.gdp != null
-    ? `<div class="stat-row"><span class="sl">${icon("y-gold", "🪙", { size: 14 })}Economic output (estimate)</span><span><b>≈ ${money(city.gdp)}</b><span class="cmp">${city.population ? "≈ " + money(city.gdp / city.population) + " per resident" : ""}</span></span></div>
+    ? `<div class="stat-row"><span class="sl">${icon("y-gold", "🪙", { size: 14 })}Economic output (estimate)</span><span><b>≈ ${money(city.gdp)}</b>${sourceLink(gdpRef, "Economic output source", "Municipal output is estimated from regional accounts and local jobs.")}<span class="cmp">${city.population ? "≈ " + money(city.gdp / city.population) + " per resident" : ""}</span></span></div>
       <p class="muted small">${esc(city.gdp_region_name || city.gdp_region)}'s published ${city.gdp_year} output (${esc(city.gdp_concept || "")}) shared ${city.gdp_method === "sector"
         ? "by each industry's regional value added and this municipality's jobs in that industry (real estate by residents)" : "by this municipality's share of the region's jobs"}.
         Estimated from published regional statistics. ${fin(city.gdp_jobshare) ? `A plain job-share split would give ≈ ${money(city.gdp_jobshare)}.` : ""}
@@ -242,7 +243,7 @@ export function openCityPanel(city, ctx) {
       ...sectionsFor("Society"),
       peers.length && { tab: "Society", title: "Similar-sized municipalities", html: peerHtml },
       { tab: "Sources", title: "Data status", html: status },
-      { tab: "Sources", title: "Tables", html: srcRows + row("Economic output", "", nation.gdp_vintage || "") + row("Boundary", "", "Municipal polygons for display; statistics refer to the municipality as published") },
+      { tab: "Sources", title: "Tables", html: srcRows + row("Economic output", gdpRef ? `<a href="${esc(gdpRef.url)}" target="_blank" rel="noopener noreferrer">${esc(gdpRef.publisher)} – Table ${esc(gdpRef.table)}</a>` : esc(nation.gdp_vintage || "")) + row("Boundary", "", "Municipal polygons for display; statistics refer to the municipality as published") },
       ...sectionsFor("Sources"),
       ...extra.filter(({ tab }) => !["Overview", "Economy", "Society", "Sources"].includes(tab)),
     ],
