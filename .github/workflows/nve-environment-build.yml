@@ -25,9 +25,13 @@ jobs:
       - uses: actions/download-artifact@v4
         with:
           name: nve-environment-source-and-generated
-          run-id: 46093615578
+          run-id: 46093874875
           github-token: ${{ github.token }}
+      - name: Remove unused glacier query entries from restored flood manifest
+        run: |
+          python -c "from pipeline.core import fetch; m=fetch.read_manifest('nve_environment'); m['files']={k:v for k,v in m['files'].items() if k.startswith('flood200/')}; fetch.write_manifest('nve_environment',m)"
       - run: python -m pipeline.build.nve_environment
+      - run: python -m unittest discover -s tests -p test_nve_environment.py
       - run: python -m pipeline check --mode built
       - uses: actions/upload-artifact@v4
         if: always()

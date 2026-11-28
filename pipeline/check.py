@@ -60,7 +60,7 @@ KNOWN_PLACES = {  # name: (lon, lat) of the main town, for a placement check (±
     "Tromsø": (18.96, 69.65), "Kiruna": (20.23, 67.86), "Luleå": (22.15, 65.58), "Stavanger": (5.73, 58.97),
 }
 DATA_FILES = ["world", "cities", "states", "nation", "lenses", "sources", "resources", "infrastructure", "wonders",
-              "detail", "munis", "climate"]
+              "detail", "munis", "climate", "nve_environment"]
 
 
 class Report:
@@ -610,6 +610,7 @@ def main(argv=None):
     check_shelters(r, load("shelters"), cities, world, lenses, mode)
     check_uplinks(r, load("uplinks"), cities, world, mode)
     check_climate(r, load("climate"), sources, mode)
+    check_nve_environment(r, load("nve_environment"), sources, mode)
     check_version(r, load("version"))
     if res:
         check_resources(r, res, world)
@@ -887,5 +888,59 @@ def _finish(r):
     return 1 if r.failed else 0
 
 
+
+def check_nve_environment(r, packet, sources, mode):
+    from .build.nve_environment import DISPLAY_BOUNDS, TOLERANCE_KM, build
+    from .sources.nve_environment import BATCH
+    if not packet:
+        r.add("FAIL", "NVE: flood extent data missing")
+        return
+    group = packet.get("groups", {}).get("flood200", {})
+    features = group.get("features", [])
+    count = group.get("source_count", 0)
+    ids = [f.get("id") for f in features]
+    r.ok(set(packet.get("groups", {})) == {"flood200"} and
+         group.get("display_bounds_lonlat") == list(DISPLAY_BOUNDS) and
+         packet.get("simplification_km") == TOLERANCE_KM and
+         len(features) == group.get("display_count") and 0 < len(features) <= count and
+         len(set(ids)) == len(ids) and all(type(i) is int for i in ids),
+         f"NVE: {len(features)} unique southeast pilot polygons from {count} selected source records")
+    invalid = []
+    for f in features:
+        b, rings = f.get("bbox", []), f.get("rings", [])
+        valid = len(b) == 4 and all(math.isfinite(x) for x in b) and b[0] <= b[2] and b[1] <= b[3] and bool(rings)
+        if valid:
+            for ring in rings:
+                if (len(ring) < 4 or ring[0] != ring[-1] or
+                    any(len(p) != 2 or not all(math.isfinite(x) for x in p) or
+                        not (b[0]-.001 <= p[0] <= b[2]+.001 and b[1]-.001 <= p[1] <= b[3]+.001)
+                        for p in ring)):
+                    valid = False
+                    break
+        if not valid:
+            invalid.append(f.get("id"))
+    r.ok(not invalid and (WEB_DATA / "nve_environment.json").stat().st_size <= 3_000_000,
+         f"NVE: finite closed rings, matching bounding boxes, 3 MB budget ({len(invalid)} invalid)")
+    files = packet.get("source", {}).get("files", [])
+    expected = math.ceil(count / BATCH) + 2
+    catalogue = next((s for s in sources if s["id"] == "nve_environment"), {})
+    r.ok(len(files) == expected and len({f["file"] for f in files}) == expected
+         and catalogue.get("file_count") == expected and
+         catalogue.get("license") == packet["source"].get("license")
+         and all(f["file"].startswith("flood200/") and
+                 f["url"].startswith("https://kart.nve.no/enterprise/rest/services/Flomsoner2/MapServer/17")
+                 and re.fullmatch(r"[a-f0-9]{64}", f["sha256"]) and f["bytes"] > 0 for f in files),
+         "NVE: source catalogue and complete flood request/hash inventory agree")
+    if mode != "built":
+        try:
+            actual = build(write=False)
+            def without_dates(data):
+                return {**data, "source": {**data["source"], "files": [
+                    {k:v for k,v in f.items() if k != "retrieved"} for f in data["source"]["files"]]}}
+            r.ok(without_dates(actual) == without_dates(packet), "NVE: published geometry equals verified source snapshot")
+        except (OSError, ValueError) as error:
+            r.add("FAIL", f"NVE: {error}")
+
 if __name__ == "__main__":
     sys.exit(main(sys.argv[1:]))
+

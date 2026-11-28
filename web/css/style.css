@@ -863,3 +863,9 @@ a.maps-open svg { flex-shrink: 0; }
 .journey-list { display: grid; gap: 6px; margin: 10px 0; }
 .journey-list button { text-align: left; white-space: normal; }
 .discovery[data-journeys] .chips { flex-wrap: wrap; }
+
+/* Keep Council and Timeline actions large enough for keyboard and pointer use. */
+.nc .chip { min-height: 24px; min-width: 24px; white-space: normal; }
+.nc .obs .chips { gap: 6px; }
+
+.nve-environment .chip { min-height:24px; min-width:24px; white-space:normal; }
