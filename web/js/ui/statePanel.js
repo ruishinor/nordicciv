@@ -43,6 +43,11 @@ export function openStatePanel(idx, ctx) {
   const growth = Number.isFinite(st.growth) ? ` · <span class="growth ${st.growth >= 0 ? "good" : "bad"}">${st.growth >= 0 ? "▲" : "▼"} ${Math.abs(st.growth * 100).toFixed(1)}% <span class="since">since ${st.growth_years?.[0]}</span></span>` : "";
   const regionMaps = regionTarget(st.name || geo.name, cities, { grid: w.grid });
   const mapsHtml = regionMaps ? `<div class="cp-actions">${mapsLink(regionMaps, { id: "region" })}</div>` : "";
+  const extra = [];
+  for (const sections of ctx.stateSections || []) {
+    try { extra.push(...(sections(st) || [])); }
+    catch (error) { console.error("region panel section failed", error); }
+  }
   showPanel({
     kind: "state",
     stripe: css(w.stateColor[idx] || [190, 190, 190]),
@@ -55,6 +60,7 @@ export function openStatePanel(idx, ctx) {
         <p class="muted small">Gold is the sum of the municipalities' output estimates: for Swedish län and Danish regions it equals the published regional output; for Norway's 2024 counties split from Viken, Vestfold og Telemark and Troms og Finnmark it is an estimate (≈). ≥ = lower bound.</p>` },
       { title: "Population 2008–2026", html: popChart(st) + popBasis(st) },
       { title: "Land", html: landBar },
+      ...extra,
       st.jobs && { title: "Jobs by industry · place of work, 2024", html: industryBars(st, nation, 8) },
       { title: "Largest municipalities", html: cityRows },
       mapsHtml && { title: "Maps", html: mapsHtml },

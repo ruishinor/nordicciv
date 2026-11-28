@@ -577,8 +577,9 @@ async function main() {
 
   const citySections = []; // app.addCitySections(fn, wire): extension sections in the municipality panel
   const cityWire = [];
+  const stateSections = []; // app.addStateSections(fn): extension sections in the region panel
   const panelCtx = () => ({
-    w, nation, states, cities, extraSections: citySections, extraWire: cityWire,
+    w, nation, states, cities, extraSections: citySections, extraWire: cityWire, stateSections,
     onClose: () => clearSelection(),
     onPedia: () => pedia.open("Yields"),
     onState: (idx) => selectState(idx, { fly: true }),
@@ -1253,6 +1254,11 @@ async function main() {
       citySections.push(sections);
       if (wire) cityWire.push(wire);
       if (state.selectedCity) selectCity(state.selectedCity, { fly: false });
+    },
+    /** Contribute sections to the region panel: sections(region) → [{title, html}]. */
+    addStateSections(sections) {
+      stateSections.push(sections);
+      if (state.selectedState != null) selectState(state.selectedState);
     },
     highlightBounds: (h = state.highlight) => highlightBounds(w, h),
     setResourceFilter(f) { state.resourceFilter = f || null; requestDraw(); },

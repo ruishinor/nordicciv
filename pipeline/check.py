@@ -60,7 +60,7 @@ KNOWN_PLACES = {  # name: (lon, lat) of the main town, for a placement check (±
     "Tromsø": (18.96, 69.65), "Kiruna": (20.23, 67.86), "Luleå": (22.15, 65.58), "Stavanger": (5.73, 58.97),
 }
 DATA_FILES = ["world", "cities", "states", "nation", "lenses", "sources", "resources", "infrastructure", "wonders",
-              "detail", "munis"]
+              "detail", "munis", "climate"]
 
 
 class Report:
@@ -553,6 +553,7 @@ def main(argv=None):
     check_lenses(r, lenses, sources, world)
     check_shelters(r, load("shelters"), cities, world, lenses, mode)
     check_uplinks(r, load("uplinks"), cities, world, mode)
+    check_climate(r, load("climate"), sources, mode)
     check_version(r, load("version"))
     if res:
         check_resources(r, res, world)
@@ -768,6 +769,47 @@ def check_uplinks(r, up, cities, world, mode):
             r.ok(not diff, f"source: every published position equals the provider's cached listing, read independently ({len(pub)} checked, {len(diff)} differ {diff[:3]})")
         else:
             r.add("FAIL", "source: cached provider listings for camera uplinks missing (data/raw/camera_uplinks)")
+
+
+def check_climate(r, climate, sources, mode):
+    from .sources.climate import ClimateNormals, MIN_YEARS, PERIOD
+    if not climate:
+        r.add("FAIL", "climate: station data missing")
+        return
+    expected = {f"{f.rel_path[:2]}-{Path(f.rel_path).stem.rsplit('_', 1)[1]}": f.url for f in ClimateNormals().files()}
+    stations = climate.get("stations", [])
+    catalogue = next((s for s in sources if s["id"] == "climate_normals"), {})
+    r.ok(climate.get("period") == PERIOD and climate.get("minimum_years") == MIN_YEARS
+         and {s["id"]: s["source_url"] for s in stations} == expected and len(stations) == len(expected),
+         f"climate: {len(stations)} unique selected station records match the pinned archive")
+    bad = []
+    for s in stations:
+        if not (54 <= s["lat"] <= 72 and 3 <= s["lon"] <= 32 and s["id"].startswith(s["country"] + "-")
+                and re.fullmatch(r"[a-f0-9]{64}", s["sha256"]) and re.match(r"^\d{4}-\d\d-\d\dT", s["retrieved"])):
+            bad.append(s["id"])
+        for m, n, lower, upper in (("temperature_c", "temperature_years", -65, 45),
+                                    ("precipitation_mm", "precipitation_years", 0, 7000)):
+            values, counts = s[m] + [s["annual_" + m]], s[n]
+            if len(values) != 13 or len(counts) != 13 or any(
+                (c is not None and (type(c) is not int or not 0 <= c <= 30))
+                or (v is not None and (not lower <= v <= upper or c is not None and c < MIN_YEARS))
+                for v, c in zip(values, counts)
+            ):
+                bad.append(s["id"])
+    r.ok(not bad, f"climate: coordinates, units, missingness, observation-year counts and source hashes ({len(bad)} invalid)")
+    r.ok(catalogue.get("file_count") == len(stations) and catalogue.get("license") == climate["source"]["license"],
+         "climate: Almanac source count and archive licence match")
+    if mode != "built":
+        try:
+            actual = ClimateNormals().process()
+        except (FileNotFoundError, ValueError) as error:
+            r.add("FAIL", f"climate: {error}")
+        else:
+            def without_retrieval(packet):
+                return {**packet, "stations": [{k: v for k, v in s.items() if k != "retrieved"} for s in packet["stations"]]}
+
+            r.ok(without_retrieval(actual) == without_retrieval(climate),
+                 "climate: shipped values and hashes equal the verified source cache")
 
 
 def check_version(r, v):

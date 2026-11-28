@@ -105,6 +105,9 @@ export function install(app) {
     if (dockEl && context && innerWidth < 1200 && !app.isMobile?.()) { toggle(false); return; }
     if (dockEl && tab === "advisors") render();
   });
+  app.on("data", ({ name }) => {
+    if (name === "climate" && tab === "advisors" && advisor === "environment") render();
+  });
   // mobile navigation bar (index.html #mobile-nav)
   const nav = document.getElementById("mobile-nav");
   function syncNav() {
@@ -424,6 +427,8 @@ export function install(app) {
       }
       const parks = (app.data.wonders?.wonders || []).filter((x) => x.rule === "national_park" && (c ? x.county === c.id : r ? x.state === r.fips : true));
       if (parks.length) out.push(obs(`Large national parks: ${parks.map((p) => `${esc(p.short)} (${int(p.metrics.area_km2)} km²)`).join(", ")}.`, { source: "Wikidata areas; rule ≥ 1,000 km²" }));
+      const climate = app.climate?.advisor(c, r);
+      if (climate) out.push(climate);
       return out;
     },
     resilience(c, r) {
