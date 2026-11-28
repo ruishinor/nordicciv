@@ -52,7 +52,7 @@ async def _open(b, url, ok_errors, *, viewport=None, mobile=False, reduced=False
     return ctx, pg, reqs
 
 
-async def run(b, URL, ok, errors, timings, geo_of):
+async def run(b, URL, ok, errors, timings, geo_of, out):
     base = URL.split("#")[0]
 
     # 33–34. cold start, slow network (≈ 4 Mbit/s, 150 ms) and 4× slower CPU
@@ -139,19 +139,20 @@ async def run(b, URL, ok, errors, timings, geo_of):
 
     # 36. reduced motion: nothing moves (needle, glint, fade), the map still opens
     async def hold(route):  # keep the opening on screen for a moment so its styles can be read
-        await pg_hold.wait_for_timeout(1500)
+        await pg_hold.wait_for_timeout(5000)
         await route.continue_()
     ctx, pg_hold, _ = await _open(b, URL, errors, reduced=True, routes=[("**/data/world.json", hold)])
     await pg_hold.wait_for_function("document.querySelector('#opening .op-needle')", timeout=20000)
+    await pg_hold.locator("#opening").screenshot(path=str(out / "opening-desktop.png"), animations="disabled")
     rm = await pg_hold.evaluate("""(() => { const g = (sel, p) => getComputedStyle(document.querySelector('#opening ' + sel))[p];
-        return { needle: g('.op-needle', 'animationName'),
+        return { compass: !!document.querySelector("#opening .op-bezel") && !document.querySelector("#opening .op-cross"), needle: g('.op-needle', 'animationName'),
                  bar: g('.op-progress', 'animationName'), fade: getComputedStyle(document.getElementById('opening')).transitionDuration,
                  fill: g('.op-fill', 'transitionDuration') }; })()""")
     await pg_hold.wait_for_function(READY, timeout=60000)
     rm["phase"] = await pg_hold.evaluate("__opening.phase")
     await ctx.close()
     ok("36 reduced motion: the compass needle, progress glint and fade do not animate; the map opens as usual",
-       rm["needle"] == rm["bar"] == "none" and rm["fade"].startswith("0s") and rm["fill"] == "0s" and rm["phase"] == "ready", rm)
+       rm["compass"] and rm["needle"] == rm["bar"] == "none" and rm["fade"].startswith("0s") and rm["fill"] == "0s" and rm["phase"] == "ready", rm)
 
     # 37. failures: an essential file missing (404), an essential download cut off, a code file that does not load;
     # each stops the progress with a plain explanation and "Try again" (focused); the retry works once the cause is gone.
@@ -217,10 +218,11 @@ async def run(b, URL, ok, errors, timings, geo_of):
     await ctx.close()
 
     async def hold_m(route):
-        await pm_.wait_for_timeout(1500)
+        await pm_.wait_for_timeout(5000)
         await route.continue_()
     ctx, pm_, _ = await _open(b, URL, errors, viewport={"width": 390, "height": 844}, mobile=True, routes=[("**/data/world.json", hold_m)])
     await pm_.wait_for_function("document.querySelector('#opening .op-version')?.textContent", timeout=20000)
+    await pm_.locator("#opening").screenshot(path=str(out / "opening-phone.png"), animations="disabled")
     ph = await pm_.evaluate("""(() => { const r = (s) => document.querySelector('#opening ' + s).getBoundingClientRect(); const inV = (x) => x.left >= 0 && x.right <= innerWidth && x.top >= 0 && x.bottom <= innerHeight;
         return { emblem: inV(r('.op-emblem')), title: inV(r('.op-title')), bar: inV(r('.op-progress')), status: inV(r('.op-status')), version: inV(r('.op-version')),
                  overflow: document.documentElement.scrollWidth > innerWidth }; })()""")
