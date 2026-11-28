@@ -7,6 +7,7 @@ import { reliefReady, muniFeature } from "../../render/art/relief.js";
 import { comparable, growthBetween, whyNotComparable, popIn, rankBy } from "../../stats.js";
 import { showPanelTab } from "../../ui/infoPanel.js";
 import { norm } from "../../app/search.js";
+import { glacierHistoryHtml, hazardLinksHtml } from "./environment-history.js";
 
 const COUNTRY = { NO: "Norway", SE: "Sweden", DK: "Denmark" };
 const FLAG = { NO: "🇳🇴", SE: "🇸🇪", DK: "🇩🇰" };
@@ -77,6 +78,10 @@ export function install(app) {
     return fin(x) ? v.indexOf(x) + 1 : null;
   };
   const totals = nation.nation;
+  app.addStateSections((region) => {
+    const html = glacierHistoryHtml(region.fips) + hazardLinksHtml(region.fips);
+    return html ? [{ title: "Landscape changes and hazards", html }] : [];
+  });
 
   // ---- UI shell ------------------------------------------------------------------------------------------------------
   const btn = app.ui.addTopButton({ id: "council", icon: "🏛️", label: "Council", title: "Advisors, comparison and data explorer (C)", onClick: () => toggle() });
@@ -427,6 +432,11 @@ export function install(app) {
       }
       const parks = (app.data.wonders?.wonders || []).filter((x) => x.rule === "national_park" && (c ? x.county === c.id : r ? x.state === r.fips : true));
       if (parks.length) out.push(obs(`Large national parks: ${parks.map((p) => `${esc(p.short)} (${int(p.metrics.area_km2)} km²)`).join(", ")}.`, { source: "Wikidata areas; rule ≥ 1,000 km²" }));
+      const scope = c ? c.states?.[0] || c.country : r?.fips || "";
+      const history = glacierHistoryHtml(scope);
+      if (history) out.push(`<div class="obs">${history}</div>`);
+      const hazards = hazardLinksHtml(scope);
+      if (hazards) out.push(`<div class="obs">${hazards}</div>`);
       const climate = app.climate?.advisor(c, r);
       if (climate) out.push(climate);
       return out;
@@ -749,7 +759,9 @@ export function install(app) {
         Ranked: ${d.ranked.length}${tl.min ? ` with ${int(tl.min)}+ residents in ${tl.b}` : ""}.</p>
       <div class="nc-excl" hidden>${d.excluded.map((c) => `<div>${cityLink(c)} <span class="muted small">${esc(whyNotComparable(c, tl.a, tl.b))}</span></div>`).join("")}</div>
       ${d.ranked.length >= 2 ? `<p>Grew most: ${top.map(line).join(", ")}<br>${bottom[0][1] < 0 ? "Shrank most" : "Grew least"}: ${bottom.map(line).join(", ")}</p>` : ""}
-      <p class="muted small">Population 1 January on today's municipal borders. SSB 07459 (aggregated series for the 2024 municipalities; county totals from agg_Fylker2024), SCB TAB628 (31 December of the previous year), DST FOLK1A (1st quarter). A municipality is compared only between years observed on the same territory.</p></div>`;
+      <p class="muted small">Population 1 January on today's municipal borders. SSB 07459 (aggregated series for the 2024 municipalities; county totals from agg_Fylker2024), SCB TAB628 (31 December of the previous year), DST FOLK1A (1st quarter). A municipality is compared only between years observed on the same territory.</p>
+      <div class="obs"><h4>Land cover, 1990–2018</h4><p>See where the CORINE grid changed to built-up land, industry, mines or transport.</p>${lens("urban_growth") ? '<button class="chip" data-lens="urban_growth">Show new built-up land</button>' : ""}</div>
+      ${glacierHistoryHtml(tl.scope)}</div>`;
   }
   function sparkScope(o) {
     const ys = Object.keys(o?.pop_series || {}).map(Number).filter((y) => fin(o.pop_series[y]));
