@@ -6,7 +6,7 @@ import { statDefs, fmtStat, SCOPE_NAME } from "./yieldReport.js";
 // under the value; selecting a municipality never changes these figures (the scope only changes here).
 let scope = "";
 try { scope = localStorage.getItem("nc-scope") || ""; } catch { /* storage blocked */ }
-if (!(scope in SCOPE_NAME)) scope = "";
+if (!Object.hasOwn(SCOPE_NAME, scope)) scope = "";
 export const hudScope = () => scope;
 
 export function renderTopbar(nation) {

@@ -13,37 +13,38 @@ const sgn = (v, d = 1) => (v >= 0 ? "+" : "−") + Math.abs(v * 100).toFixed(d) 
 /** Measures with a plain-language reading for each end. `lens` = the map lens that shows it. */
 export const FACETS = [
   { id: "growth", lens: "growth", get: (c) => c.growth,
-    hi: "one of the fastest-growing municipalities", lo: "one of the fastest-shrinking municipalities",
+    hi: "has one of the highest population growth rates", lo: "has one of the lowest population growth rates",
     value: (v) => `${sgn(v)} residents since 2016`, def: "Population change 1 Jan 2016 → 1 Jan 2026 on the same territory (municipalities whose boundaries changed are left out)." },
   { id: "density", lens: "density", get: (c) => c.density,
-    hi: "one of the most densely populated", lo: "one of the most thinly populated",
+    hi: "is one of the most densely populated municipalities", lo: "is one of the least densely populated municipalities",
     value: (v) => `${v < 10 ? v.toFixed(1) : int(v)} residents per km² of land`, def: "Residents (1 Jan 2026) per km² of land area (lakes excluded)." },
   { id: "ageing", lens: "ageing", get: (c) => c.share_65plus,
-    hi: "one of the highest shares of residents aged 65+", lo: "one of the lowest shares of residents aged 65+",
+    hi: "has one of the highest percentages of residents aged 65 or older", lo: "has one of the lowest percentages of residents aged 65 or older",
     value: (v) => `${pct(v, 0)} of residents aged 65 or over`, def: "Share of residents aged 65+, 1 Jan 2026." },
   { id: "jobs", lens: "jobs_ratio", get: (c) => c.jobs_per_100,
-    hi: "a job centre: One of the highest numbers of jobs per resident", lo: "a commuter home: One of the lowest numbers of jobs per resident",
-    value: (v) => `${v.toFixed(0)} jobs located here per 100 residents`, def: "Jobs at workplaces in the municipality (2024) per 100 residents (2026). Above 100 means people commute in; it is not an employment rate." },
+    hi: "has one of the highest numbers of jobs per resident", lo: "has one of the lowest numbers of jobs per resident",
+    value: (v) => `${v.toFixed(0)} jobs located here per 100 residents`, def: "Jobs at workplaces in the municipality (2024) per 100 residents (2026). This compares local jobs with all residents, not just people of working age." },
   // distance to a larger municipality says something about small places only (for Copenhagen it is the distance to
   // Oslo), so it is measured among municipalities under 50,000 residents
   { id: "remote", lens: null, get: (c) => ((c.population || 0) < 50000 ? c.nearest_bigger_km : null),
-    hi: "remote: Unusually far from any larger municipality (among those under 50,000 residents)", lo: null,
+    hi: "is unusually far from a larger municipality (compared with municipalities under 50,000 residents)", lo: null,
     value: (v) => `${int(v)} km to the nearest more populous municipality`, def: "Straight-line distance between the main settlements of this and the nearest municipality with more residents." },
   { id: "area", lens: null, get: (c) => c.land_km2,
-    hi: "one of the largest by land area", lo: "one of the smallest by land area",
+    hi: "is one of the largest municipalities by land area", lo: "is one of the smallest municipalities by land area",
     value: (v) => `${int(v)} km² of land`, def: "Land area (water excluded) as published by the national agency." },
 ];
 
 const TOP = 0.05; // "among the most" = top or bottom 5 %
 
 function ranked(cities, facet) {
-  if (!facet._r) {
+  const cache = facet._r ||= new WeakMap();
+  if (!cache.has(cities)) {
     const list = rankList(cities, facet.get); // competition ranks, largest first
     const n = list.length;
     const lo = rankList(cities, facet.get, { asc: true });
-    facet._r = { n, hi: new Map(list.map((e) => [e.x.id, e.rank])), lo: new Map(lo.map((e) => [e.x.id, e.rank])), order: list };
+    cache.set(cities, { n, hi: new Map(list.map((e) => [e.x.id, e.rank])), lo: new Map(lo.map((e) => [e.x.id, e.rank])), order: list });
   }
-  return facet._r;
+  return cache.get(cities);
 }
 
 /** Up to `max` distinctive facts about one municipality, most extreme first; [] when it is typical everywhere. */
@@ -61,16 +62,16 @@ export function distinctive(c, cities, max = 4) {
         const k = r.order.findIndex((e) => e.x.id === c.id);
         const near = r.order.slice(Math.max(0, k - 2), k + 3).filter((e) => e.x.id !== c.id).slice(0, 3).map((e) => e.x);
         out.push({ facet: f, side, rank, n: r.n, v, share: rank / r.n, near,
-          text: `${f[side]} in Scandinavia`, detail: `${f.value(v)} · #${rank} of ${r.n} from the ${side === "hi" ? "top" : "bottom"}` });
+          text: `${c.name} ${f[side]} in Scandinavia.`, detail: `${f.value(v)} · Rank ${rank} (${side === "hi" ? "Highest" : "Lowest"}) of ${r.n} municipalities` });
       }
     }
   }
   // the strongest specialisation, when it is far above the Scandinavian mix
   const sp = (c.specialisations || [])[0];
   if (sp && sp.lq >= 2.5) {
-    out.push({ facet: { id: "spec", def: "Location quotient: the industry's share of local jobs ÷ its share in Norway, Sweden and Denmark combined (place of work, 2024). It measures concentration, not output." },
+    out.push({ facet: { id: "spec", def: "Industry specialisation: The industry's share of local jobs ÷ its share in Norway, Sweden and Denmark combined (place of work, 2024). It measures concentration, not output." },
       side: "hi", share: 1 / sp.lq, group: sp.group,
-      text: `${sp.lq.toFixed(1)} times the Scandinavian share of jobs in ${sp.label.toLowerCase()}`, detail: `${sp.partial ? "≥" : ""}${int(sp.jobs)} jobs` });
+      text: `${c.name} has ${sp.lq.toFixed(1)} times the Scandinavian share of jobs in ${sp.label.toLowerCase()}.`, detail: `${sp.partial ? "≥" : ""}${int(sp.jobs)} jobs` });
   }
   return out.sort((a, b) => a.share - b.share).slice(0, max);
 }
@@ -79,15 +80,14 @@ export function distinctive(c, cities, max = 4) {
 export function distinctiveHtml(c, cities) {
   const items = distinctive(c, cities);
   if (!items.length) {
-    return `<p class="muted">Close to the Scandinavian middle on every measure checked here (growth, density, age, jobs per resident,
-      distance, area, specialisation): No figure is in the top or bottom 5%. The similar-municipality and Council views show how it compares.</p>`;
+    return `<p class="muted">No figure meets the selection criteria for this section. Use Compare to explore other municipalities.</p>`;
   }
   return `<ul class="standout">${items.map((it) => `<li title="${esc(it.facet.def)}">
       <div><b>${esc(sentenceCase(it.text))}</b> <span class="muted">${esc(it.detail)}</span></div>
       <div class="chips">${it.facet.lens ? `<button class="chip sm" data-facet="${esc(it.facet.id)}" title="Colour the map by this measure">Map ›</button>` : ""}
         ${it.group ? `<button class="chip sm" data-spec="${esc(it.group)}" title="Where else this industry concentrates">Where else ›</button>` : ""}
-        ${(it.near || []).map((x) => `<button class="chip sm" data-city="${esc(x.id)}" title="${esc(x.full || x.name)}">${esc(x.name)}</button>`).join("")}</div></li>`).join("")}</ul>
-    <p class="muted small">"Among the most" = top or bottom 5% of the municipalities with the figure. The names are its neighbours in that ranking. Hover an item for the definition.</p>`;
+        ${it.near?.length ? `<span class="muted small">Nearby in this ranking:</span>` : ""}${(it.near || []).map((x) => `<button class="chip sm" data-city="${esc(x.id)}" title="${esc(x.full || x.name)}">${esc(x.name)}</button>`).join("")}</div></li>`).join("")}</ul>
+    `;
 }
 
 /** Facts worth discovering, each tied to a municipality and a lens. Small municipalities are filtered where a ratio

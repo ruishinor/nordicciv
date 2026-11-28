@@ -56,7 +56,7 @@ export function yearStatus(c, y) {
 export function rankText(o, key, of) {
   const n = typeof of === "object" && of ? of[key] : of;
   const rr = o?.rank_range?.[key];
-  if (rr) return rr[1] - rr[0] >= n / 2 ? `rank uncertain (suppressed)` : `#${rr[0]}–${rr[1]} of ${n}`;
+  if (rr) return rr[1] - rr[0] >= n / 2 ? `Rank unavailable` : `#${rr[0]}–${rr[1]} of ${n}`;
   const r = o?.ranks?.[key];
   return r ? `#${r} of ${n}` : "";
 }
