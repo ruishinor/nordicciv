@@ -867,3 +867,9 @@ a.maps-open svg { flex-shrink: 0; }
 /* Keep Council and Timeline actions large enough for keyboard and pointer use. */
 .nc .chip { min-height: 24px; min-width: 24px; white-space: normal; }
 .nc .obs .chips { gap: 6px; }
+
+.nve-environment .chip { min-height:24px; min-width:24px; white-space:normal; }
+
+.commuting-partners { list-style:none; margin:6px 0 12px; padding:0; display:grid; gap:4px; }
+.commuting-partners li { display:flex; justify-content:space-between; align-items:center; gap:8px; }
+.commuting-section .chip { min-height:24px; min-width:24px; text-align:left; white-space:normal; }

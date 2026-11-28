@@ -86,3 +86,11 @@ To update this dataset alone, run `python -m pipeline fetch climate_normals`, `p
 ## Historical CORINE land cover
 
 `lenses.json.land_history` contains the paired observation years (1990, 2018), pinned upstream revision, tile paths, Git blob IDs and SHA-256 hashes. `paired_cells` and each group's `gain` / `loss` arrays use the existing owned-hex packing. Forest classes are 23–25, agricultural classes 12–22. Net change is gain minus loss, null where no cell has both observations. Counts are 1 km cell classes, not polygon-based municipal areas. The builder checks all existing urban-growth values before writing new layers.
+
+## Optional NVE flood extent
+
+`nve_environment.json` contains a source inventory (request URLs, SHA-256, byte counts, retrieval timestamps), map simplification tolerance (km), and one group `flood200` with source and displayed record counts, the southeast pilot bounds (WGS84 degrees), and simplified closed polygon rings in map kilometres. Only current/updated modelled 200-year inundation polygons fully inside the pilot bounds are shown. Permanent water and low-point classes are excluded. No inference about unshown areas, live warnings, or property-level risk is made. Source: NVE, NLOD 1.0.
+
+## Norwegian commuting
+
+`commuting.json`: one 2024 Q4 SSB 03321 snapshot for 357 Norwegian municipalities. `flows` contains `[home municipality ID, workplace municipality ID, employed people]` for directed, intermunicipal pairs with at least 25 people; `audit` counts the full requested Cartesian matrix (published, within municipality, below threshold, missing). `source.files` stores request identity and SHA-256. The municipality panel lists up to eight partners in each direction. Map lines connect municipal centres; they are schematic, not transport routes, trips or travel-mode statistics. No cross-border commuting or unshown totals are inferred.
