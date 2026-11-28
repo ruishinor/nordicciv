@@ -1,10 +1,11 @@
 """Source registry: every Source subclass listed here is fetched/processed by the CLI."""
 from .climate import ClimateNormals
+from .nve_environment import NveEnvironment
 from .geo import Boundaries, Euronym, GiscoGrids, NaturalEarth, OurAirports, PowerPlants
 from .stats import DST_, SCB_, SSB_, Eurostat
 
 ALL = [GiscoGrids(), NaturalEarth(), Boundaries(), Euronym(), OurAirports(), PowerPlants(),
-       SSB_(), SCB_(), DST_(), Eurostat(), ClimateNormals()]
+       SSB_(), SCB_(), DST_(), Eurostat(), ClimateNormals(), NveEnvironment()]
 
 
 def _extra_sources():
