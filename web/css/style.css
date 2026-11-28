@@ -877,3 +877,9 @@ a.maps-open svg { flex-shrink: 0; }
 .shelter-overview-list > div { display:flex; align-items:baseline; justify-content:space-between; gap:12px; padding:5px 0; border-bottom:1px solid rgba(255,255,255,.12); }
 .shelter-overview-list dd { margin:0; font-variant-numeric:tabular-nums; white-space:nowrap; font-weight:600; }
 .shelter-overview a { color:var(--gold-bright); display:inline-flex; align-items:center; min-height:24px; }
+
+/* Published transport observations */
+.transport-observations{list-style:none;margin:8px 0;padding:0;display:grid;gap:8px}
+.transport-observations li{padding:8px 0;border-bottom:1px solid currentColor;overflow-wrap:anywhere}
+.transport-observations li[hidden],.transport-section [hidden]{display:none!important}
+.transport-section select{max-width:100%;min-height:32px;margin:4px}

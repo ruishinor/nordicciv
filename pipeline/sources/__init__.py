@@ -3,11 +3,12 @@ from .climate import ClimateNormals
 from .commuting import Commuting
 from .nordic_commuting import NordicCommuting
 from .nve_environment import NveEnvironment
+from .transport import Transport
 from .geo import Boundaries, Euronym, GiscoGrids, NaturalEarth, OurAirports, PowerPlants
 from .stats import DST_, SCB_, SSB_, Eurostat
 
 ALL = [GiscoGrids(), NaturalEarth(), Boundaries(), Euronym(), OurAirports(), PowerPlants(),
-       SSB_(), SCB_(), DST_(), Eurostat(), ClimateNormals(), NveEnvironment(), Commuting(), NordicCommuting("SE"), NordicCommuting("DK")]
+       SSB_(), SCB_(), DST_(), Eurostat(), ClimateNormals(), NveEnvironment(), Commuting(), NordicCommuting("SE"), NordicCommuting("DK"), Transport()]
 
 
 def _extra_sources():

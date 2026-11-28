@@ -60,7 +60,7 @@ KNOWN_PLACES = {  # name: (lon, lat) of the main town, for a placement check (±
     "Tromsø": (18.96, 69.65), "Kiruna": (20.23, 67.86), "Luleå": (22.15, 65.58), "Stavanger": (5.73, 58.97),
 }
 DATA_FILES = ["world", "cities", "states", "nation", "lenses", "sources", "resources", "infrastructure", "wonders",
-              "detail", "munis", "climate", "nve_environment", "commuting", "commuting_se", "commuting_dk"]
+              "detail", "munis", "climate", "nve_environment", "commuting", "commuting_se", "commuting_dk", "transport"]
 
 
 class Report:
@@ -613,6 +613,7 @@ def main(argv=None):
     check_nve_environment(r, load("nve_environment"), sources, mode)
     for country, name in (("NO", "commuting"), ("SE", "commuting_se"), ("DK", "commuting_dk")):
         check_commuting(r, load(name), cities, sources, mode, country)
+    check_transport(r, load("transport"), cities, sources, mode)
     check_version(r, load("version"))
     if res:
         check_resources(r, res, world)
@@ -988,6 +989,80 @@ def check_commuting(r, packet, cities, sources, mode, country="NO"):
             r.ok(without_dates(actual)==without_dates(packet),"commuting: shipped values equal verified national observations")
         except (OSError,ValueError) as error:
             r.add("FAIL",f"commuting: {error}")
+
+def check_transport(r, packet, cities, sources, mode):
+    from .sources.transport import Transport, SELECTIONS, AIRPORTS, FERRIES
+    import itertools
+    import math
+    if not packet:
+        r.add("FAIL", "transport: data missing")
+        return
+    source = Transport()
+    nodes = packet.get("nodes", {})
+    flows = packet.get("flows", [])
+    city_ids = {c["id"]: c["country"] for c in cities}
+    valid_nodes = all(
+        n.get("kind") == k.split(":")[0] and n.get("name") and
+        (n.get("country") in ("NO", "SE", "DK")) and
+        (n.get("kind") == "country" and k in ("country:NO", "country:SE") and
+         "city" not in n and "x" not in n and "y" not in n or
+         n.get("kind") != "country" and city_ids.get(n.get("city")) == n.get("country") and
+         (k == "port:DK_0DKNDB" and "x" not in n and "y" not in n or
+          all(isinstance(n.get(coord), (float, int)) and math.isfinite(n[coord]) for coord in ("x", "y"))))
+        for k, n in nodes.items())
+    expected = {t: set(itertools.product(*sel.values())) for t, sel in SELECTIONS.items()}
+    counts = {t: 0 for t in expected}
+    seen, used, bad = set(), set(), 0
+    for f in flows:
+        table = f.get("table")
+        key = tuple(f.get("id", "").split(":")[1:])
+        if table not in expected or key not in expected[table] or f["id"] != table + ":" + ":".join(key):
+            bad += 1
+            continue
+        counts[table] += 1
+        if table == "FLYV33":
+            a, b = ["airport:" + AIRPORTS[k[1:]] for k in key[:2]]
+        elif table == "FLYV34":
+            a, b = "airport:" + AIRPORTS[key[0]], "country:" + key[1]
+            if key[2] == "0003":
+                a, b = b, a
+        else:
+            a, b = FERRIES[table][key[0]]
+        aviation = table.startswith("FLYV")
+        category = "aviation" if aviation else "ferry" if key[1] == "8005" else "freight"
+        unit = "tonnes" if category == "freight" else "passenger movements"
+        n = f.get("value")
+        if (f.get("origin"), f.get("destination")) != (a, b) or a == b or a not in nodes or b not in nodes or \
+                f.get("directed") is not aviation or f.get("category") != category or f.get("unit") != unit or \
+                type(n) is not int or n <= 0 or f["id"] in seen:
+            bad += 1
+        seen.add(f["id"])
+        used.update((a, b))
+    audit = packet.get("audit", {})
+    valid_audit = set(audit) == set(expected) and all(
+        set(audit[t]) == {"requested", "unavailable_or_zero", "same_airport", "published"} and
+        all(type(v) is int and v >= 0 for v in audit[t].values()) and
+        audit[t]["requested"] == len(expected[t]) and
+        audit[t]["requested"] == sum(audit[t][k] for k in ("unavailable_or_zero", "same_airport", "published")) and
+        audit[t]["published"] == counts[t] for t in expected)
+    r.ok(packet.get("schema") == 1 and packet.get("period") == "2024" and valid_nodes and
+         valid_audit and not bad and used == set(nodes) and len(flows) > 0,
+         f"transport: {len(flows)} bounded observations, endpoints, units, directions and coverage")
+    files = packet.get("files", [])
+    catalogue = next((s for s in sources if s.get("id") == source.id), {})
+    expected_files = {f.rel_path: f.url for f in source.files()}
+    r.ok({f["file"]: f["url"] for f in files} == expected_files and len(files) == len(expected_files) and
+         catalogue.get("file_count") == len(expected_files) and catalogue.get("license") == source.info.license and
+         {f["file"]: (f["url"], f["sha256"]) for f in files} ==
+         {f["file"]: (f["url"], f["sha256"]) for f in catalogue.get("files", [])} and
+         all(re.fullmatch(r"[a-f0-9]{64}", f["sha256"]) for f in files),
+         "transport: pinned requests and matching catalogue hashes")
+    if mode != "built":
+        try:
+            r.ok(source.process() == packet, "transport: shipped values equal verified source observations")
+        except (OSError, ValueError, KeyError, TypeError) as error:
+            r.add("FAIL", f"transport: {error}")
+
 
 if __name__ == "__main__":
     sys.exit(main(sys.argv[1:]))

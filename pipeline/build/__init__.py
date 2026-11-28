@@ -4,7 +4,7 @@ BUILDERS = []
 
 def run(names):
     import importlib
-    order = ["world", "regions", "munis", "relief", "resources", "infrastructure", "wonders", "shelters", "uplinks", "climate", "nve_environment", "commuting", "nordic_commuting", "lenses", "catalog", "version"]
+    order = ["world", "regions", "munis", "relief", "resources", "infrastructure", "wonders", "shelters", "uplinks", "climate", "nve_environment", "commuting", "nordic_commuting", "transport", "lenses", "catalog", "version"]
     for name in order:
         if names and name not in names:
             continue

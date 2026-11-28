@@ -97,3 +97,7 @@ To update this dataset alone, run `python -m pipeline fetch climate_normals`, `p
 ## Scandinavian shelter overview
 
 The shelter overview data module contains separate source figures. DK: the official 19 June 2024 municipal inventory (FOU 2023–24, annex 205), all 98 municipality codes, four capacity categories and the published total. Each row and national column reconciles to the published totals. SE: MCF national guidance and official location map; Swedish municipal totals may be added from its downloadable register. The DSB point layer and Norway-only lens remain unchanged. The national definitions are different; no cross-country ranking or coverage ratio is computed.
+
+## `transport.json`
+
+Schema 1, period 2024. Selected Statistics Denmark tables FLYV33, FLYV34, SKIB31 and SKIB32. Each flow names its source table, endpoints, value, unit, category and direction. Values are published in rounded thousands and multiplied by 1,000. Ferry totals combine directions; aviation is directed. Zero/suppressed cells and same-airport observations are not displayed. Airport-to-country observations have no foreign airport or map coordinates. Læsø uses its labelled municipality centre; Fanø's port position is withheld pending verification. Map lines join endpoints, not actual routes. `audit` reconciles the requested matrices; `files` identifies the exact eight requests and hashes. Source/release checks compare the shipped packet with the cached source processor.
