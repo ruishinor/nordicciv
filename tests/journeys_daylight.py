@@ -98,11 +98,15 @@ async def desktop(page, url):
 
 async def time_and_link(page, url):
     await page.clock.install(time=datetime(2024, 6, 21, 0, 0, 10, tzinfo=timezone.utc))
-    await open_map(page, url + "#" + urlencode({"daylight": "2024-06-20T21:55:00.000Z", "city": "SE-2584"}))
+    async def flush_before_daylight_loads(route):
+        await page.evaluate("window.__app.hash.flush()")
+        await route.continue_()
+    await page.route("**/js/ext/daylight/index.js", flush_before_daylight_loads, times=1)
+    await open_map(page, url + "#" + urlencode({"daylight": "2024-06-20T21:55:00.000Z"}))
     await expect(page.locator(CLOCK)).to_have_attribute("datetime", "2024-06-20T21:55:00.000Z")
+    await select_place(page, "Kiruna")
     await expect(page.locator(CONTROLS)).to_contain_text("Sweden local time")
     await expect(page.locator(CLOCK)).to_contain_text("23:55 UTC+2")
-    await page.get_by_role("tab", name="Daylight").click()
     await expect(page.locator(CITY)).to_contain_text("Midnight sun")
 
     await set_time(page, "2024-03-31", "02:30")
@@ -138,11 +142,12 @@ async def mobile(page, url):
     await expect(page.locator(CITY)).to_contain_text("Daylight at 12:00")
     await expect(page.locator(CITY + " dd")).to_have_text(["04:25", "21:57", "17 h 32 min"])
     layout = await page.locator(CONTROLS).evaluate("""el => {
-      const r = el.getBoundingClientRect(), city = document.querySelector('#city-panel').getBoundingClientRect();
-      return r.x >= 0 && r.right <= innerWidth && r.bottom < city.top && el.scrollWidth <= el.clientWidth
+      const r = el.getBoundingClientRect(), city = document.querySelector('#city-panel');
+      return r.x >= 0 && r.right <= innerWidth && r.bottom < city.getBoundingClientRect().top
+        && el.scrollWidth <= el.clientWidth && city.scrollWidth <= city.clientWidth && city.scrollLeft === 0
         && getComputedStyle(el).transitionDuration === '0s';
     }""")
-    assert layout
+    assert layout, "Daylight controls or municipality tabs overflow on a narrow screen"
     await page.get_by_role("button", name="Turn off").tap()
     await expect(page.locator(CONTROLS)).to_be_hidden()
     await expect(page.get_by_role("button", name="Turn on Daylight")).to_be_focused()
@@ -155,7 +160,7 @@ async def run(browser, url, ok, errors):
         ("43 Daylight desktop: winter and summer, geographic lighting, local figures, raster cache, lens and return", desktop, {}),
         ("44 Daylight time: shared view, DST gap and overlap, live updates and Back", time_and_link, {}),
         ("45 Daylight phone: touch, reduced motion and municipality layout", mobile,
-         {"viewport": {"width": 390, "height": 844}, "is_mobile": True, "has_touch": True,
+         {"viewport": {"width": 360, "height": 800}, "is_mobile": True, "has_touch": True,
           "device_scale_factor": 2, "reduced_motion": "reduce"}),
     ]:
         ctx = await browser.new_context(**{"viewport": {"width": 1440, "height": 900}, **options})

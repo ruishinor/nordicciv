@@ -34,6 +34,7 @@ export function install(app) {
   const projection = projectionFrom(app.w);
   if (!projection) return;
   let mode = null, parameters = null, timer = 0, opener = null, lastDay = null;
+  let layerRegistered = false;
   const selectedZone = () => zoneForCountry(app.state.selectedCity?.country);
   const panel = document.createElement("section");
   panel.id = "daylight-controls";
@@ -81,7 +82,7 @@ export function install(app) {
   const nowButton = find("[data-now]"), chooseButton = find("[data-choose]");
   const panelRoot = app.panels.element;
   const desktopButton = app.ui.addTopButton({
-    id: "btn-daylight", icon: "☀", label: "Daylight", onClick: (_, button) => toggle(button),
+    id: "btn-daylight", icon: "☀", label: "Daylight", title: "Daylight", onClick: (_, button) => toggle(button),
   });
   const mobileButton = document.createElement("button");
   mobileButton.type = "button";
@@ -94,8 +95,6 @@ export function install(app) {
     button.setAttribute("aria-controls", panel.id);
     button.setAttribute("aria-pressed", "false");
   }
-
-  app.registerStaticLayer(daylightLayer(projection, app.w.raw, () => parameters));
 
   function citySummary(city) {
     if (!parameters) return '<p>See how daylight changes here through the year.</p><button type="button" class="chip" data-daylight-start>Turn on Daylight</button>';
@@ -182,6 +181,10 @@ export function install(app) {
     if (!mode && !next) return;
     mode = next;
     parameters = p;
+    if (mode && !layerRegistered) {
+      app.registerStaticLayer(daylightLayer(projection, app.w.raw, () => parameters));
+      layerRegistered = true;
+    }
     panel.hidden = !mode;
     for (const button of [desktopButton, mobileButton]) button.setAttribute("aria-pressed", String(!!mode));
     nowButton.setAttribute("aria-pressed", String(mode === "now"));

@@ -209,7 +209,6 @@ kbd {
 }
 
 /* ---------- daylight exploration ---------- */
-#btn-daylight .lbl { display: inline; }
 .daylight-panel {
   position: fixed; z-index: 11; top: calc(var(--topbar-h) + 12px); left: calc(12px + var(--dock-left, 0px));
   width: min(292px, calc(100vw - 24px)); max-height: calc(100dvh - var(--topbar-h) - 24px);
@@ -711,6 +710,8 @@ button.link { background:none; border:0; padding:0; color:#f0d48a; cursor:pointe
   background: var(--panel-2); }
 .cp-tabs button { flex: 1; background: none; border: 1px solid transparent; border-bottom: none; border-radius: 4px 4px 0 0;
   padding: 6px 4px 7px; font: 12px var(--serif); letter-spacing: .08em; text-transform: uppercase; color: var(--ink-dim); cursor: pointer; min-height: 32px; }
+#city-panel[data-kind="city"] .cp-tabs { flex-wrap: wrap; padding-inline: 8px; }
+#city-panel[data-kind="city"] .cp-tabs button { flex: 1 1 auto; padding-inline: 3px; font-size: 11px; letter-spacing: .04em; }
 .cp-tabs button:hover { color: var(--gold-bright); }
 .cp-tabs button[aria-selected="true"] { color: var(--gold-bright); border-color: var(--line); background: linear-gradient(180deg, #3a2f15, rgba(58,47,21,0)); }
 .yield-tile .meas { font-size: 10px; line-height: 1.2; color: var(--ink-dim); margin-top: 1px; min-height: 2.4em; }

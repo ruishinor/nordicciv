@@ -3,9 +3,9 @@
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
+import { projectionFrom, mapToLonLat, lonLatToMap } from "../web/js/util/geo.js";
+import * as M from "../web/js/app/maps.js";
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
-const { projectionFrom, mapToLonLat, lonLatToMap } = await import(join(ROOT, "web/js/util/geo.js"));
-const M = await import(join(ROOT, "web/js/app/maps.js"));
 const read = (n) => JSON.parse(readFileSync(join(ROOT, "web/data", `${n}.json`), "utf8"));
 const world = read("world"), cities = read("cities"), wonders = read("wonders"), infra = read("infrastructure"), up = read("uplinks");
 const pts = JSON.parse(readFileSync(0, "utf8") || "[]");

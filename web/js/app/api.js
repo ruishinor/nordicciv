@@ -72,6 +72,9 @@ export function createHashState(opts) {
   let applying = false;
 
   const params = (hash) => new URLSearchParams(String(hash || "").replace(/^#/, ""));
+  // The core can write the hash before optional extensions register their keys.
+  // Keep those values so late registrations can still restore a shared view.
+  const pendingExtras = (p) => [...p].filter(([key, value]) => value && !CORE_KEYS.has(key) && !extras.has(key));
   const readExtras = () => {
     const out = [];
     for (const [key, h] of extras) {
@@ -83,7 +86,7 @@ export function createHashState(opts) {
       }
       if (v != null && v !== "") out.push([key, String(v)]);
     }
-    return out;
+    return [...out, ...pendingExtras(params(location.hash))];
   };
   const format = (core, ex) => {
     const base = formatHash(core);
@@ -95,7 +98,7 @@ export function createHashState(opts) {
   const hashSig = (hash) => {
     const p = params(hash);
     const ex = [...extras.keys()].filter((k) => p.get(k)).map((k) => [k, p.get(k)]);
-    return sig(parseHash(hash), ex);
+    return sig(parseHash(hash), [...ex, ...pendingExtras(p)]);
   };
   let entrySig = hashSig(location.hash);
 
