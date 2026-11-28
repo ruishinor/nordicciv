@@ -1,0 +1,41 @@
+name: Generate Norwegian commuting
+on:
+  push:
+    branches: [feature/norwegian-commuting]
+    paths:
+      - .github/workflows/commuting-build.yml
+      - pipeline/sources/commuting.py
+      - pipeline/build/commuting.py
+permissions:
+  contents: write
+jobs:
+  generate:
+    if: github.ref == 'refs/heads/feature/norwegian-commuting'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feature/norwegian-commuting
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: pip install -r requirements.txt
+      - run: python -m unittest discover -s tests -p test_commuting.py
+      - run: python -m pipeline.build.commuting --fetch
+      - run: python -m pipeline check --mode built
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: commuting-source-and-generated
+          path: |
+            data/raw/commuting
+            web/data/commuting.json
+      - name: Checkpoint generated data only
+        run: |
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add web/data/commuting.json web/data/sources.json
+          git diff --cached --quiet || git commit -m "Publish verified SSB commuting pairs"
+          git push origin HEAD:refs/heads/feature/norwegian-commuting
