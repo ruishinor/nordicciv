@@ -1,0 +1,60 @@
+name: Close zoom visual and performance comparison
+on:
+  workflow_dispatch:
+  push:
+    branches: [integration/roadmap-2026-11-28]
+    paths:
+      - 'web/css/style.css'
+      - 'web/index.html'
+      - 'web/js/render/art/**'
+      - 'web/js/render/art/improvements.js'
+      - 'web/js/render/banners.js'
+      - 'tests/perf.py'
+      - 'tests/visual_states.py'
+      - '.github/workflows/close-zoom-review.yml'
+permissions:
+  contents: read
+jobs:
+  compare:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 0}
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - run: pip install -r requirements.txt
+      - run: python -m playwright install --with-deps chromium
+      - name: Compare identical views and supported maximum zoom
+        run: |
+          set -e
+          git worktree add --detach "$RUNNER_TEMP/nc-baseline" 23d09ba9ff15a7b90183c6be25851009e2ab67db
+          mkdir -p tests/results/close-zoom-review
+          git -C "$RUNNER_TEMP/nc-baseline" rev-parse HEAD > tests/results/close-zoom-review/baseline.txt
+          git rev-parse HEAD > tests/results/close-zoom-review/candidate.txt
+          python -m pipeline serve --port 8765 > /tmp/nc-candidate-server.log 2>&1 &
+          (cd "$RUNNER_TEMP/nc-baseline" && python -m pipeline serve --port 8766) > /tmp/nc-baseline-server.log 2>&1 &
+          sleep 3
+          python tests/perf.py tests/results/close-zoom-review/perf.json baseline=http://127.0.0.1:8766/ candidate=http://127.0.0.1:8765/ --runs 1
+          for spec in baseline:8766 candidate:8765; do
+            name="${spec%:*}"
+            port="${spec#*:}"
+            python tests/visual_states.py "http://127.0.0.1:$port/" "tests/results/close-zoom-review/$name" 47-close-fjord 48-close-islands 49-close-forest 50-close-farmland 51-close-city 52-close-phone
+          done
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          p=Path("tests/results/close-zoom-review")
+          d=json.loads((p/"perf.json").read_text())
+          for name in ("baseline","candidate"):
+              x=d[name]
+              print(name, json.dumps({k:x[k] for k in ("max_zoom","pan","zoom","close_pan","redraw_warm")},ensure_ascii=False))
+              v=json.loads((p/name/"timings.json").read_text())
+              if len(v)!=6 or any(x["errors"] for x in v.values()):
+                  raise SystemExit(f"{name}: missing or failed visual states")
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: close-zoom-review
+          path: tests/results/close-zoom-review/

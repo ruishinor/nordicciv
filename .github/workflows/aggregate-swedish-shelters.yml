@@ -1,0 +1,30 @@
+name: Aggregate Swedish shelter register
+on:
+  push:
+    branches: [feature/scandinavian-shelter-overview]
+    paths: [tools/aggregate_swedish_shelters.py, .github/workflows/aggregate-swedish-shelters.yml]
+permissions:
+  contents: write
+jobs:
+  aggregate:
+    if: github.ref == 'refs/heads/feature/scandinavian-shelter-overview'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feature/scandinavian-shelter-overview
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: pip install pyshp shapely pyproj
+      - run: python tools/aggregate_swedish_shelters.py
+      - run: python -m unittest discover -s tests -p test_shelter_overview.py
+      - name: Save municipal aggregate only
+        run: |
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add web/js/ext/shelters/overview-data.js
+          git diff --cached --quiet || git commit -m "Publish Swedish municipal shelter aggregates from MCF register"
+          git push origin HEAD:refs/heads/feature/scandinavian-shelter-overview

@@ -1,0 +1,27 @@
+name: Verify Swedish shelter aggregates
+on:
+  workflow_dispatch:
+  push:
+    branches: [integration/roadmap-2026-11-28]
+    paths:
+      - 'tools/aggregate_swedish_shelters.py'
+      - '.github/workflows/verify-swedish-shelters.yml'
+permissions:
+  contents: read
+jobs:
+  compare:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: pip install pyshp shapely pyproj
+      - run: python tools/aggregate_swedish_shelters.py --verify --cache-dir data/raw/swedish_shelters --report tests/results/swedish-shelters.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: swedish-shelter-comparison
+          path: tests/results/swedish-shelters.json
+          if-no-files-found: warn

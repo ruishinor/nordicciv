@@ -7,7 +7,7 @@ import { showCellTooltip, showCityTooltip, showHtmlTooltip, hideTooltip } from "
 import { initLensDock, formatLensValue, lensValueAt } from "./ui/lenses.js";
 import { openCityPanel, closeCityPanel } from "./ui/cityPanel.js";
 import { openStatePanel } from "./ui/statePanel.js";
-import { installSheetSwipe } from "./ui/infoPanel.js";
+import { installSheetSwipe, expandPanel } from "./ui/infoPanel.js";
 import { initPedia } from "./ui/pedia.js";
 import { initYieldReports } from "./ui/yieldReport.js";
 import { Minimap } from "./ui/minimap.js";
@@ -282,7 +282,7 @@ async function main() {
     hits = drawBanners(ctx, cam, w, state, nation.yields, nation);
     if (overlays.length) drawOverlays(ctx, cam, overlays, app, { dpr, zMin: 100 });
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    minimap.draw();
+    if (!document.body.classList.contains("minimap-collapsed")) minimap.draw();
     record(perf.frame, performance.now() - t0);
   }
 
@@ -588,6 +588,7 @@ async function main() {
 
   function selectCity(city, { fly = true } = {}) {
     if (!city) return clearSelection();
+    if (fly) expandPanel();
     state.selectedCity = city;
     state.selectedState = null;
     app.panels.city(city, panelCtx());
@@ -598,6 +599,7 @@ async function main() {
 
   function selectState(idx, { fly = false } = {}) {
     if (idx == null || !w.raw.states[idx]) return clearSelection();
+    if (fly) expandPanel();
     state.selectedCity = null;
     state.selectedState = idx;
     app.panels.state(idx, panelCtx());
@@ -872,15 +874,22 @@ async function main() {
   }
   const mmBtn = document.getElementById("btn-minimap");
   if (mmBtn) {
-    mmBtn.innerHTML = icon("terrain", "🗺️", { size: 18 });
-    mmBtn.onclick = () => {
-      const on = !document.body.classList.contains("minimap-on");
-      document.body.classList.toggle("minimap-on", on);
-      mmBtn.setAttribute("aria-pressed", String(on));
-      mmBtn.setAttribute("aria-label", on ? "Hide the minimap" : "Show the minimap");
-      minimap.draw();
+    let on = !isMobile();
+    try { const saved=localStorage.getItem(isMobile()?"nc-minimap-mobile":"nc-minimap-desktop"); if(saved!==null)on=saved==="1"; } catch {}
+    const sync=()=>{
+      document.body.classList.toggle("minimap-on",on);
+      document.body.classList.toggle("minimap-collapsed",!on);
+      mmBtn.setAttribute("aria-expanded",String(on));
+      mmBtn.setAttribute("aria-pressed",String(on));
+      mmBtn.setAttribute("aria-label",on?"Hide the minimap":"Show the minimap");
+      mmBtn.title=on?"Hide the minimap":"Show the minimap";
+      mmBtn.innerHTML=icon(on?"close":"terrain",on?"×":"Map",{size:16});
+      if(on)minimap.draw();
     };
+    mmBtn.onclick=()=>{on=!on;try{localStorage.setItem(isMobile()?"nc-minimap-mobile":"nc-minimap-desktop",on?"1":"0");}catch{}sync();};
+    sync();
   }
+  document.addEventListener("nc-panel-layout", requestDraw);
 
   // Map layer switches (app.ui.addMapToggle), in a menu next to the Resources toggle; kept in the hash (layers=).
   const mapToggles = createMapToggles({

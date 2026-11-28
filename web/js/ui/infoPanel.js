@@ -12,6 +12,21 @@ export const DISTRICT_ICON = {
 };
 
 const panelEl = () => document.getElementById("city-panel");
+const restoreEl = () => document.getElementById("btn-inspector");
+let collapsed = false, currentKey = null;
+function syncPanel(focus = false) {
+  const panel = panelEl(), restore = restoreEl();
+  panel.hidden = collapsed;
+  document.body.classList.toggle("panel-open", !collapsed);
+  restore.hidden = !collapsed;
+  restore.setAttribute("aria-expanded", String(!collapsed));
+  if (focus) (collapsed ? restore : panel.querySelector(".cp-collapse"))?.focus();
+  document.dispatchEvent(new Event("nc-panel-layout"));
+}
+export function expandPanel() {
+  if (!collapsed) return;
+  collapsed=false; syncPanel();
+}
 
 
 // One "value ▲ US value" row. higherIsGood: true / false / null (neutral).
@@ -91,12 +106,18 @@ export const popLine = (o, extra = "") =>
  */
 export function showPanel(spec) {
   const panel = panelEl();
+  const key=spec.kind+":"+spec.title;
+  const same=key===currentKey;
+  if(!same) collapsed=false;
+  currentKey=key;
+  const oldScroll=same?panel.scrollTop:0;
   panel.dataset.kind = spec.kind;
   panel.setAttribute("aria-label", `${spec.kind === "state" ? "Region" : "Municipality"}: ${spec.title}`);
   panel.innerHTML = `
     <div class="sheet-grip" aria-hidden="true"></div>
     <div class="cp-head">
       <div class="stripe" style="background:${spec.stripe}"></div>
+      <button class="icon-btn cp-collapse" type="button" aria-label="Collapse details" aria-expanded="true" aria-controls="city-panel" title="Collapse details">›</button>
       <button class="icon-btn cp-close" aria-label="Close panel (Esc)" title="Close (Esc)">${icon("close", "✕", { size: 13 })}</button>
       <div class="cp-kind">${spec.kind === "state" ? "Region" : "Municipality"}</div>
       <h2 class="cp-name">${spec.titleHtml ?? esc(spec.title)}</h2>
@@ -106,11 +127,14 @@ export function showPanel(spec) {
     ${tabBar(spec)}
     ${spec.sections.filter(Boolean).map((s) => `<section class="cp-section" ${s.tab ? `data-tab="${esc(s.tab)}" role="tabpanel"` : ""} ${s.tab && s.tab !== activeTab(spec) ? "hidden" : ""}>${s.title ? `<h3>${s.title}</h3>` : ""}${s.html}</section>`).join("")}
     <div class="cp-foot">${spec.foot || ""} <a href="#" data-pedia>Almanac ›</a></div>`;
-  panel.hidden = false;
-  panel.scrollTop = 0;
+  restoreEl().textContent="‹ "+spec.title;
+  restoreEl().setAttribute("aria-label","Expand details for "+spec.title);
+  restoreEl().onclick=()=>{collapsed=false;syncPanel(true);};
+  panel.querySelector(".cp-collapse").onclick=()=>{collapsed=true;syncPanel(true);};
+  syncPanel();
+  panel.scrollTop = oldScroll;
   panel.classList.remove("dragging-sheet");
   panel.style.transform = "";
-  document.body.classList.add("panel-open");
   panel.querySelector(".cp-close").onclick = spec.onClose;
   panel.querySelector("[data-pedia]").onclick = (e) => {
     e.preventDefault();
@@ -163,6 +187,8 @@ function wireTabs(panel, spec) {
 
 export function hidePanel() {
   const panel = panelEl();
+  collapsed=false; currentKey=null;
+  restoreEl().hidden=true;
   panel.hidden = true;
   panel.innerHTML = "";
   delete panel.dataset.kind;

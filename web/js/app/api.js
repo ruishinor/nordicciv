@@ -393,6 +393,7 @@ export function createUi(app, { toast, onLayout }) {
 export function createMapToggles({ dock, after, area, hash, onChange }) {
   const toggles = new Map(); // id → {id, label, icon, title, get, set, def}
   let btn = null, pop = null, restoreFocus = null;
+  const mobileBtn = document.getElementById("btn-maplayers-mobile");
   // The ids the URL asked for (a Set), or null when the URL has no layers= key. Ids of toggles that are not
   // registered yet (an extension still loading) stay in the hash until their toggle arrives.
   let wanted = null;
@@ -447,6 +448,7 @@ export function createMapToggles({ dock, after, area, hash, onChange }) {
     pop.setAttribute("aria-label", "Map layers");
     (area || document.body).insertBefore(pop, (area || document.body).firstChild);
     btn.onclick = () => (pop.hidden ? open() : close());
+    if(mobileBtn) { mobileBtn.hidden=false; mobileBtn.onclick=btn.onclick; }
     pop.onclick = (e) => {
       const row = e.target.closest("[data-toggle]");
       if (!row) return;
@@ -468,7 +470,7 @@ export function createMapToggles({ dock, after, area, hash, onChange }) {
       }
     });
     document.addEventListener("pointerdown", (e) => {
-      if (!pop.hidden && !pop.contains(e.target) && !btn.contains(e.target)) close(false);
+      if (!pop.hidden && !pop.contains(e.target) && !btn.contains(e.target) && !mobileBtn?.contains(e.target)) close(false);
     });
   }
 
@@ -494,6 +496,7 @@ export function createMapToggles({ dock, after, area, hash, onChange }) {
     restoreFocus = document.activeElement;
     pop.hidden = false;
     btn.setAttribute("aria-expanded", "true");
+    mobileBtn?.setAttribute("aria-expanded","true");
     render();
     pop.querySelector("[data-toggle]")?.focus();
   }
@@ -501,6 +504,7 @@ export function createMapToggles({ dock, after, area, hash, onChange }) {
     if (!pop || pop.hidden) return false;
     pop.hidden = true;
     btn.setAttribute("aria-expanded", "false");
+    mobileBtn?.setAttribute("aria-expanded","false");
     if (restore) (restoreFocus && document.contains(restoreFocus) ? restoreFocus : btn).focus();
     return true;
   }
