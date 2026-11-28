@@ -44,6 +44,10 @@ async def main():
                 }""", {**case, "scale": scale})
                 await page.wait_for_timeout(1800)
                 if not baseline:
+                    await page.wait_for_function("""() => {
+                        const t=__app.terrain.stats().tiles, width=__app.cam.w/__app.cam.scale;
+                        return t && Math.abs(t.widthKm-width)<0.05;
+                    }""", timeout=30000)
                     await page.wait_for_function("() => !__app.terrain.stats().tiles?.pending", timeout=30000)
                     # Loading changes the sampled surface. Keep the geographical target at the centre.
                     await page.evaluate("""() => { const a=__app, q=__reviewPoint;
