@@ -6,6 +6,7 @@
 import { compact, dollars, esc, int, money, pct } from "../format.js";
 import { hasIcon } from "../icons.js";
 import { rankList } from "../stats.js";
+import { sourceRef, sourceLink } from "./placeDetails.js";
 import { icon, glyph } from "./icon.js";
 import { DISTRICT_ICON } from "./infoPanel.js";
 
@@ -67,8 +68,8 @@ export function statDefs(nation, scope = "") {
       : partial ? "at least this many jobs" : "published figures";
     return {
       key: y.key, label: y.label, name: y.label, color: y.color, yield: y, unit: y.unit, measure: y.measure,
-      description: `${where}: ${y.measure}. ${y.description}`, status, partial,
-      source: y.key === "gold" ? nation.gdp_vintage || nation.vintage || "" : (pub != null ? n.yields_published_note : "") || nation.vintage || "",
+      description: `${where}: ${String(y.measure || "").replace(/^./, c => c.toUpperCase())}. ${y.description}`, status, partial,
+      source: y.key === "gold" ? (scope === "NO" ? "Statistics Norway: Regional accounts (2023)" : scope === "SE" ? "Statistics Sweden: Regional accounts (2023)" : scope === "DK" ? "Statistics Denmark: Regional accounts (2023)" : nation.gdp_vintage || nation.vintage || "") : scope ? ({ NO: "Statistics Norway: Table 07984 (2024)", SE: "Statistics Sweden: Table TAB3204 (2024)", DK: "Statistics Denmark: Table RAS501 (2024)" }[scope]) : (pub != null ? n.yields_published_note : "") || nation.vintage || "",
       value: pub ?? (y.key === "gold" ? n.gdp ?? n.yields?.gold ?? null : n.yields?.[y.key] ?? null),
     };
   });
@@ -76,8 +77,8 @@ export function statDefs(nation, scope = "") {
   return [
     {
       key: "population", label: "Population", name: "Population", color: "#e8dcc0", iconId: "pop", emoji: "👥", unit: "people", measure: "residents, 1 Jan 2026",
-      description: `${where}: registered residents on 1 January 2026 — ${n.pop_series_source || "SSB 07459, SCB TAB628, DST FOLK1A"}.`,
-      status: "published figures", source: nation?.vintage || "", value: pubPop,
+      description: `${where}: registered residents on 1 January 2026 – ${n.pop_series_source || "SSB 07459, SCB TAB628, DST FOLK1A"}.`,
+      status: "published figures", source: n.pop_series_source || nation?.vintage || "", value: pubPop,
     },
     ...yields,
   ];
@@ -92,13 +93,13 @@ export const industryIcon = (k) => { k = NORDIC_IND[k] || k; return hasIcon(`i-$
 
 // Areas the leaderboards rank: regions (index into states.json = world.json states) and municipalities.
 // NordicCiv: every record in cities.json is a municipality, selected explicitly by its id (the inherited US engine
-// filtered on `metro`, which excluded every Scandinavian municipality — NC-T05).
-function areas(states, cities) {
+// filtered on `metro`, which excluded every Scandinavian municipality – NC-T05).
+function areas(states, cities, country = "") {
   const st = (Array.isArray(states) ? states : [])
     .map((o, i) => (o ? { kind: "state", ref: i, name: o.name || o.abbr || "?", sub: o.abbr || "", o } : null))
-    .filter(Boolean);
+    .filter(r => r && (!country || r.o.country === country || r.o.abbr?.startsWith(country + "-")));
   const metros = (Array.isArray(cities) ? cities : [])
-    .filter((c) => c && typeof c.id === "string" && /^(NO|SE|DK)-\d+$/.test(c.id))
+    .filter((c) => c && typeof c.id === "string" && /^(NO|SE|DK)-\d+$/.test(c.id) && (!country || c.id.startsWith(country + "-")))
     .map((c) => ({ kind: "city", ref: c.id, name: c.name, sub: (c.states || []).join("–"), o: c }));
   return { st, metros };
 }
@@ -122,22 +123,24 @@ function rank(list, valueOf, { asc = false, min = 0, fmt = count3, exact = int, 
     });
 }
 
-// Which states the "States" rankings cover. states.json holds the states drawn on the map; when the U.S. total
-// includes people outside them (Alaska and Hawaii are not on the map), say so rather than imply all 50 are ranked.
-function stateScope(n, st) {
-  const abbrs = new Set(st.map((r) => r.o.abbr).filter(Boolean));
-  const hasDC = abbrs.has("DC");
-  const sum = st.reduce((a, r) => a + (fin(r.o.population) ? r.o.population : 0), 0);
-  const gap = fin(n.population) && n.population > 0 ? (n.population - sum) / n.population : 0;
-  const label = hasDC ? "Regions" : "Regions";
-  if (!st.length || gap < 0.001) return { label, note: "" };
-  const missing = [["AK", "Alaska"], ["HI", "Hawaii"]].filter(([a]) => !abbrs.has(a)).map(([, name]) => name);
-  const outside = missing.length ? missing.join(" and ") : `${compact(n.population - sum)} residents`;
-  const what = `${st.length - (hasDC ? 1 : 0)} states on the map${hasDC ? " + DC" : ""}`;
-  return {
-    label, inMap: `${hasDC ? "Map states & DC" : "Map states"}`,
-    note: `Ranks the ${what}; ${outside} ${missing.length > 1 ? "are" : "is"} in the U.S. total but not ranked.`,
+// National statistics and rankings may cover different geographic areas.
+function stateScope(n, st, country) {
+  return { label: "Regions", note: "", country, name: SCOPE_NAME[country] };
+}
+
+// Use national published employment wherever available, consistently with the headline yields.
+function reportTotals(nation, country) {
+  const n = country ? nation.countries?.[country] : nation.nation;
+  if (!n) return {};
+  const countries = country ? [n] : Object.values(nation.countries || {});
+  if (!countries.length) return n;
+  const sum = (read) => {
+    const vals = countries.map(read);
+    return vals.every(fin) ? vals.reduce((a,b) => a+b,0) : null;
   };
+  const keys = new Set(countries.flatMap(c => Object.keys(c.jobs_published || c.jobs || {})));
+  const jobs = Object.fromEntries([...keys].map(k => [k, sum(c => (c.jobs_published || c.jobs)?.[k])]));
+  return { ...n, population: n.population_published ?? n.population, employed: sum(c => c.jobs_total_published ?? c.employed) ?? n.employed, jobs };
 }
 
 // Sorted [{r, v}] of every area with a value (for extremes and medians).
@@ -157,12 +160,13 @@ function sorted(list, valueOf, min = 0) {
  *  boards: {note, modes: [{id, label, hint, states: [row], metros: [row]}]},   row: {rank, kind, ref, name, sub, value, text}
  *  lens: {id, name} | null}
  */
-export function buildReport(key, { nation, states, cities, lenses, lensVintage } = {}) {
-  const def = statDefs(nation).find((d) => d.key === key);
+export function buildReport(key, { nation, states, cities, lenses, lensVintage, country = "" } = {}) {
+  if (!Object.hasOwn(SCOPE_NAME, country)) country = "";
+  const def = statDefs(nation, country).find((d) => d.key === key);
   if (!def) return null;
-  const n = nation.nation || {};
-  const { st, metros } = areas(states, cities);
-  const scope = stateScope(n, st);
+  const n = reportTotals(nation, country);
+  const { st, metros } = areas(states, cities, country);
+  const scope = stateScope(n, st, country);
   const fmt = (v) => fmtStat(def, v);
   const rep = {
     key, def, total: def.value, totalText: fmt(def.value), context: [], definition: def.description, source: def.source,
@@ -178,7 +182,10 @@ export function buildReport(key, { nation, states, cities, lenses, lensVintage }
   if (key === "population") reportPopulation(rep, n, st, metros);
   else if (key === "unemployment") reportUnemployment(rep, n, st, metros);
   else if (def.unit === "usd" || def.unit === "eur") reportGold(rep, nation, n, st, metros);
-  else reportJobs(rep, def, nation, n, st, metros);
+  else {
+    reportJobs(rep, def, nation, n, st, metros);
+    if (!country || country === "NO") rep.context.push("Norwegian national totals include jobs outside mapped municipalities. Rankings cover mapped places only.");
+  }
   return rep;
 }
 
@@ -194,7 +201,7 @@ function reportPopulation(rep, n, st, metros) {
     label: `${prefix}${x.r.name}`, sub: x.r.kind === "city" ? x.r.sub : "", value: x.v, text: signedPct(x.v),
   });
   const groups = [];
-  if (fin(n.growth)) groups.push({ rows: [{ label: "Scandinavia (published national totals)", value: n.growth, text: signedPct(n.growth), strong: true }] });
+  if (fin(n.growth)) groups.push({ rows: [{ label: `${rep.scope.name} (published population)`, value: n.growth, text: signedPct(n.growth), strong: true }] });
   const extremes = (list, what) => {
     if (list.length < 2) return;
     const k = Math.min(3, Math.floor(list.length / 2));
@@ -249,8 +256,8 @@ function reportGold(rep, nation, n, st, metros) {
   const years = n.gdp_year && popYear && n.gdp_year !== popYear ? `${n.gdp_year} GDP ÷ ${popYear} residents` : "GDP ÷ residents";
   if (pp != null) rep.context.push(`${money(pp)} per person (${years})`);
   if (n.gdp_year) rep.context.push(`Year ${n.gdp_year}, current prices in euro`);
-  if (nation.gdp_label) rep.context.push(nation.gdp_label);
-  if (nation.extra_regio?.note) rep.context.push(nation.extra_regio.note);
+  if (!rep.scope.country && nation.gdp_label) rep.context.push(nation.gdp_label);
+  if (!rep.scope.country && nation.extra_regio?.note) rep.context.push(nation.extra_regio.note);
 
   const rows = Object.entries(n.gdp_by_industry || {})
     .filter(([, v]) => fin(v))
@@ -275,7 +282,7 @@ function reportGold(rep, nation, n, st, metros) {
 function reportJobs(rep, def, nation, n, st, metros) {
   const key = def.key;
   const nShare = ratio(rep.total, n.employed);
-  if (nShare != null) rep.context.push(`${pct(nShare)} of the ${compact(n.employed)} employed`);
+  if (nShare != null) rep.context.push(`${pct(nShare)} of ${compact(n.employed)} jobs`);
   const per1k = ratio(rep.total, n.population);
   if (per1k != null) rep.context.push(`${Math.round(per1k * 1000)} per 1,000 residents`);
 
@@ -301,7 +308,7 @@ function reportJobs(rep, def, nation, n, st, metros) {
     })
     .filter(Boolean)
     .sort((a, b) => b.value - a.value);
-  if (rows.length) rep.breakdown = { title: "Jobs by industry", note: `Jobs at the place of work, November / 4th quarter 2024. ${def.label} counts ${def.yield?.measure || "jobs"} — employment, not output.`, groups: [{ rows }] };
+  if (rows.length) rep.breakdown = { title: "Jobs by industry", note: `Jobs at the place of work, November / 4th quarter 2024. ${def.label} counts ${def.yield?.measure || "jobs"} – employment, not output.`, groups: [{ rows }] };
 
   const y = (o) => o.yields?.[key];
   const lq = (o) => (nShare ? ratio(ratio(y(o), o.employed), nShare) : null);
@@ -318,7 +325,7 @@ function reportJobs(rep, def, nation, n, st, metros) {
       states: rank(st, y, { hiOf: yHi }), metros: rank(metros, y, { hiOf: yHi }) },
     {
       id: "rel", label: "Specialisation",
-      hint: `Share of the area's jobs in ${def.label.toLowerCase()} ÷ the Scandinavian share (${pct(nShare)}); municipalities of ${compact(METRO_MIN)}+ people.`,
+      hint: `How common these jobs are compared with ${rep.scope.name} (${pct(nShare)} of jobs). Municipalities with at least ${compact(METRO_MIN)} residents.`,
       states: rank(st, lq, { fmt: fmtLq, exact: exactLq, subOf: shareSub, hiOf: lqHi }),
       metros: rank(metros, lq, { fmt: fmtLq, exact: exactLq, subOf: shareSub, min: METRO_MIN, hiOf: lqHi }),
     },
@@ -386,9 +393,10 @@ export function initYieldReports(opts) {
   const data = { nation: opts.nation, states: opts.states, cities: opts.cities, lenses: opts.lenses, lensVintage: opts.lensVintage };
   const cityById = new Map((opts.cities || []).map((c) => [String(c.id), c]));
   const cache = new Map();
-  const build = (key) => {
-    if (!cache.has(key)) cache.set(key, buildReport(key, data));
-    return cache.get(key);
+  const build = (key, country = document.getElementById("hud-scope")?.value || "") => {
+    const id = `${country}:${key}`;
+    if (!cache.has(id)) cache.set(id, buildReport(key, { ...data, country }));
+    return cache.get(id);
   };
   let current = null; // {key, btn, rep}
   let tab = opts.states?.length ? "states" : "metros"; // remembered across reports
@@ -424,13 +432,17 @@ export function initYieldReports(opts) {
     pop.innerHTML = `
       <div class="yr-head">
         <span class="yr-ic" style="color:${esc(def.color)}">${defIcon(def, 26)}</span>
-        <div class="yr-titles"><div class="yr-kind">National report</div><h2 id="yr-title">${esc(def.name)}</h2></div>
+        <div class="yr-titles"><div class="yr-kind">${esc(rep.scope.name)}</div><h2 id="yr-title">${esc(def.name)}</h2></div>
         <button class="icon-btn yr-close" aria-label="Close report (Esc)" title="Close (Esc)">${icon("close", "✕", { size: 12 })}</button>
       </div>
       <div class="yr-total"><b style="color:${esc(def.color)}">${esc(rep.totalText)}</b>
         ${rep.context.length ? `<ul class="yr-ctx">${rep.context.map((c) => `<li>${esc(c)}</li>`).join("")}</ul>` : ""}</div>
       ${rep.definition ? `<p class="yr-def">${esc(rep.definition)}</p>` : ""}
-      ${rep.source ? `<div class="yr-src">Source: ${esc(rep.source)}</div>` : ""}
+      ${rep.source ? `<details class="yr-src"><summary>Sources</summary><p>${esc(rep.source)}</p>${(rep.scope.country ? [rep.scope.country] : ["NO","SE","DK"]).map(cc => {
+        const table = rep.key === "population" ? {NO:"07459",SE:"TAB628",DK:"FOLK1A"}[cc] : rep.key === "gold" ? {NO:"09391",SE:"TAB3138",DK:"NRHP"}[cc] : {NO:"07984",SE:"TAB3204",DK:"RAS501"}[cc];
+        const ref = sourceRef(opts.sources || [], cc, table, rep.key === "population" ? "Population" : rep.key === "gold" ? "Regional economic output" : "Jobs by industry");
+        return ref ? `<div>${esc(ref.publisher)} – Table ${esc(ref.table)} ${sourceLink(ref, "Source table " + ref.table)}</div>` : "";
+      }).join("")}</details>` : ""}
       ${rep.breakdown ? `<section class="yr-sec"><h3>${esc(rep.breakdown.title)}</h3>
         ${rep.breakdown.note ? `<p class="yr-note">${esc(rep.breakdown.note)}</p>` : ""}
         <div class="yr-bars">${barsHtml(rep.breakdown, expanded)}</div></section>` : ""}
@@ -460,7 +472,7 @@ export function initYieldReports(opts) {
 
   // The ranking's hint, plus (on the States tab) which states are ranked.
   function hintText(m) {
-    const parts = [m?.hint || ""];
+    const parts = [`${tab === "states" ? "Regions" : "Municipalities"} in ${current.rep.scope.name}.`, m?.hint || ""];
     if (tab === "states" && current.rep.boards.statesNote) parts.push(current.rep.boards.statesNote);
     return parts.filter(Boolean).join(" ");
   }
@@ -481,6 +493,7 @@ export function initYieldReports(opts) {
       board.setAttribute("aria-labelledby", `yr-tab-${tab}`);
       board.innerHTML = boardHtml(m?.[tab]);
     }
+    window.__app?.hash?.update();
   }
 
   function open(key, btn) {
@@ -502,6 +515,7 @@ export function initYieldReports(opts) {
     // Keep the anchor visible when the bar has scrolled (narrow screens).
     btn.scrollIntoView?.({ block: "nearest", inline: "nearest" });
     pop.focus({ preventScroll: true });
+    window.__app?.hash?.update();
   }
 
   function close(restoreFocus = true) {
@@ -513,6 +527,7 @@ export function initYieldReports(opts) {
     pop.hidden = true;
     pop.innerHTML = "";
     if (restoreFocus && document.contains(btn)) btn.focus();
+    window.__app?.hash?.update();
   }
 
   bar.addEventListener("click", (e) => {
@@ -614,6 +629,7 @@ export function initYieldReports(opts) {
   document.addEventListener("pointerdown", (e) => {
     if (current && !pop.contains(e.target) && !e.target.closest?.("[data-report]")) close(false);
   });
+  bar.addEventListener("change", (e) => { if (e.target.id === "hud-scope") close(false); });
   window.addEventListener("resize", position);
   bar.addEventListener("scroll", position, { passive: true });
   document.getElementById("topbar")?.addEventListener("scroll", position, { passive: true });
@@ -631,5 +647,16 @@ export function initYieldReports(opts) {
     build,
     get isOpen() { return !!current; },
     get key() { return current?.key ?? null; },
+    get view() { return current ? [current.key, tab, mode].join(":") : null; },
+    restoreView(value) {
+      if (!value) { close(false); return; }
+      const [key, nextTab, nextMode] = value.split(":");
+      const btn = buttons().find(b => b.dataset.report === key);
+      if (!btn) return;
+      open(key, btn);
+      if (["states", "metros"].includes(nextTab)) tab = nextTab;
+      if (current.rep.boards.modes.some(m => m.id === nextMode)) mode = nextMode;
+      render();
+    },
   };
 }

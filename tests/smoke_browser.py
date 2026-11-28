@@ -136,7 +136,23 @@ async def main():
         hud = await pg.inner_text("#yields")
         await pg.select_option("#hud-scope", "NO")
         hud_no = await pg.inner_text("#yields")
+        # Existing report interaction: verify all four scopes, exact headline and leaderboard membership.
+        scoped = await pg.evaluate("""(() => {
+            const out = {}; const {nation, states} = __app.data;
+            for (const cc of ["", "NO", "SE", "DK"]) {
+                const n = cc ? nation.countries[cc] : nation.nation;
+                const rep = __app.reports.build("production", cc);
+                const rows = rep.boards.modes.flatMap(m => [...m.states, ...m.metros]);
+                const valid = rows.length > 0 && rows.every(row => !cc || (row.kind === "city" ? row.ref.startsWith(cc+"-") : states[row.ref].country === cc));
+                out[cc || "all"] = { valid, total: rep.total, expected: n.yields_published?.production ?? n.yields.production };
+            }
+            return out;
+        })()""")
+        await pg.click('#yields [data-report="production"]')
+        report_no = await pg.inner_text("#yield-report")
+        await pg.click("#yield-report .yr-close")
         await pg.select_option("#hud-scope", "")
+        ok("2a scoped reports agree with the selected country", all(x["valid"] and x["total"] == x["expected"] for x in scoped.values()) and "Norway" in report_no and "521K" in report_no, str(scoped))
         ok("2 overview HUD names its scope and measures", "22.3M" in hud and ("5.6M" in hud_no or "5.63M" in hud_no) and "22.3M" not in hud_no and "residents" in hud and "jobs" in hud,
            hud.replace("\n", " ")[60:180] + " | NO: " + hud_no.replace("\n", " ")[60:110])
 
@@ -156,14 +172,14 @@ async def main():
 
         # 4. Bergen inspector: tabs, measures, data status
         tabs = await pg.evaluate("[...document.querySelectorAll('#city-panel [data-cptab]')].map(b => b.dataset.cptab)")
-        meas = await pg.evaluate("[...document.querySelectorAll('#city-panel .yield-tile .meas')].map(x => x.innerText).join('|')")
+        meas = await pg.evaluate("[...document.querySelectorAll('#city-panel .yield-tile .yield-unit')].map(x => x.innerText).join('|')")
         await pg.click("#city-panel [data-cptab='Economy']")
         econ = await pg.inner_text("#city-panel")
         await pg.click("#city-panel [data-cptab='Sources']")
         src = await pg.inner_text("#city-panel")
         await pg.click("#city-panel [data-cptab='Overview']")
         ok("4 Bergen inspector: 5 tabs, yields name their measures, output is an estimate",
-           tabs == ["Overview", "Economy", "Society", "Sources", "Daylight"] and "jobs" in meas and "estimate" in econ.lower() and "Estimate" in src,
+           tabs == ["Overview", "Economy", "Society", "Sources", "Daylight"] and "jobs" in meas.lower() and "estimate" in econ.lower() and "Estimate" in src,
            f"tabs={tabs}")
 
         # 5. compare the three capitals: neutral emphasis

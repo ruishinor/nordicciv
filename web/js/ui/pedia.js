@@ -62,20 +62,19 @@ export function initPedia(data) {
       <p>${esc(data.nation.extra_regio?.note || "")}</p>
       ${sensitivityHtml(data.nation)}
       <h4>Specialisation (city types)</h4>
-      <p>A municipality's type is its industry group with the highest <b>location quotient</b> — its share of local jobs ÷ the
-      share in Norway, Sweden and Denmark combined — of at least ${data.nation.lq_rule?.min_lq} with at least ${data.nation.lq_rule?.min_jobs}
+      <p>A municipality's type is its industry group with the highest <b>location quotient</b> – its share of local jobs ÷ the
+      share in Norway, Sweden and Denmark combined – of at least ${data.nation.lq_rule?.min_lq} with at least ${data.nation.lq_rule?.min_jobs}
       jobs. Several groups can qualify; the panel lists them all. Sweden publishes mining together with manufacturing, so a
       Swedish mining town reads as "Industrial"; its mines appear as resources.</p>
       <h4>When some job counts are missing</h4>
       <p>Statistics Norway withholds very small job counts to protect privacy. Statistics Sweden has added small random adjustments to its figures since 2025. A number marked ≥ includes the published jobs, and there may be more. The total number of jobs tells us how many could be missing. The municipality panel and CSV show that maximum, and ranks can appear as a range, such as #10–14. Norway’s national totals come from SSB’s national table, where these counts are published.</p>
       <h4>Ranks</h4>
       <p>${esc(data.nation.ranking || "")} The interval uses only each area's own published bounds; the bounds do not use the
-      agencies' disclosure thresholds or national totals, so the true range can be narrower. "Rank uncertain" means the
-      interval covers at least half of the areas (for example Oslo's agriculture jobs, which are suppressed).</p>
-      <h4>Location quotients</h4>
+      agencies' disclosure thresholds or national totals, so the true range can be narrower. "Rank unavailable" means the possible rank covers at least half of the areas.</p>
+      <h4>Industry specialisation</h4>
       <p>A location quotient (×) compares an industry's share of local jobs with its share in the three countries combined;
-      ×2 means twice as concentrated. It measures relative concentration only — not output, productivity, the largest
-      industry or strategic importance — and small municipalities can reach high quotients with few jobs, so a
+      ×2 means twice as concentrated. It measures relative concentration only – not output, productivity, the largest
+      industry or strategic importance – and small municipalities can reach high quotients with few jobs, so a
       specialisation needs at least ${data.nation.lq_rule?.min_jobs} jobs. The municipality panel shows the largest industry
       and the strongest specialisation side by side.</p>`,
     Regions: () => `
@@ -125,7 +124,7 @@ export function initPedia(data) {
       plus the local detail) under one north-west light. Below 1 km it only interpolates.</p>
       <p><b>Illustrations.</b> Closer in, the map paints trees, fields, scree, mire, heath and rooftops through the 1 km
       CORINE class masks (forest weighted by tree-cover density). They show what covers the ground in that square kilometre
-      — forest, farmland, bare rock, built-up land — not where any real tree, field or house stands. Zoom in further to
+      – forest, farmland, bare rock, built-up land – not where any real tree, field or house stands. Zoom in further to
       see sharper, larger illustrations of the same landscape. The underlying map still uses 1 km grids. The analysis
       view (any lens) drops the illustrations so the data colours stay legible.</p>
       <h4>For developers</h4>

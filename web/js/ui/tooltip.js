@@ -70,6 +70,12 @@ export function showHtmlTooltip(mx, my, content) {
   show(mx, my, html);
 }
 
+export function showResourceTooltip(mx, my, w, item) {
+  const t = w.resources?.typeById.get(item.type);
+  const value = item.value == null ? "" : ` · ${esc(int(item.value))} ${esc(t?.unit || "")}`;
+  show(mx, my, `<b>${esc(item.name || t?.name || "Resource")}</b><br>${esc(t?.name || "")}${value}`);
+}
+
 export function showCityTooltip(mx, my, city) {
   show(mx, my, `<b>${esc(city.full)}</b><br><span class="muted">${esc(city.type?.label || "")} · click to open the municipality</span>`);
 }

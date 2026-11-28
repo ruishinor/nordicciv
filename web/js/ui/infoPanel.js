@@ -126,7 +126,7 @@ export function showPanel(spec) {
     </div>
     ${tabBar(spec)}
     ${spec.sections.filter(Boolean).map((s) => `<section class="cp-section" ${s.tab ? `data-tab="${esc(s.tab)}" role="tabpanel"` : ""} ${s.tab && s.tab !== activeTab(spec) ? "hidden" : ""}>${s.title ? `<h3>${s.title}</h3>` : ""}${s.html}</section>`).join("")}
-    <div class="cp-foot">${spec.foot || ""} <a href="#" data-pedia>Almanac ›</a></div>`;
+    <div class="cp-foot">${spec.foot || ""} <button type="button" class="link" data-pedia>About yields</button></div>`;
   restoreEl().textContent="‹ "+spec.title;
   restoreEl().setAttribute("aria-label","Expand details for "+spec.title);
   restoreEl().onclick=()=>{collapsed=false;syncPanel(true);};
@@ -142,6 +142,7 @@ export function showPanel(spec) {
   };
   wireTabs(panel, spec);
   spec.wire?.(panel);
+  panel.querySelectorAll("a[target=_blank]").forEach(a => a.addEventListener("click", () => window.__app?.hash?.flush()));
 }
 
 // Progressive disclosure: sections may carry a `tab`; the panel shows one tab at a time and remembers the last one.
@@ -173,6 +174,7 @@ function wireTabs(panel, spec) {
     btns.forEach((x) => { const on = x === b; x.setAttribute("aria-selected", on); x.tabIndex = on ? 0 : -1; });
     panel.querySelectorAll(".cp-section[data-tab]").forEach((sec) => (sec.hidden = sec.dataset.tab !== b.dataset.cptab));
     if (focus) b.focus();
+    window.__app?.hash?.update();
   };
   btns.forEach((b, k) => {
     b.onclick = () => pick(b);

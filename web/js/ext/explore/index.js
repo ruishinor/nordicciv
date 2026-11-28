@@ -85,7 +85,10 @@ export async function install(app) {
   function saveButton(b, id) {
     const saved = places.has(id);
     b.setAttribute("aria-pressed", String(saved));
-    b.textContent = saved ? "Remove saved place" : "Save this place";
+    const star = b.hasAttribute("data-save-star");
+    b.textContent = star ? (saved ? "★" : "☆") : (saved ? "Remove saved place" : "Save this place");
+    b.setAttribute("aria-label", saved ? "Remove saved place" : "Save this place");
+    b.title = saved ? "Remove saved place" : "Save this place";
   }
   function placeMenu(kind) {
     clearJourney();
@@ -113,8 +116,7 @@ export async function install(app) {
     });
     card.querySelectorAll("[data-place-remove]").forEach(b => b.onclick = () => {
       places.remove(b.dataset.placeRemove);
-      const current = app.panels.element.querySelector("[data-save-city]");
-      if (current) saveButton(current, current.dataset.saveCity);
+      app.panels.element.querySelectorAll("[data-save-city], [data-save-star]").forEach(b => saveButton(b, b.dataset.saveCity || b.dataset.saveStar));
       placeMenu("saved");
     });
     const clear = card.querySelector("[data-place-clear]");
@@ -198,16 +200,18 @@ export async function install(app) {
     if (html) sections.push({tab: "Overview", title: "Weather and satellite imagery", html});
     return sections;
   }, (panel, city) => {
-    const save = panel.querySelector("[data-save-city]");
-    if (save) save.onclick = () => {
+    const saves = [...panel.querySelectorAll("[data-save-city], [data-save-star]")];
+    for (const save of saves) {
+      save.hidden = false; saveButton(save, city.id);
+      save.onclick = () => {
       if (app.state.selectedCity?.id !== city.id) return;
       if (!places.has(city.id) && places.saved.length >= places.maxSaved) {
         app.ui.toast("Your saved places list is full. Remove a place first.");
         return;
       }
       places.toggle(city.id);
-      saveButton(save, city.id);
-    };
+      saves.forEach(b => saveButton(b, city.id));
+    }; }
     panel.querySelectorAll("[data-discover-journey]").forEach(b => {
       b.onclick = () => {
         const parsed = resolveJourney(journeys, b.dataset.discoverJourney);

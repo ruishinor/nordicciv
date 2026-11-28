@@ -22,7 +22,7 @@ export function initSearch(opts) {
   if (!input || !box) return { focus() {}, close() {}, get isOpen() { return false; } };
   // The full placeholder only fits the wide search box; narrower ones say just "Search".
   const narrow = matchMedia("(max-width: 1120px)");
-  const setPlaceholder = () => (input.placeholder = narrow.matches ? "Search" : "Search municipalities, towns, regions");
+  const setPlaceholder = () => (input.placeholder = "Search location");
   setPlaceholder();
   narrow.addEventListener?.("change", setPlaceholder);
 
