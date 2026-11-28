@@ -415,7 +415,9 @@ def regional_source_totals(raw, year=2023):
 
     for d, value, _ in jsonstat.records(jsonstat.load(ra / "ssb_09391.json")):
         code = d["Region"]
-        if d["ContentsCode"] == "BNPB" and len(code) == 2 and code not in ("21", "22", "23", "25", "26", "88", "99"):
+        # The table also contains historical/new territorial codes without a 2023 observation.
+        # Match the builder's selection of populated regional accounts; coverage is checked separately.
+        if d["ContentsCode"] == "BNPB" and value is not None and value != 0 and len(code) == 2 and code not in ("21", "22", "23", "25", "26", "88", "99"):
             add("NO", code, value, "NOK")
     for d, value, _ in jsonstat.records(jsonstat.load(ra / "scb_TAB3138.json")):
         code = d["Region"]
@@ -750,12 +752,18 @@ def check_shelters(r, sh, cities, world, lenses, mode):
             txt = raw.read_text(encoding="utf-8")
             recs = re.findall(r"<app:lokalId>([^<]+)</app:lokalId>.*?<gml:pos>([-\d.]+) ([-\d.]+)</gml:pos>.*?<app:romnr>(\d+)</app:romnr>\s*"
                               r"<app:plasser>(\d*)</app:plasser>", txt, re.S)
-            src = {i: (float(la), float(lo), int(rm), int(pl) if pl else None) for i, la, lo, rm, pl in recs}
+            src = {i: (round(float(la), 6), round(float(lo), 6), int(rm), int(pl) if pl else None) for i, la, lo, rm, pl in recs}
             built = {x["id"]: (x["lat"], x["lon"], x["room"], x["places"]) for x in rows}
             diff = [i for i in set(src) | set(built) if src.get(i) != built.get(i)]
             hits = re.search(r'numberMatched="(\d+)"', (raw.parent / "hits.xml").read_text(encoding="utf-8"))
-            r.ok(not diff and len(src) == int(hits.group(1)), f"source: every shelter record (id, position, room, places) equals the cached WFS answer "
-                 f"({len(src)} read independently, {len(diff)} differ; WFS reports {hits.group(1)} matched)")
+            r.ok(bool(hits) and not diff and len(src) == len(recs) == len(rows) == int(hits.group(1)), f"source: every shelter record (id, position rounded to six decimals, room, places) equals the cached WFS answer "
+                 f"({len(src)} read independently, {len(diff)} differ; WFS reports {hits.group(1) if hits else 'unknown'} matched)")
+            digest = hashlib.sha256(raw.read_bytes()).hexdigest()
+            catalogue = next((s for s in load("sources") if s["id"] == "dsb_shelters"), {})
+            entry = next((f for f in catalogue.get("files", []) if f["file"] == raw.name), {})
+            r.ok(digest == sh["source"].get("sha256") == entry.get("sha256") and
+                 sh["source"].get("retrieved") == entry.get("retrieved"),
+                 "source: shelter dataset and catalogue identify the exact cached WFS snapshot")
         else:
             r.add("FAIL", "source: cached WFS answer for shelters missing")
     lens = next((l for l in lenses["lenses"] if l["id"] == "shelter_places"), None)

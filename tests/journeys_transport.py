@@ -33,7 +33,7 @@ async def run(browser, url, ok, errors):
             await section.get_by_role("button", name="Show transport connections").click()
             assert await page.evaluate("__app.transport.on")
             assert await page.evaluate("() => __app.transport.mapped().every(f => f.category === 'ferry')")
-            await section.locator('[data-transport-city="SE-1283"]').click()
+            await section.locator('li:visible [data-transport-city="SE-1283"]').click()
             assert await page.evaluate("__app.state.selectedCity.id") == "SE-1283"
             ok(label, True, "Published aviation and ferry values, no fabricated airport routes, category filtering and navigation")
         except Exception as error:
