@@ -56,7 +56,7 @@ export function install(app) {
   });
   app.ui.addMapToggle({id:"transport-connections",label:"Transport connections",icon:"map",default:false,
     title:"Selected 2024 aviation and ferry connections; schematic lines",get:()=>on,set(v){on=!!v;app.invalidate();}});
-  function setCategory(value) {
+  function setCategory(value, write=true) {
     if(!Object.hasOwn(LABELS,value))return;
     category=value;
     for(const section of document.querySelectorAll(".transport-section")){
@@ -66,7 +66,12 @@ export function install(app) {
       const empty=section.querySelector("[data-transport-empty]");if(empty)empty.hidden=rows.some(row=>!row.hidden);
     }
     app.invalidate();
+    if(write) app.hash.soon();
   }
+  app.hash.register("transport-category", {
+    get:()=>category==="all"?null:category,
+    set:value=>setCategory(Object.hasOwn(LABELS,value)?value:"all",false),
+  });
   document.addEventListener("change",event=>{
     if(event.target.matches("[data-transport-filter]"))setCategory(event.target.value);
   });
@@ -82,7 +87,7 @@ export function install(app) {
       Math.max(...points.map(p=>p[0])),Math.max(...points.map(p=>p[1])),{maxScale:8});
     app.ui.toast("Transport connections · 2024");
   });
-  app.transport={get packet(){return packet;},get on(){return on;},get category(){return category;},mapped:()=>packet?mapped(packet,category):[]};
+  app.transport={get packet(){return packet;},get on(){return on;},get category(){return category;},setCategory,mapped:()=>packet?mapped(packet,category):[]};
   app.loadData("transport").then(data=>{
     if(!data)return;
     packet=data;

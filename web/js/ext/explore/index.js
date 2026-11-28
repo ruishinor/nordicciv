@@ -135,8 +135,11 @@ export async function install(app) {
         app.setLens(stop.lens || null);
         app.setHighlight({cities: new Set([city.id]), cells: new Set(), color: "#ffe08a"});
         if (stop.hydro) app.setShowResources(true);
-        if (stop.commuting) app.ui.setMapToggle("commuting-connections", true);
-        if (stop.transport) app.ui.setMapToggle("transport-connections", true);
+        if (stop.commuting || stop.transport || stop.crossBorder) {
+          app.ui.setMapToggle("commuting-connections", !!stop.commuting);
+          if (stop.transport) app.transport?.setCategory(stop.transport);
+          app.ui.setMapToggle("transport-connections", !!stop.transport);
+        }
         if (stop.daylight) app.panels.element.querySelector('[data-cptab="Daylight"]')?.click();
       } finally { moving = false; }
     }

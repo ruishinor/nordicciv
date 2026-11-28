@@ -27,6 +27,31 @@ async def run(browser, url, ok, errors):
                 await expect(preview).to_contain_text(name)
             for jid in ("commuting-no", "commuting-se", "commuting-dk", "transport-aviation", "transport-ferry", "oresund-commuting"):
                 await expect(card.locator(f'[data-journey="{jid}"]')).to_be_visible()
+            await page.wait_for_function("() => __app.transport?.packet && __app.commuting?.packets.size === 3")
+            for jid, category, commuting in (
+                    ("commuting-no", None, True),
+                    ("commuting-se", None, True),
+                    ("commuting-dk", None, True),
+                    ("transport-aviation", "aviation", False),
+                    ("transport-ferry", "ferry", False),
+                    ("oresund-commuting", None, False)):
+                await card.locator(f'[data-journey="{jid}"]').click()
+                await expect(card).to_contain_text("1 of 2")
+                assert await page.evaluate("__app.commuting.on") == commuting
+                assert await page.evaluate("__app.transport.on") == bool(category)
+                if category:
+                    assert await page.evaluate("__app.transport.category") == category
+                    assert await page.evaluate("c => __app.transport.mapped().every(f => f.category === c)", category)
+                expected = await page.evaluate("id => __app.explore.journeys.find(j=>j.id===id).stops[1].city", jid)
+                await card.get_by_role("button", name="Next stop").click()
+                await expect(card).to_contain_text("2 of 2")
+                assert await page.evaluate("__app.state.selectedCity.id") == expected
+                if jid == "transport-ferry":
+                    await page.wait_for_function("() => new URLSearchParams(location.hash.slice(1)).get('journey') === 'transport-ferry:1' && new URLSearchParams(location.hash.slice(1)).get('transport-category') === 'ferry'")
+                    await page.reload(wait_until="domcontentloaded")
+                    await expect(card).to_contain_text("2 of 2", timeout=15000)
+                    await page.wait_for_function("() => __app.transport?.on && __app.transport.category === 'ferry'")
+                await card.get_by_role("button", name="Journeys", exact=True).click()
             await preview.click()
             await expect(card).to_contain_text("1 of 3")
             await expect(card.get_by_role("button", name="Previous")).to_be_disabled()

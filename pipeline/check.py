@@ -60,7 +60,7 @@ KNOWN_PLACES = {  # name: (lon, lat) of the main town, for a placement check (±
     "Tromsø": (18.96, 69.65), "Kiruna": (20.23, 67.86), "Luleå": (22.15, 65.58), "Stavanger": (5.73, 58.97),
 }
 DATA_FILES = ["world", "cities", "states", "nation", "lenses", "sources", "resources", "infrastructure", "wonders",
-              "detail", "munis", "climate", "nve_environment", "commuting", "commuting_se", "commuting_dk", "transport"]
+              "detail", "munis", "climate", "nve_environment", "commuting", "commuting_se", "commuting_dk", "transport", "cross_border"]
 
 
 class Report:
@@ -666,6 +666,7 @@ def main(argv=None):
     for country, name in (("NO", "commuting"), ("SE", "commuting_se"), ("DK", "commuting_dk")):
         check_commuting(r, load(name), cities, sources, mode, country)
     check_transport(r, load("transport"), cities, sources, mode)
+    check_cross_border(r, load("cross_border"))
     check_version(r, load("version"))
     if res:
         check_resources(r, res, world)
@@ -680,6 +681,29 @@ def main(argv=None):
         cr = argv[argv.index("--candidate") + 1] if "--candidate" in argv else None
         check_release(r, cities, nation, accept="--accept" in argv, evidence=ev, candidate_root=cr)
     return _finish(r)
+
+
+def check_cross_border(r, data):
+    """Verify both selected COMP53 cells against the retained source response."""
+    try:
+        raw = (ROOT / "tests/fixtures/comp53_2023.json").read_bytes()
+        js = json.loads(raw)
+        codes = js["dimension"]["reporting country"]["category"]["index"]
+        cells = {k: js["value"][i] for k, i in codes.items()}
+        rows = data["flows"]
+        expected = {"DK": "SE", "SE": "DK"}
+        valid = (data["schema"] == 1 and data["period"] == "2023"
+                 and data["region"] == "Øresund" and data["source"]["table"] == "COMP53"
+                 and js["size"] == [2, 1]
+                 and js["dimension"]["time"]["category"]["index"] == {"2023": 0}
+                 and hashlib.sha256(raw).hexdigest() == data["source"]["sha256"]
+                 and len(rows) == 2 and set(cells) == set(expected)
+                 and {f["residence"]: f["work"] for f in rows} == expected
+                 and {f["residence"]: f["value"] for f in rows} == cells
+                 and all(type(f["value"]) is int and f["value"] > 0 for f in rows))
+        r.ok(valid, "cross-border commuting: both 2023 COMP53 counts match the pinned source response")
+    except (OSError, ValueError, KeyError, TypeError, IndexError) as error:
+        r.add("FAIL", f"cross-border commuting: invalid or missing source response: {error}")
 
 
 def check_shelters(r, sh, cities, world, lenses, mode):
