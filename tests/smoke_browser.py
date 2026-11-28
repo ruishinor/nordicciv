@@ -697,7 +697,7 @@ async def main():
         def geo_of(x, y):  # map km (y down) → (lon, lat), independently of the app's own code
             return _to.transform(x + _proj["x0_km"], _proj["y1_km"] - y)
         from journeys_opening_maps import run as run_v05
-        await run_v05(b, URL, ok, errors, timings, geo_of)
+        await run_v05(b, URL, ok, errors, timings, geo_of, OUT)
         from journeys_daylight import run as run_daylight
         await run_daylight(b, URL, ok, errors)
         from journeys_climate import run as run_climate
