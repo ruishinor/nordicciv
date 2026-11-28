@@ -18,19 +18,20 @@ export function install(app) {
   const btn = document.createElement("button");
   btn.id = "btn-discover";
   btn.className = "btn";
-  btn.title = "Show a surprising fact about a real place (computed from the data)";
-  btn.setAttribute("aria-label", "Discover: show a surprising fact about a place");
+  btn.title = "Explore journeys or discover a surprising place";
+  btn.setAttribute("aria-label", "Discover journeys and places");
   btn.innerHTML = `<span aria-hidden="true">✦</span><span class="lbl">Discover</span>`;
   bar?.insertBefore(btn, bar.firstChild);
-  btn.onclick = () => surprise();
+  const openDiscover = () => journeys.length ? menu() : surprise();
+  btn.onclick = openDiscover;
   // phones: the top bar scrolls, so Discover also gets a place in the bottom navigation
   const mnav = document.getElementById("mobile-nav");
   if (mnav) {
     const mb = document.createElement("button");
     mb.dataset.mnav = "discover";
-    mb.setAttribute("aria-label", "Discover: a surprising fact about a place");
+    mb.setAttribute("aria-label", "Discover journeys and places");
     mb.innerHTML = `<span aria-hidden="true">✦</span>Discover`;
-    mb.onclick = () => surprise();
+    mb.onclick = openDiscover;
     mnav.appendChild(mb);
   }
 
@@ -59,8 +60,9 @@ export function install(app) {
   function menu() {
     clearJourney();
     card.dataset.journeys = "menu";
-    card.innerHTML = '<h2 class="disc-t" tabindex="-1">Explore a journey</h2><p class="muted small">Follow a theme across places. These are map tours, not travel directions.</p><div class="journey-list">' +
-      journeys.map(j => '<button type="button" class="chip" data-journey="' + esc(j.id) + '">' + esc(j.title) + ' · ' + j.stops.length + ' stops</button>').join("") +
+    card.innerHTML = '<h2 class="disc-t" tabindex="-1">Discover Scandinavia</h2><p class="muted small">Pick a theme to explore places on the map.</p><div class="journey-list">' +
+      journeys.map(j => '<button type="button" class="chip" data-journey="' + esc(j.id) + '">' + esc(j.title) + ' · ' + j.stops.length + ' stops<br><span class="muted small">' +
+        j.stops.map(s => esc(app.cityById.get(s.city)?.name || s.city)).join(' → ') + '</span></button>').join("") +
       '</div><div class="chips"><button type="button" class="chip" data-d="next">Surprise me</button><button type="button" class="chip" data-d="close">Close</button></div>';
     card.hidden = false;
     card.querySelectorAll("[data-journey]").forEach(b => b.onclick = () => step(b.dataset.journey, 0));
@@ -86,10 +88,14 @@ export function install(app) {
     card.dataset.journeys = "step";
     card.innerHTML = '<div class="disc-k">' + esc(journey.title) + ' · ' + (index + 1) + ' of ' + journey.stops.length + '</div>' +
       '<h2 class="disc-t" tabindex="-1">' + esc(city.name) + '</h2><p>' + esc(stop.text) + '</p><p class="muted small">' + esc(stop.source) + '</p>' +
+      '<div class="chips" role="group" aria-label="Journey stops">' + journey.stops.map((s, i) =>
+        '<button type="button" class="chip" data-journey-stop="' + i + '"' + (i === index ? ' aria-current="step" disabled' : '') + '>' +
+        (i + 1) + '. ' + esc(app.cityById.get(s.city)?.name || s.city) + '</button>').join("") + '</div>' +
       '<div class="chips"><button type="button" class="chip" data-d="prev"' + (index === 0 ? ' disabled' : '') + '>Previous</button>' +
       '<button type="button" class="chip" data-d="forward">' + (index + 1 === journey.stops.length ? 'Finish' : 'Next stop ›') + '</button>' +
       '<button type="button" class="chip" data-d="journeys">Journeys</button><button type="button" class="chip" data-d="close">Close</button></div>';
     card.hidden = false;
+    card.querySelectorAll("[data-journey-stop]").forEach(b => b.onclick = () => step(id, Number(b.dataset.journeyStop)));
     card.querySelector('[data-d="prev"]').onclick = () => step(id, index - 1);
     card.querySelector('[data-d="forward"]').onclick = () => index + 1 < journey.stops.length ? step(id, index + 1) : menu();
     card.querySelector('[data-d="journeys"]').onclick = menu;
@@ -111,8 +117,25 @@ export function install(app) {
     }
   });
   app.addCitySections(city => {
+    const sections = [];
+    const related = journeys.flatMap(j => {
+      const index = j.stops.findIndex(s => s.city === city.id);
+      return index < 0 ? [] : [{j, index}];
+    });
+    if (related.length) sections.push({tab: "Overview", title: "Journeys through here",
+      html: '<div class="journey-list">' + related.map(({j, index}) =>
+        '<button type="button" class="chip" data-discover-journey="' + esc(j.id + ":" + index) + '">' +
+        esc(j.title) + ' · stop ' + (index + 1) + ' of ' + j.stops.length + '</button>').join("") + '</div>'});
     const html = contextLinks(city);
-    return html ? [{tab: "Overview", title: "Weather and satellite imagery", html}] : [];
+    if (html) sections.push({tab: "Overview", title: "Weather and satellite imagery", html});
+    return sections;
+  }, (panel, city) => {
+    panel.querySelectorAll("[data-discover-journey]").forEach(b => {
+      b.onclick = () => {
+        const parsed = resolveJourney(journeys, b.dataset.discoverJourney);
+        if (parsed && app.state.selectedCity?.id === city.id) step(parsed.id, parsed.index);
+      };
+    });
   });
 
   const showers = new Map(); // key → (d) => void, for discoveries contributed by other extensions
@@ -176,7 +199,7 @@ export function install(app) {
     intro.innerHTML = `<h2>Scandinavia, from official statistics</h2>
       <ul><li><b>Click a municipality</b> to see what stands out about it and where to go next.</li>
       <li><b>Lenses</b> colour the map by one measure; the legend says what it means.</li>
-      <li><b>Discover</b> shows a surprising fact about a real place.</li></ul>
+      <li><b>Discover</b> offers map journeys and surprising places.</li></ul>
       <div class="chips"><button class="chip" data-i="go">✦ Discover something</button><button class="chip" data-i="ok">Got it</button></div>`;
     document.body.appendChild(intro);
     const done = () => { intro.remove(); try { localStorage.setItem("nc-intro", "1"); } catch { /* fine */ } };
