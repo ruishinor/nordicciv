@@ -55,7 +55,7 @@ async def main():
                 for _ in range(5):
                     samples.append(await page.evaluate("""async () => { const t=performance.now(); __app.invalidate();
                         await new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)));
-                        return {paint:performance.now()-t, static:__perf().static_ms, frame:__perf().frame_ms}; }"""))
+                        return {paint:performance.now()-t, static:__app.stats().staticLast, frame:__app.stats().frameLast}; }"""))
                 detail = await page.evaluate("""() => ({terrain:__app.terrain.stats(), perf:__perf(),
                     camera:{x:__app.cam.x,y:__app.cam.y,scale:__app.cam.scale,pitch:__app.cam.pitch,widthKm:__app.cam.w/__app.cam.scale},
                     heapBytes:performance.memory?.usedJSHeapSize ?? null})""")

@@ -87,7 +87,7 @@ function layerOpts(ctx, vp, w, opts, extra) {
     // ctx back to world units (km, the default when draw() is called) or to screen css px of this canvas
     world: () => ctx.setTransform(dpr * s, 0, 0, dpr * yScale, -vp.x0 * dpr * s, -vp.y0 * dpr * yScale),
     screen: () => ctx.setTransform(dpr, 0, 0, dpr, 0, 0),
-    toScreen: (x, y) => [(x - vp.x0) * s, (y - vp.y0) * yScale],
+    toScreen: (x, y) => [(x - vp.x0) * s, ((vp.surfaceY ? vp.surfaceY(x, y) : y) - vp.y0) * yScale],
     ...extra,
   };
 }
@@ -120,7 +120,7 @@ export function drawStatic(ctx, vp, w, opts) {
   const Rpx = R * s;
   const lod = lodFor(Rpx);
   const W = w.raw.width, H = w.raw.height;
-  const { r0, r1, c0, c1 } = grid.range(vp.x0, vp.y0, vp.x1, vp.y1);
+  const { r0, r1, c0, c1 } = grid.range(vp.x0, vp.y0 - (vp.surfaceY ? 0.2 : 0), vp.x1, vp.y1 + (vp.surfaceY ? 4 : 0));
   const worldT = () => ctx.setTransform(dpr * s, 0, 0, dpr * yScale, -vp.x0 * dpr * s, -vp.y0 * dpr * yScale);
 
   const T = opts.timings; // optional {section: ms} for profiling
@@ -200,8 +200,10 @@ export function drawStatic(ctx, vp, w, opts) {
   // 2. Land: the relief image (Explore), lens colours clipped to the land and shaded by the relief (Analyze), or tiles.
   upTo(Z.LAND);
   const useTerrain = !opts.lens && opts.terrainRenderer?.available;
-  if (useTerrain) {
-    drawReliefTextured(ctx, vp);
+  if (useTerrain && !opts.terrainRenderer.covers(vp, opts.pitch ?? 0)) {
+    // At close terrain scales the existing artwork has no finer geographical information.
+    if (s <= 48) drawReliefTextured(ctx, vp);
+    else drawRelief(ctx, vp);
     worldT();
   }
   const terrainGround = useTerrain && opts.terrainRenderer.draw(ctx, vp, w, opts.pitch ?? 0);
@@ -251,7 +253,7 @@ export function drawStatic(ctx, vp, w, opts) {
   ctx.beginPath();
   ctx.rect(0, 0, W, H);
   ctx.clip();
-  drawRivers(ctx, w, { s, Rpx, lod, lens: !!opts.lens });
+  drawRivers(ctx, w, { s, Rpx, lod, lens: !!opts.lens, vp });
   if (relief && bordersReady()) drawPolygonBorders(ctx, vp, w, s, Rpx, !!opts.lens);
   else drawBorders(ctx, w, s, Rpx, !!opts.lens);
   ctx.restore();
@@ -259,7 +261,7 @@ export function drawStatic(ctx, vp, w, opts) {
   // 6. City tiles.
   lap("rivers+borders");
   upTo(Z.CITIES);
-  drawCityTiles(ctx, w, Rpx, s, lod, opts.selectedCity || null, vp);
+  if (!terrainGround || s <= 48) drawCityTiles(ctx, w, Rpx, s, lod, opts.selectedCity || null, vp);
   lap("cities");
 
   // 7. Sea mist around the edges of the known world.
@@ -544,7 +546,7 @@ function drawResources(ctx, vp, w, r0, r1, c0, c1, Rpx, filterSpec = null) {
   const { typeById, byCell, norm } = w.resources;
   const perCell = overview ? 1 : Rpx < 26 ? 1 : Rpx < 42 ? 2 : 3;
   const badges = !overview && Rpx >= 24;
-  const toS = (x, y) => [(x - vp.x0) * vp.s, ((vp.surfaceY ? vp.surfaceY(x, y) : y) - vp.y0) * vp.s];
+  const toS = (x, y) => [(x - vp.x0) * vp.s, ((vp.surfaceY ? vp.surfaceY(x, y) : y) - vp.y0) * (vp.yScale ?? vp.s)];
 
   // Visible cells, best first (the first item of each list is that cell's best), so the most important
   // sites win the screen-space declutter below.
@@ -769,7 +771,7 @@ function rememberProjectedPath(paths, key, path) {
   return path;
 }
 
-function projectRings(owner, key, rings, surfaceY, stepKm) {
+function projectRings(owner, key, rings, surfaceY, stepKm, view = null) {
   let paths = projectedPaths.get(owner);
   if (!paths) projectedPaths.set(owner, (paths = new Map()));
   if (paths.has(key)) return paths.get(key);
@@ -779,7 +781,8 @@ function projectRings(owner, key, rings, surfaceY, stepKm) {
     path.moveTo(ring[0], surfaceY(ring[0], ring[1]));
     for (let k = 2; k < ring.length; k += 2) {
       const ax = ring[k - 2], ay = ring[k - 1], bx = ring[k], by = ring[k + 1];
-      const steps = Math.max(1, Math.ceil(Math.hypot(bx - ax, by - ay) / stepKm));
+      const offscreen = view && (Math.max(ax,bx)<view.x0 || Math.min(ax,bx)>view.x1 || Math.max(ay,by)<view.y0-0.2 || Math.min(ay,by)>view.y1+4);
+      const steps = offscreen ? 1 : Math.max(1, Math.ceil(Math.hypot(bx - ax, by - ay) / stepKm));
       for (let j = 1; j <= steps; j++) {
         const x = ax + (bx - ax) * j / steps, y = ay + (by - ay) * j / steps;
         path.lineTo(x, surfaceY(x, y));
@@ -793,10 +796,10 @@ function projectRings(owner, key, rings, surfaceY, stepKm) {
 function projectedStatePaths(cam, w, si, outline) {
   let paths = projectedPaths.get(w);
   if (!paths) projectedPaths.set(w, (paths = new Map()));
-  const key = `state:${si}:${cam.pitch}:${cam.verticalExaggeration}`;
+  const key = `state:${si}:${cam.pitch}:${cam.verticalExaggeration}:${cam.surfaceRevision ?? 0}`;
   if (paths.has(key)) return paths.get(key);
   const surfaceY = (x, y) => cam.toSurfaceY(x, y);
-  const path = projectRings(w, `${key}:outline`, outline.loops, surfaceY, w.grid.R / 2);
+  const path = projectRings(w, `${key}:outline`, outline.loops, surfaceY, Math.max(0.03, 4 / cam.scale), cam.view());
   const dim = new Path2D();
   dim.rect(-1e5, -1e5, 2e5 + w.raw.width, 2e5 + w.raw.height);
   dim.addPath(path);
@@ -827,7 +830,7 @@ export function drawOverlay(ctx, cam, w, state, now = performance.now()) {
     // the selected municipality's own territory (its polygon), never the hexes of its neighbours
     const level = muniLevel(s * (ctx.getTransform().a / s || 1));
     const path = surfaceY
-      ? projectRings(sf, `muni:${level}:${cam.pitch}:${cam.verticalExaggeration}`, sf.levels[level], surfaceY, grid.R / 2)
+      ? projectRings(sf, `muni:${level}:${cam.pitch}:${cam.verticalExaggeration}:${cam.surfaceRevision ?? 0}`, sf.levels[level], surfaceY, Math.max(0.03, 4 / s), cam.view())
       : muniPath(sf, level);
     ctx.save();
     ctx.fillStyle = "rgba(255,226,140,.12)";

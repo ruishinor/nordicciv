@@ -804,7 +804,7 @@ function ribbon(P, p, halfWidth) {
   P.closePath();
 }
 
-export function drawRivers(ctx, w, { s, Rpx, lod, lens = false }) {
+export function drawRivers(ctx, w, { s, Rpx, lod, lens = false, vp = null }) {
   const R = w.grid?.R ?? (Rpx && s ? Rpx / s : 25);
   Rpx = Rpx ?? R * s;
   lod = lod ?? lodFor(Rpx);
@@ -814,6 +814,24 @@ export function drawRivers(ctx, w, { s, Rpx, lod, lens = false }) {
     drawShore(ctx, w, q.cells, { ...q.opts, s, Rpx, lod, lens });
   }
   const rivers = prepRivers(w);
+  if (vp?.surfaceY && !lens) {
+    ctx.strokeStyle = "#3f8cc4"; ctx.lineJoin = "round"; ctx.lineCap = "round";
+    for (const river of rivers) {
+      const b = river.bbox;
+      if (b[2] < vp.x0 || b[0] > vp.x1 || b[3] < vp.y0 - 0.2 || b[1] > vp.y1 + 4) continue;
+      ctx.beginPath();
+      const p = river.pts;
+      for (let i=2;i<p.length;i+=2) {
+        const x0=p[i-2],y0=p[i-1],x1=p[i],y1=p[i+1];
+        if (Math.max(x0,x1)<vp.x0 || Math.min(x0,x1)>vp.x1 || Math.max(y0,y1)<vp.y0-0.2 || Math.min(y0,y1)>vp.y1+4) continue;
+        ctx.moveTo(x0,vp.surfaceY(x0,y0));
+        const n=Math.max(1,Math.ceil(Math.hypot(x1-x0,y1-y0)/Math.max(0.03,4/s)));
+        for(let j=1;j<=n;j++){const x=x0+(x1-x0)*j/n,y=y0+(y1-y0)*j/n;ctx.lineTo(x,vp.surfaceY(x,y));}
+      }
+      ctx.lineWidth=Math.min(4,Math.max(1,(10-river.rank)*0.4))/s;ctx.stroke();
+    }
+    return;
+  }
   const view = visibleRect(ctx);
   ctx.lineJoin = "round";
   ctx.lineCap = "round";

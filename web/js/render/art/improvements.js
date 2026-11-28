@@ -68,13 +68,16 @@ function buildPieces(w, links, classes, offsetOf = null) {
     const cx = grid.cx(i), cy = grid.cy(i);
     const key = `${Math.floor(cx / TILE_KM)},${Math.floor(cy / TILE_KM)}`;
     let t = tiles.get(key);
-    if (!t) tiles.set(key, (t = { x0: Infinity, y0: Infinity, x1: -Infinity, y1: -Infinity, paths: {} }));
+    if (!t) tiles.set(key, (t = { x0: Infinity, y0: Infinity, x1: -Infinity, y1: -Infinity, paths: {}, commands: {} }));
     t.x0 = Math.min(t.x0, cx - R); t.y0 = Math.min(t.y0, cy - R);
     t.x1 = Math.max(t.x1, cx + R); t.y1 = Math.max(t.y1, cy + R);
     for (const cls of classes) {
       const mine = list.filter((p) => p.cls === cls);
       if (!mine.length) continue;
-      const p = t.paths[cls] || (t.paths[cls] = new Path2D());
+      const path = t.paths[cls] || (t.paths[cls] = new Path2D());
+      const commands = t.commands[cls] || (t.commands[cls] = []);
+      const p = Object.fromEntries(["moveTo", "lineTo", "quadraticCurveTo"].map(method =>
+        [method, (...args) => { path[method](...args); commands.push([method, ...args]); }]));
       // end of a piece: the shared edge midpoint (+ the link's sideways shift); hub: the centre + the mean shift
       const ends = mine.map((q) => [cx + R * H * DIR_COS[q.d] + q.vx, cy + R * H * DIR_SIN[q.d] + q.vy]);
       let hx = 0, hy = 0;
@@ -116,7 +119,28 @@ function visibleTiles(tiles, vp, pad) {
   const out = [];
   for (const t of tiles) {
     if (t.x1 < vp.x0 - pad || t.x0 > vp.x1 + pad || t.y1 < vp.y0 - pad || t.y0 > vp.y1 + pad) continue;
-    out.push(t);
+    if (!vp.surfaceY) { out.push(t); continue; }
+    const paths = {};
+    for (const [cls, commands] of Object.entries(t.commands || {})) {
+      const path = paths[cls] = new Path2D();
+      let ax = 0, ay = 0;
+      for (const [method, ...q] of commands) {
+        if (method === "moveTo") { [ax, ay] = q; path.moveTo(ax, vp.surfaceY(ax, ay)); continue; }
+        const curve = method === "quadraticCurveTo", [bx, by] = q.slice(-2);
+        const cx = curve ? q[0] : (ax + bx) / 2, cy = curve ? q[1] : (ay + by) / 2;
+        if (Math.max(ax,bx,cx)<vp.x0 || Math.min(ax,bx,cx)>vp.x1 || Math.max(ay,by,cy)<vp.y0-0.2 || Math.min(ay,by,cy)>vp.y1+4) {
+          path.moveTo(bx,vp.surfaceY(bx,by)); [ax,ay]=[bx,by]; continue;
+        }
+        const length = Math.hypot(cx-ax,cy-ay)+Math.hypot(bx-cx,by-cy);
+        const n = Math.max(1,Math.ceil(length/Math.max(0.03,4/vp.s)));
+        for(let j=1;j<=n;j++) {
+          const f=j/n, g=1-f, x=g*g*ax+2*g*f*cx+f*f*bx, y=g*g*ay+2*g*f*cy+f*f*by;
+          path.lineTo(x,vp.surfaceY(x,y));
+        }
+        [ax,ay]=[bx,by];
+      }
+    }
+    out.push({...t,paths});
   }
   return out;
 }

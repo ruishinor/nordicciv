@@ -22,6 +22,7 @@ import { initShare } from "./app/share.js";
 import { initHelp } from "./app/help.js";
 import { initMaps } from "./app/maps.js";
 import { opening } from "./opening.js";
+import { installTerrainControls } from "./ui/terrain-controls.js";
 import {
   TERRAIN_LAYER_TYPES, VERTICAL_EXAGGERATION, WebGLTerrainRenderer, terrainElevationAt,
 } from "./render/webgl-terrain.js";
@@ -105,7 +106,7 @@ async function main() {
   const terrainStatus = document.getElementById("terrain-status");
   const params = new URLSearchParams(location.search);
   const rendererRequested = params.get("renderer") === "webgl";
-  const pitchValue = params.get("pitch");
+  const pitchValue = new URLSearchParams(location.hash.slice(1)).get("pitch") ?? params.get("pitch");
   const requestedPitch = pitchValue == null ? 0 : Number(pitchValue);
   function restoreCanvasCamera() {
     cam.stop();
@@ -114,6 +115,7 @@ async function main() {
     const [centerX, centerY] = cam.toWorld(cam.w / 2, cam.h / 2);
     cam.setPitch(0);
     cam.elevationAt = null;
+    cam.surfaceRay = null;
     cam.verticalExaggeration = 1;
     cam.maxScale = canvasMaxScale;
     cam.x = centerX;
@@ -130,6 +132,11 @@ async function main() {
     }
   }
   const terrainRenderer = rendererRequested ? new WebGLTerrainRenderer(w, {
+    onChange: () => {
+      // Several tiles can finish together. One task rebuilds the shared surface and map cache.
+      clearTimeout(terrainUpdateTimer);
+      terrainUpdateTimer = setTimeout(() => window.__app?.invalidate(), 40);
+    },
     onUnavailable: (error) => {
       restoreCanvasCamera();
       if (terrainStatus) {
@@ -142,13 +149,14 @@ async function main() {
     },
   }) : null;
   if (terrainRenderer?.available) {
-    cam.maxScale = 48;
+    cam.maxScale = 720;
     cam.verticalExaggeration = VERTICAL_EXAGGERATION;
-    cam.elevationAt = (x, y) => terrainElevationAt(w, x, y);
+    cam.elevationAt = (x, y) => terrainRenderer.elevationAt(x, y);
+    cam.surfaceRay = (x, y, k) => terrainRenderer.raycast(x, y, k);
     cam.setPitch(Number.isFinite(requestedPitch) ? requestedPitch : 0);
     if (terrainStatus) {
       terrainStatus.hidden = false;
-      terrainStatus.textContent = `Terrain preview · ${VERTICAL_EXAGGERATION}× vertical scale · one height per 6 km-radius hex.`;
+      terrainStatus.textContent = "Terrain pilot · Loading elevation coverage.";
     }
   } else if (rendererRequested && terrainStatus && terrainRenderer) {
     terrainStatus.hidden = false;
@@ -156,6 +164,7 @@ async function main() {
     console.warn("WebGL terrain unavailable; showing the standard map.", terrainRenderer.error);
   }
   let dpr = 1;
+  let terrainUpdateTimer = 0;
   let hits = [];
   let queued = false;
   let userMoved = false;
@@ -169,7 +178,9 @@ async function main() {
 
   const minimap = new Minimap(document.getElementById("minimap"), w, cam, (x, y) => {
     userMoved = true;
-    cam.centerOn(x, y);
+    cam.stop();
+    [cam.x, cam.y] = cam.centerAt(x, y, cam.w / 2, cam.h / 2);
+    cam.clamp();
     requestDraw();
     url.schedule();
   });
@@ -204,24 +215,38 @@ async function main() {
   function renderStatic(lead = null) {
     const t0 = performance.now();
     const s = cam.scale;
-    const v = cam.view();
+    let v = cam.view();
     const m = CACHE_MARGIN / s, my = CACHE_MARGIN / cam.yScale;
     const ox = lead ? lead[0] * PAN_LEAD * m : 0, oy = lead ? lead[1] * PAN_LEAD * my : 0;
-    const vp = {
+    let vp = {
       x0: v.x0 - m + ox, y0: v.y0 - my + oy, x1: v.x1 + m + ox, y1: v.y1 + my + oy, s, yScale: cam.yScale, dpr,
       cssW: cam.w + 2 * CACHE_MARGIN, cssH: cam.h + 2 * CACHE_MARGIN,
       surfaceY: terrainRenderer?.available && !state.lens ? (x, y) => cam.toSurfaceY(x, y) : null,
     };
+    if (terrainRenderer?.available && !state.lens) {
+      const keepAnchor = terrainRenderer.detailMesh && terrainRenderer.anchorRevision !== terrainRenderer.tiles.revision;
+      const anchor = keepAnchor ? cam.toWorld(cam.w / 2, cam.h / 2) : null;
+      terrainRenderer.prepareDetail(vp, cam.pitch);
+      terrainRenderer.anchorRevision = terrainRenderer.tiles.revision;
+      if (anchor) {
+        [cam.x, cam.y] = cam.centerAt(...anchor, cam.w / 2, cam.h / 2);
+        cam.clamp(); v = cam.view();
+        vp = { ...vp, x0:v.x0-m+ox, y0:v.y0-my+oy, x1:v.x1+m+ox, y1:v.y1+my+oy };
+      }
+    }
     const W = Math.ceil(vp.cssW * dpr), H = Math.ceil(vp.cssH * dpr);
     if (cache.cv.width !== W || cache.cv.height !== H) {
       cache.cv.width = W;
       cache.cv.height = H;
     }
     const hitsOut = {};
+    const timings = {};
     drawStatic(cctx, vp, w, {
       lens: state.lens, showResources: state.showResources, resourceFilter: state.resourceFilter, selectedCity: state.selectedCity, hits: hitsOut,
-      layers: staticLayers, app, terrainRenderer: terrainRenderer?.available ? terrainRenderer : null, pitch: cam.pitch,
+      layers: staticLayers, app, terrainRenderer: terrainRenderer?.available ? terrainRenderer : null, pitch: cam.pitch, timings,
     });
+    perf.sections = timings;
+    cam.surfaceRevision = terrainRenderer?.surfaceRevision ?? 0;
     cache.hits = { resources: hitsOut.resources || [] };
     cache.vp = vp;
     cache.key = cacheKey();
@@ -246,6 +271,7 @@ async function main() {
     warm.handle = 0;
     warm.jobs = [];
     warm.sig = warmSig();
+    if (terrainRenderer?.available && cam.scale > 48) return;
     const v = cam.view();
     const cx = (v.x0 + v.x1) / 2, cy = (v.y0 + v.y1) / 2;
     for (const f of WARM_STEPS) {
@@ -293,10 +319,10 @@ async function main() {
   function updateScale() {
     if (!scaleEl || Math.abs(cam.scale - scaleShown) < 1e-6) return;
     scaleShown = cam.scale;
-    const steps = [1, 2, 5, 10, 20, 25, 50, 100, 200, 250, 500, 1000];
+    const steps = [0.05, 0.1, 0.2, 0.5, 1, 2, 5, 10, 20, 25, 50, 100, 200, 250, 500, 1000];
     const km = steps.find((k) => k * cam.scale >= 60) || 1000;
     scaleEl.querySelector("i").style.width = `${Math.round(km * cam.scale)}px`;
-    scaleEl.querySelector("span").textContent = `${km} km`;
+    scaleEl.querySelector("span").textContent = km < 1 ? `${km * 1000} m` : `${km} km`;
   }
 
   function draw(moving) {
@@ -448,6 +474,7 @@ async function main() {
     canvas.width = Math.round(cw * dpr);
     canvas.height = Math.round(ch * dpr);
     cam.resize(cw, ch);
+    if (terrainRenderer?.available) cam.maxScale = Math.max(48, cw / 2);
     // Keep refitting until the user has moved the map (the first layout may be tiny or hidden).
     if (!userMoved || !(cam.scale > 0)) home();
     else updateMinScale();
@@ -610,7 +637,8 @@ async function main() {
     if (terrainRenderer?.available && !!cam.elevationAt !== !lens) {
       const [x, y] = cam.toWorld(cam.w / 2, cam.h / 2);
       cam.stop();
-      cam.elevationAt = lens ? null : (wx, wy) => terrainElevationAt(w, wx, wy);
+      cam.elevationAt = lens ? null : (wx, wy) => terrainRenderer.elevationAt(wx, wy);
+      cam.surfaceRay = lens ? null : (wx, wy, k) => terrainRenderer.raycast(wx, wy, k);
       [cam.x, cam.y] = cam.centerAt(x, y, cam.w / 2, cam.h / 2);
       cam.clamp();
     }
@@ -737,6 +765,10 @@ async function main() {
       };
     },
     apply(p, { initial }) {
+      if (terrainRenderer?.available) {
+        const angle = Number(new URLSearchParams(location.hash.slice(1)).get("pitch") ?? params.get("pitch") ?? 0);
+        cam.setPitch(Number.isFinite(angle) ? angle : 0);
+      }
       const lens = p.lens ? lensById.get(p.lens) || null : null;
       if (lens !== state.lens || state.band) setLens(lens);
       if (lens) dock.remember(lens.id);
@@ -1365,13 +1397,17 @@ async function main() {
         return () => { remove(); cache.key = null; requestDraw(); };
       },
       stats: () => terrainRenderer?.stats() ?? null,
+      elevationAt: (x, y) => terrainRenderer?.elevationAt(x, y) ?? null,
     },
     setPitch(degrees) {
       if (!terrainRenderer?.available) throw new Error("enable the WebGL renderer with ?renderer=webgl before setting camera pitch");
+      const [x, y] = cam.toWorld(cam.w / 2, cam.h / 2);
       const pitch = cam.setPitch(degrees);
+      [cam.x, cam.y] = cam.centerAt(x, y, cam.w / 2, cam.h / 2);
       updateMinScale();
       cache.key = null;
       requestDraw();
+      url.schedule();
       return pitch;
     },
     selectCity(city, { fly = true } = {}) {
@@ -1413,7 +1449,7 @@ async function main() {
     search, share, help, lensDock: dock, reports, pedia, minimap, shareInfo, url, perf,
     stats() {
       const avg = (a) => (a.length ? a.reduce((p, q) => p + q, 0) / a.length : 0);
-      return { staticAvg: avg(perf.static), staticLast: perf.static.at(-1), frameAvg: avg(perf.frame), frameLast: perf.frame.at(-1) };
+      return { staticAvg: avg(perf.static), staticLast: perf.static.at(-1), frameAvg: avg(perf.frame), frameLast: perf.frame.at(-1), sections: perf.sections };
     },
   });
   Object.defineProperties(app, {
@@ -1421,6 +1457,10 @@ async function main() {
     modeParams: { get: () => modes.modeParams, enumerable: true },
   });
   window.__app = app;
+  if (terrainRenderer?.available) {
+    url.register("pitch", { get: () => String(cam.pitch), set: () => {} });
+    installTerrainControls(app, terrainRenderer, terrainStatus);
+  }
   // Rendering timings for tests and profiling: medians (ms) of the last static renders, frames and warm-up strips.
   const med = (a) => { const v = [...a].sort((x, y) => x - y); return v.length ? +v[v.length >> 1].toFixed(1) : null; };
   const q95 = (a) => { const v = [...a].sort((x, y) => x - y); return v.length ? +v[Math.min(v.length - 1, Math.floor(v.length * 0.95))].toFixed(1) : null; };

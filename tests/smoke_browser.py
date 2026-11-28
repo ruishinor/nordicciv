@@ -41,7 +41,7 @@ URL = _pos[0] if _pos else "http://127.0.0.1:8765/"
 CANDIDATE = Path(_arg("--candidate", str(ROOT))).resolve()
 OUT = Path(_arg("--out", str(ROOT / "tests" / "results"))).resolve()
 # every journey must run and pass for a release (journey ids are the leading numbers of the names below)
-MANDATORY = [str(i) for i in range(0, 62)]  # 51 NVE, 52–53 commuting, 54–55 close zoom, 60–61 terrain fallback.
+MANDATORY = [str(i) for i in range(0, 69)]  # Includes terrain fallback, pitched lenses and the bounded terrain pilot.
 AXE = ROOT / "tests" / ".node" / "node_modules" / "axe-core" / "axe.min.js"
 AXE_ALT = Path(os.environ.get("NORDICCIV_AXE", "/nonexistent"))
 
@@ -716,6 +716,8 @@ async def main():
         await run_transport(b, URL, ok, errors)
         from journeys_terrain import run as run_terrain
         await run_terrain(b, URL, ok, errors, OUT)
+        from journeys_detailed_terrain import run as run_detailed_terrain
+        await run_detailed_terrain(b, URL, ok, errors, OUT)
 
         from journeys_atlas_ui import run as run_atlas_ui
         await run_atlas_ui(b, URL, ok, errors, OUT)

@@ -25,8 +25,12 @@ svg.icon { display: inline-block; flex: none; }
 #map.dragging { cursor: grabbing; }
 .terrain-status {
   position: fixed; top: calc(var(--topbar-h) + 10px); right: 12px; z-index: 11; max-width: min(360px, calc(100vw - 24px));
-  padding: 7px 10px; color: var(--ink-dim); font-size: 11px; line-height: 1.4; pointer-events: none;
+  padding: 7px 10px; color: var(--ink-dim); font-size: 11px; line-height: 1.4; pointer-events: auto;
 }
+.terrain-status summary { cursor: pointer; min-height: 24px; display: list-item; }
+.terrain-status label, .terrain-status a { display: block; margin-top: 8px; }
+.terrain-status select, .terrain-status input { display: block; width: 100%; min-height: 32px; }
+.terrain-status p { max-width: 280px; margin: 8px 0; }
 
 .panel {
   background: linear-gradient(180deg, var(--panel-2), var(--panel));

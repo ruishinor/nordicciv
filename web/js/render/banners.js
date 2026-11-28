@@ -624,9 +624,9 @@ export function drawBanners(ctx, cam, w, state, yields, nation = state.nation) {
       if ((city.prominence ?? city.population) < minPop || shown >= budget) break; // cities are sorted by prominence (or population)
     }
     if (city.cell == null) continue;
-    const [sx, sy] = cam.toScreenSurface
-      ? cam.toScreenSurface(grid.cx(city.cell), grid.cy(city.cell))
-      : cam.toScreen(grid.cx(city.cell), grid.cy(city.cell));
+    const precise = cam.elevationAt && cam.scale > 48 && Number.isFinite(city.x) && Number.isFinite(city.y);
+    const bx = precise ? city.x : grid.cx(city.cell), by = precise ? city.y : grid.cy(city.cell);
+    const [sx, sy] = cam.toScreenSurface ? cam.toScreenSurface(bx, by) : cam.toScreen(bx, by);
     if (sx < -200 || sy < -80 || sx > cam.w + 200 || sy > cam.h + 100) continue;
 
     const focused = focus == null || inFocus(focus, city, sel);

@@ -1,15 +1,22 @@
-NOTE  validation mode: built; data hash 6949991564917fae
+NOTE  validation mode: built; data hash 6593c02c6960eec1
 PASS  files: world.json parses as strict JSON numbers (no NaN/Infinity) [2.13 MB]
 PASS  files: cities.json parses as strict JSON numbers (no NaN/Infinity) [1.99 MB]
 PASS  files: states.json parses as strict JSON numbers (no NaN/Infinity) [0.07 MB]
 PASS  files: nation.json parses as strict JSON numbers (no NaN/Infinity) [0.02 MB]
-PASS  files: lenses.json parses as strict JSON numbers (no NaN/Infinity) [1.26 MB]
-PASS  files: sources.json parses as strict JSON numbers (no NaN/Infinity) [0.05 MB]
+PASS  files: lenses.json parses as strict JSON numbers (no NaN/Infinity) [1.45 MB]
+PASS  files: sources.json parses as strict JSON numbers (no NaN/Infinity) [0.12 MB]
 PASS  files: resources.json parses as strict JSON numbers (no NaN/Infinity) [0.14 MB]
 PASS  files: infrastructure.json parses as strict JSON numbers (no NaN/Infinity) [0.14 MB]
 PASS  files: wonders.json parses as strict JSON numbers (no NaN/Infinity) [0.03 MB]
 PASS  files: detail.json parses as strict JSON numbers (no NaN/Infinity) [0.77 MB]
 PASS  files: munis.json parses as strict JSON numbers (no NaN/Infinity) [1.45 MB]
+PASS  files: climate.json parses as strict JSON numbers (no NaN/Infinity) [0.04 MB]
+PASS  files: nve_environment.json parses as strict JSON numbers (no NaN/Infinity) [1.07 MB]
+PASS  files: commuting.json parses as strict JSON numbers (no NaN/Infinity) [0.10 MB]
+PASS  files: commuting_se.json parses as strict JSON numbers (no NaN/Infinity) [0.14 MB]
+PASS  files: commuting_dk.json parses as strict JSON numbers (no NaN/Infinity) [0.08 MB]
+PASS  files: transport.json parses as strict JSON numbers (no NaN/Infinity) [0.01 MB]
+PASS  files: cross_border.json parses as strict JSON numbers (no NaN/Infinity) [0.00 MB]
 PASS  world: 9,005 Scandinavian land hexes ≈ 842,244 km² (land of NO+SE+DK ≈ 774,000 km² + inland water)
 PASS  world: every Scandinavian land hex has a dominant municipality (0 without)
 PASS  dasymetric: hex population 22,258,516 vs municipal total 22,258,431 (Δ 0.00038%, rounding only)
@@ -59,6 +66,11 @@ PASS  geometry: every municipality has its own polygon (0 without: [])
 PASS  geometry: no empty polygons (0)
 PASS  geometry fixture: Frederiksberg, Solna, Sundbyberg, Haugesund, Utsira, Røst, Værøy, Rælingen, Randaberg are selectable polygons (9/9)
 NOTE  geometry: 745 polygons, 3643 rings, 113805 vertices at full detail
+PASS  land history: paired years and all pinned tile identities and hashes match the inventory
+PASS  land history: paired cell counts have the packed owned-hex length
+PASS  land history: forest_change net values match gains and losses; no paired cells means no value
+PASS  land history: agriculture_change net values match gains and losses; no paired cells means no value
+NOTE  land history: 41,424 paired 1 km cells in 512 of 9,005 mapped hexes
 PASS  lens density: source ['ssb', 'scb', 'dst', 'gisco_grids'], unit 'people / km²', resolution derived
 PASS  lens growth: source ['ssb', 'scb', 'dst'], unit '% change', resolution municipality
 PASS  lens ageing: source ['ssb', 'scb', 'dst'], unit 'share of residents', resolution municipality
@@ -82,6 +94,8 @@ PASS  lens farmland: source ['gisco_grids'], unit '% of land', resolution hex
 PASS  lens cover: source ['gisco_grids'], unit '', resolution hex
 PASS  lens urban_growth: source ['gisco_grids'], unit 'km² (1 km cells)', resolution hex
 PASS  lens shelter_places: source ['dsb_shelters'], unit '', resolution municipality
+PASS  lens forest_change: source ['gisco_grids'], unit 'km² (1 km cells)', resolution hex
+PASS  lens agriculture_change: source ['gisco_grids'], unit 'km² (1 km cells)', resolution hex
 PASS  shelters: 555 records, every DSB lokalId present, well-formed and unique
 PASS  shelters: all 555 features the WFS reports as matched are in the build (555)
 PASS  shelters: room numbers are integers and unique
@@ -112,6 +126,21 @@ PASS  uplinks: every published camera's page was checked and answered within the
 PASS  uplinks: municipal lists and totals equal the camera records
 PASS  uplinks: no-live-claim, position meaning, page-check meaning, absence caveat, exclusions and attribution are published with the data
 NOTE  uplinks: 196 cameras — Norway 80, Sweden 108, Denmark 8; 21 at place positions; providers {'Falkenberg Energi': 1, 'Gaustabanen': 1, 'Port of Skjervøy': 1, 'WestWind': 1, 'camstreamer': 71, 'panomax': 8, 'skylinewebcams': 17, 'webcamcollections': 96}
+PASS  climate: 48 unique selected station records match the pinned archive
+PASS  climate: coordinates, units, missingness, observation-year counts and source hashes (0 invalid)
+PASS  climate: Almanac source count and archive licence match
+PASS  NVE: 1185 unique southeast pilot polygons from 5160 selected source records
+PASS  NVE: finite closed rings, matching bounding boxes, 3 MB budget (0 invalid)
+PASS  NVE: source catalogue and complete flood request/hash inventory agree
+PASS  commuting NO: 2981 unique directed qualifying pairs from 127,449 requested municipality pairs
+PASS  commuting: complete pinned request set, hashes and source catalogue
+PASS  commuting SE: 4268 unique directed qualifying pairs from 84,100 requested municipality pairs
+PASS  commuting: complete pinned request set, hashes and source catalogue
+PASS  commuting DK: 3066 unique directed qualifying pairs from 9,604 requested municipality pairs
+PASS  commuting: complete pinned request set, hashes and source catalogue
+PASS  transport: 40 bounded observations, endpoints, units, directions and coverage
+PASS  transport: pinned requests and matching catalogue hashes
+PASS  cross-border commuting: both 2023 COMP53 counts match the pinned source response
 PASS  version: web/data/version.json says '0.5.0', VERSION says '0.5.0' (rebuild with: python -m pipeline build version)
 PASS  resources: 687 sites, all inside the map (0 outside)
 PASS  resources: 0 on foreign hexes []
@@ -132,6 +161,12 @@ PASS  source sgu: 2 files, licence: CC0 1.0 (SGU open data)
 PASS  source links: 2 files, licence: CC0 1.0 (Wikidata); CC BY 4.0 (Eurostat)
 PASS  source dsb_shelters: 4 files, licence: NLOD 1.0 (Norwegian Licence for Open Government Data)
 PASS  source camera_uplinks: 7 files, licence: Facts and links only: names, positions and page addresses as
+PASS  source climate_normals: 48 files, licence: CC0 1.0 (NOAA NCEI accession 0253808)
+PASS  source nve_environment: 67 files, licence: NLOD 1.0 (Norwegian Licence for Open Government Data)
+PASS  source commuting: 25 files, licence: NLOD 2.0 / CC BY 4.0
+PASS  source commuting_se: 31 files, licence: CC0 1.0
+PASS  source commuting_dk: 5 files, licence: CC BY 4.0
+PASS  source transport: 8 files, licence: CC BY 4.0
 SKIP  source reconciliation and cache verification not run in 'built' mode
 
-126 pass, 8 note, 0 warn, 1 skipped, 0 fail → PASS (mode: built)
+160 pass, 9 note, 0 warn, 1 skipped, 0 fail → PASS (mode: built)

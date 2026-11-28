@@ -323,7 +323,12 @@ function strokeLines(ctx, vp, lines, width, color, dash = null, smooth = false, 
       ctx.moveTo(r[0], surfaceY ? surfaceY(r[0], r[1]) : r[1]);
       for (let k = 2; k < n; k += 2) {
         const x0 = r[k - 2], y0 = r[k - 1], x1 = r[k], y1 = r[k + 1];
-        const steps = surfaceY ? Math.ceil(Math.hypot(x1 - x0, y1 - y0) / 3) : 1;
+        if (surfaceY && (Math.max(x0, x1) < vp.x0 || Math.min(x0, x1) > vp.x1 ||
+            Math.max(y0, y1) < vp.y0 - 0.2 || Math.min(y0, y1) > vp.y1 + 4)) {
+          ctx.moveTo(x1, surfaceY(x1, y1));
+          continue;
+        }
+        const steps = surfaceY ? Math.ceil(Math.hypot(x1 - x0, y1 - y0) / Math.max(0.03, 3 / vp.s)) : 1;
         for (let j = 1; j <= steps; j++) {
           const x = x0 + (x1 - x0) * j / steps, y = y0 + (y1 - y0) * j / steps;
           ctx.lineTo(x, surfaceY ? surfaceY(x, y) : y);

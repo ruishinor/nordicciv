@@ -33,6 +33,7 @@ export function renderToCanvas(target, cam, w, state, nation, opts = {}) {
   tmp.resize(cssW, cssH);
   tmp.setPitch(cam.pitch);
   tmp.elevationAt = cam.elevationAt;
+  tmp.surfaceRay = cam.surfaceRay;
   tmp.verticalExaggeration = cam.verticalExaggeration;
   tmp.minScale = 1e-4;
   tmp.maxScale = Infinity;

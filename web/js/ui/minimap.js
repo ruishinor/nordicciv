@@ -45,7 +45,7 @@ export class Minimap {
 
   // Called every map frame: repaints only when the view box moved (or rebuild() changed the thumbnail).
   draw() {
-    const v = this.cam.view();
+    const v = this.cam.surfaceView();
     const sig = `${v.x0},${v.y0},${v.x1},${v.y1}`;
     if (sig === this.sig) return;
     this.sig = sig;
@@ -55,6 +55,7 @@ export class Minimap {
     const k = this.k * this.dpr;
     ctx.strokeStyle = "#ffe9a8";
     ctx.lineWidth = 1.5 * this.dpr;
-    ctx.strokeRect(v.x0 * k, v.y0 * k, (v.x1 - v.x0) * k, (v.y1 - v.y0) * k);
+    const width = Math.max(3 * this.dpr, (v.x1 - v.x0) * k), height = Math.max(3 * this.dpr, (v.y1 - v.y0) * k);
+    ctx.strokeRect((v.x0 + v.x1) * k / 2 - width / 2, (v.y0 + v.y1) * k / 2 - height / 2, width, height);
   }
 }

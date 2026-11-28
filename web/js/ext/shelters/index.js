@@ -119,7 +119,7 @@ export function install(app) {
       for (const it of list) {
         if (it.x < vp.x0 - pad || it.x > vp.x1 + pad || it.y < vp.y0 - pad || it.y > vp.y1 + pad) continue;
         // the shield's point sits on the position: draw the symbol centred a little above it
-        const cy = it.y - size * 0.42;
+        const cy = (vp.surfaceY ? vp.surfaceY(it.x, it.y) : it.y) - size * 0.42;
         if (it.kind === "one") drawShelter(ctx, it.x, cy, size, { selected: it.members[0].id === selected });
         else drawShelterGroup(ctx, it.x, cy, size * 1.08, it.n, o);
       }
