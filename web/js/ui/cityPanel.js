@@ -11,7 +11,7 @@ import { mapsLink, municipalityTarget, settlementTarget, wonderTarget, airportTa
 import { muniFeature } from "../render/art/relief.js";
 
 const COUNTRY = { NO: "Norway", SE: "Sweden", DK: "Denmark" };
-const FLAG = { NO: "🇳🇴", SE: "🇸🇪", DK: "🇩🇰" };
+import { flag, sourceRef, sourceLink } from "./placeDetails.js";
 const fin = Number.isFinite;
 export const signed = (g, d = 1) => (fin(g) ? `${g >= 0 ? "+" : "−"}${Math.abs(g * 100).toFixed(d)}%` : "–");
 
@@ -42,17 +42,17 @@ export function yieldTiles(nation, o, rankOf, ranks = o.ranks) {
     const est = y.key === "gold" && (o.yields_estimated || []).includes("gold") || y.key === "gold" && o.municipalities == null && o.gdp_region;
     const partial = isPartial(o, y.key);
     const prefix = v == null ? "" : partial ? "≥" : est ? "≈" : "";
-    const val = v == null ? "–" : prefix + (y.unit === "eur" ? money(v) : compact(v));
+    const val = v == null || (partial && v === 0) ? "–" : prefix + (y.unit === "eur" ? money(v) : compact(v));
     const hi = partial && fin(o.yields_hi?.[y.key]) ? ` (at most ${y.unit === "eur" ? money(o.yields_hi[y.key]) : compact(o.yields_hi[y.key])})` : "";
     const nOf = typeof rankOf === "object" ? rankOf[y.key] : rankOf;
     const rk = ranks === o.ranks ? rankText(o, y.key, rankOf) : (ranks?.[y.key] ? `#${ranks[y.key]} of ${nOf}` : "");
     const tip = `${y.label} = ${y.measure || ""}. ${y.description}${partial ? ` Some small job counts are withheld for privacy. The total is at least the number shown${hi}.` : ""}`;
-    return `<div class="yield-tile" title="${esc(tip)}">
-      <div class="ico" style="color:${esc(y.color)}">${glyph(y, 20)}</div>
-      <div class="val" style="color:${esc(y.color)}">${val}</div>
+    return `<div class="yield-tile">
+      <details class="yield-info"><summary title="${esc(tip)}" aria-label="About ${esc(y.label)}" style="color:${esc(y.color)}">${glyph(y, 20)}</summary><div class="metric-pop">${esc(tip)}</div></details>
       <div class="lbl">${esc(y.key === "gold" ? "Gold" : y.label)}</div>
-      <div class="meas">${esc(y.measure || "")}</div>
-      ${rk ? `<div class="rank" title="Rank among the ${nOf} areas with a value (1 = largest; equal values share a rank)${o.rank_range?.[y.key] ? ". Possible ranks because some job counts are not published" : ""}">${rk}</div>` : ""}</div>`;
+      <div class="val" style="color:${esc(y.color)}">${val}</div>
+      <div class="yield-unit">${v == null || (partial && v === 0) ? "Not published" : y.key === "gold" ? "Output" : "Jobs"}</div>
+      ${rk ? `<div class="rank" title="Rank among ${nOf} ${o.municipalities == null ? "municipalities" : "regions"} in Scandinavia with figures (1 = highest; ties share a rank)${o.rank_range?.[y.key] ? ". Possible ranks because some job counts are not published" : ""}">${rk}</div>` : ""}</div>`;
   }).join("");
 }
 
@@ -110,7 +110,7 @@ const SOURCES = {
   SE: [["Population, area", "SCB TAB628 (31 December 2007–2025)"], ["Age", "SCB TAB5557 (2025)"],
     ["Jobs by industry", "SCB TAB3204 (employed 16–74 by place of work, November 2024)"], ["Income", "SCB TAB4840 (median net income 20+, 2024)"]],
   DK: [["Population, age", "DST FOLK1A (1st quarter 2008–2026)"], ["Area", "DST ARE207"],
-    ["Jobs by industry", "DST RAS501 (employed by place of work, November 2024)"], ["Income", "DST INDKP101 (average disposable income, 2024)"]],
+    ["Jobs by industry", "DST RAS501 (employed by place of work, November 2024)"], ["Income", "DST INDKP107 (average disposable income, 2024)"]],
 };
 
 export function openCityPanel(city, ctx) {
@@ -121,15 +121,20 @@ export function openCityPanel(city, ctx) {
   const regionIdx = w.raw.states.findIndex((s) => s.abbr === city.states?.[0]);
   const regionName = regionIdx >= 0 ? w.raw.states[regionIdx].name : "";
   const count = ctx.cities?.length || 745;
+  const registry = ctx.sources || [];
+  const popTable = {NO:"07459", SE:"TAB628", DK:"FOLK1A"}[city.country];
+  const jobsTable = {NO:"07984", SE:"TAB3204", DK:"RAS501"}[city.country];
+  const popRef = sourceRef(registry, city.country, popTable, "Population");
+  const jobsRef = sourceRef(registry, city.country, jobsTable, "Jobs by industry");
   const t = city.type || {};
   const badge = `<span class="ctype" style="--c:${esc(t.color || "#9aa4b0")}" title="Strongest specialisation: ${esc(t.rule || "")}">${esc(t.label || "Diversified")}</span>`;
   const gy = city.growth_years || [2016, 2026];
   const growth = fin(city.growth)
     ? ` · <span class="growth ${city.growth >= 0 ? "up" : "down"}" title="Population change ${gy.join("–")} on the same territory (national registers)">${city.growth >= 0 ? "▲" : "▼"} ${Math.abs(city.growth * 100).toFixed(1)}% <span class="since">since ${gy[0]}</span></span>`
     : ` · <span class="muted" title="${esc(city.growth_note || "")}">no comparable ${gy[0]} figure <button class="link" data-cptab-go="Society">why?</button></span>`;
-  const head = `<div class="cp-pop">${icon("pop", "👥", { size: 16 })} <b>${int(city.population)}</b> residents <span class="muted">(1 Jan ${nation.year})</span>${growth}</div>
+  const head = `<div class="cp-pop">${icon("pop", "👥", { size: 16 })} <b>${int(city.population)}</b> residents <span class="muted">(1 Jan ${nation.year})</span>${sourceLink(popRef, "Population source")}${growth}${sourceLink(popRef, "Population change source", `Calculated from population figures for ${gy.join(" and ")} on comparable municipal boundaries.`)}</div>
     <div class="cp-pop">${icon("y-production", "🏢", { size: 14 })} <b>${int(city.jobs_total)}</b> jobs located here
-    <span class="muted">(place of work, 2024 · ${fin(city.jobs_per_100) ? Math.round(city.jobs_per_100) : "–"} per 100 residents)</span></div>`;
+    <span class="muted">(place of work, 2024 · ${fin(city.jobs_per_100) ? Math.round(city.jobs_per_100) : "–"} per 100 residents)</span>${sourceLink(jobsRef, "Jobs source")}</div>`;
 
   const cmp = (v, nv, f) => (fin(v) && fin(nv) ? `${COUNTRY[city.country]} ${f(nv)}` : "");
   const incDef = nation.income_definitions?.[city.country] || "";
@@ -154,8 +159,7 @@ export function openCityPanel(city, ctx) {
         ${largest ? `<span class="muted">${compact(largest[1])} jobs · ${pct(largest[1] / city.jobs_total, 0)}</span>` : ""}</div>
       <div><span class="muted small">Strongest relative specialisation</span><br><b>${sp[0] ? esc(sp[0].label) : "none (diversified)"}</b>
         ${sp[0] ? `<span class="muted">×${sp[0].lq.toFixed(2)} · ${sp[0].partial ? "≥" : ""}${compact(sp[0].jobs)} jobs</span>` : ""}</div></div>
-    <p class="muted small">A location quotient (×) compares the industry's share of local jobs with its share in Norway, Sweden and Denmark combined.
-      It measures relative concentration — not output, productivity or importance. Listed from ×${nation.lq_rule?.min_lq} with ≥ ${nation.lq_rule?.min_jobs} jobs.</p>`;
+    <p class="muted small">Industry specialisation (×) compares how common these jobs are locally with Scandinavia as a whole. Shown from ${nation.lq_rule?.min_lq} times the Scandinavian share and at least ${nation.lq_rule?.min_jobs} jobs.</p>`;
   const specs = sp.length
     ? `<div class="spec-list">${sp.map((s) => `<div class="spec"><span>${icon(industryIcon(s.group), DISTRICT_ICON[s.group] || "•", { size: 14 })} ${esc(s.label)}</span>
         <span><b>×${s.lq.toFixed(2)}</b> <span class="muted">${s.partial ? "≥" : ""}${compact(s.jobs)} jobs</span>
@@ -168,11 +172,11 @@ export function openCityPanel(city, ctx) {
   const siteHtml = sites.length
     ? `<div class="site-list">${sites.slice(0, 14).map((s) => `<div class="site${s.maps ? " has-maps" : ""}"><span>${s.t ? glyph(s.t, 13) : s.wonder ? "🏛️" : "•"} ${esc(s.name)}</span><span class="muted">${esc(s.kind)}${s.val ? " · " + esc(s.val) : ""}</span>${s.maps ? mapsLink(s.maps, { cls: "chip sm maps-open", label: "Open in Maps" }) : ""}</div>`).join("")}${sites.length > 14 ? `<p class="muted">+${sites.length - 14} more</p>` : ""}</div>
        <p class="muted small">The Almanac lists the site types and minimum sizes included on the map.</p>`
-    : `<p class="muted">No sites of the types and sizes shown on this map are listed here.</p>`;
+    : `<p class="muted">No mapped resource sites, landmarks or hubs are listed for ${esc(city.name)}.</p>`;
 
   const peers = (city.peers || []).map((id) => ctx.cities?.find((c) => c.id === id)).filter(Boolean);
-  const peerHtml = peers.length ? `<div class="chips">${peers.map((p) => `<button class="chip" data-city="${esc(p.id)}" title="${esc(p.full)}">${FLAG[p.country] || ""} ${esc(p.name)} · ${popShort(p.population)}</button>`).join("")}</div>
-    <p class="muted small">Closest in population size (log scale), any country. The Council's Compare tab finds peers by other criteria.</p>` : "";
+  const peerHtml = peers.length ? `<div class="chips">${peers.map((p) => `<button class="chip" data-city="${esc(p.id)}" title="${esc(p.full)}">${flag(p.country)} ${esc(p.name)} · ${popShort(p.population)}</button>`).join("")}</div>
+    <p class="muted small">Municipalities in Scandinavia with a similar number of residents. <button class="link" data-compare="${esc(city.id)}">Compare by other criteria</button>.</p>` : "";
   const gdpBlock = city.gdp != null
     ? `<div class="stat-row"><span class="sl">${icon("y-gold", "🪙", { size: 14 })}Economic output (estimate)</span><span><b>≈ ${money(city.gdp)}</b><span class="cmp">${city.population ? "≈ " + money(city.gdp / city.population) + " per resident" : ""}</span></span></div>
       <p class="muted small">${esc(city.gdp_region_name || city.gdp_region)}'s published ${city.gdp_year} output (${esc(city.gdp_concept || "")}) shared ${city.gdp_method === "sector"
@@ -198,11 +202,15 @@ export function openCityPanel(city, ctx) {
       ${mapsLink(muniMaps, { id: "municipality" })}
       ${townMaps ? mapsLink(townMaps, { label: townLabel, id: "settlement" }) : ""}</div>` : "";
 
-  const srcRows = (SOURCES[city.country] || []).map(([k, v]) => row(k, "", v)).join("");
+  const srcRows = (SOURCES[city.country] || []).map(([k, v]) => {
+    const table = v.match(/(?:SSB|SCB|DST) (\w+)/)?.[1];
+    const ref = sourceRef(registry, city.country, table, k);
+    return row(esc(k), ref ? `<a href="${esc(ref.url)}" target="_blank" rel="noopener noreferrer">${esc(v)}</a>` : esc(v));
+  }).join("");
   const status = `<ul class="status-list">
-      <li><b>Published figures</b>: population, age, area, jobs by industry (as published by ${city.country === "NO" ? "SSB" : city.country === "SE" ? "SCB" : "DST"})</li>
-      ${(city.yields_partial || []).length ? `<li><b>Lower bound (≥)</b>: ${city.yields_partial.map((k) => esc(nation.yields.find((y) => y.key === k)?.label || k)).join(", ")} — ${int(city.jobs_unallocated || 0)} jobs have no published industry breakdown</li>` : ""}
-      <li><b>Estimate (≈)</b>: economic output (Gold)</li>
+      <li><b>Published figures</b>: Population, age, area, jobs by industry (as published by ${city.country === "NO" ? "SSB" : city.country === "SE" ? "SCB" : "DST"})</li>
+      ${(city.yields_partial || []).length ? `<li><b>Some job figures are incomplete</b>: ${int(city.jobs_unallocated || 0)} jobs have no published industry. The figures for ${city.yields_partial.map((k) => esc(nation.yields.find((y) => y.key === k)?.label || k)).join(", ")} may be higher.</li>` : ""}
+      <li><b>Estimate (≈)</b>: Economic output (Gold)</li>
       ${!fin(city.growth) ? `<li><b>Population change</b>: ${esc(city.growth_note || "No comparable figures")}</li>` : ""}</ul>`;
 
   const extra = extraSections(ctx, city);
@@ -211,15 +219,15 @@ export function openCityPanel(city, ctx) {
     kind: "city",
     stripe: col,
     title: city.name,
-    titleHtml: `${city.capital ? `<span class="cap" title="National capital">★</span> ` : ""}${esc(city.name)} ${badge}`,
-    sub: `${FLAG[city.country] || ""} Municipality in ${esc(regionName)}, ${COUNTRY[city.country]}${city.place && city.place !== city.name ? ` · main settlement ${esc(city.place)}` : ""}
+    titleHtml: `${esc(city.name)} ${badge} <button type="button" class="cp-save-star" data-save-star="${esc(city.id)}" aria-pressed="false" aria-label="Save ${esc(city.name)}" title="Save this place" hidden>☆</button>`,
+    sub: `${flag(city.country)} Municipality in ${esc(regionName)}, ${COUNTRY[city.country]}${city.capital ? " · National capital" : ""}${city.place && city.place !== city.name ? ` · main settlement ${esc(city.place)}` : ""}
       <div class="chips">${regionIdx >= 0 ? `<button class="chip" data-state="${regionIdx}" title="Open ${esc(regionName)}">${esc(regionName)} ›</button>` : ""}
       <button class="chip" data-compare="${esc(city.id)}" title="Compare this municipality with others">Compare ⇄</button></div>`,
     headExtra: head,
     sections: [
       { tab: "Overview", title: "What stands out", html: distinctiveHtml(city, ctx.cities || []) },
-      { tab: "Overview", title: `Yields · what each measures · rank among ${count}`, html: `<div class="yield-grid">${yieldTiles(nation, city, nation.rank_of?.municipalities || count)}</div>
-        <p class="muted small">Yields are game names for real figures: five count jobs at the place of work (2024), Gold is economic output (estimate). They are not production, research output or welfare quality. <a href="#" data-pedia-yields>What each yield measures ›</a></p>` },
+      { tab: "Overview", title: "Yields", html: `<details class="yield-explanation"><summary title="Five categories count local jobs in 2024; Gold is estimated economic output.">About yields</summary><p>Five categories count jobs located here in 2024. Gold is estimated economic output.</p></details><p class="muted small">Rank among municipalities in Scandinavia (1 = highest)</p><div class="yield-grid">${yieldTiles(nation, city, nation.rank_of?.municipalities || count)}</div>
+` },
       { tab: "Overview", title: "Economic profile", html: specSummary },
       { tab: "Overview", title: "Explore from here", html: actions },
       mapsHtml && { tab: "Overview", title: "Maps", html: mapsHtml },
@@ -238,7 +246,7 @@ export function openCityPanel(city, ctx) {
       ...sectionsFor("Sources"),
       ...extra.filter(({ tab }) => !["Overview", "Economy", "Society", "Sources"].includes(tab)),
     ],
-    foot: `Population 1 January ${nation.year}; jobs November/Q4 2024. Banner placed at ${esc(city.place || "the municipality")} (${esc(city.anchor || "")}).`,
+    foot: `Population: 1 January ${nation.year}. Jobs: November/Q4 2024.`,
     onClose: ctx.onClose,
     onPedia: ctx.onPedia,
     wire(panel) {

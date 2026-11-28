@@ -126,7 +126,7 @@ export function showPanel(spec) {
     </div>
     ${tabBar(spec)}
     ${spec.sections.filter(Boolean).map((s) => `<section class="cp-section" ${s.tab ? `data-tab="${esc(s.tab)}" role="tabpanel"` : ""} ${s.tab && s.tab !== activeTab(spec) ? "hidden" : ""}>${s.title ? `<h3>${s.title}</h3>` : ""}${s.html}</section>`).join("")}
-    <div class="cp-foot">${spec.foot || ""} <a href="#" data-pedia>Almanac ›</a></div>`;
+    <div class="cp-foot">${spec.foot || ""} <button type="button" class="link" data-pedia>About yields</button></div>`;
   restoreEl().textContent="‹ "+spec.title;
   restoreEl().setAttribute("aria-label","Expand details for "+spec.title);
   restoreEl().onclick=()=>{collapsed=false;syncPanel(true);};

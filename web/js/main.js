@@ -3,7 +3,7 @@ import { prepareWorld, applyLens, stateIndex } from "./world.js";
 import * as mapRender from "./render/map.js";
 import { drawBanners } from "./render/banners.js";
 import { renderTopbar } from "./ui/topbar.js";
-import { showCellTooltip, showCityTooltip, showHtmlTooltip, hideTooltip } from "./ui/tooltip.js";
+import { showCellTooltip, showCityTooltip, showHtmlTooltip, showResourceTooltip, hideTooltip } from "./ui/tooltip.js";
 import { initLensDock, formatLensValue, lensValueAt } from "./ui/lenses.js";
 import { openCityPanel, closeCityPanel } from "./ui/cityPanel.js";
 import { openStatePanel } from "./ui/statePanel.js";
@@ -680,7 +680,7 @@ async function main() {
   const cityWire = [];
   const stateSections = []; // app.addStateSections(fn): extension sections in the region panel
   const panelCtx = () => ({
-    w, nation, states, cities, extraSections: citySections, extraWire: cityWire, stateSections,
+    w, nation, states, cities, sources: sources || [], extraSections: citySections, extraWire: cityWire, stateSections,
     onClose: () => clearSelection(),
     onPedia: () => pedia.open("Yields"),
     onState: (idx) => selectState(idx, { fly: true }),
@@ -939,7 +939,7 @@ async function main() {
     beforeCopy: () => url.flush(),
     fileName: () => {
       const sel = shareInfo().selection;
-      return `united-states-${state.lens?.id || "terrain"}${sel ? "-" + slug(sel.name) : ""}.png`;
+      return `nordicciv-${state.lens?.id || "terrain"}${sel ? "-" + slug(sel.name) : ""}.png`;
     },
     onToast: toast,
   });
@@ -1101,8 +1101,10 @@ async function main() {
         layerError(lh.layer, "tooltip", err);
       }
     }
+    const resource = city ? null : hitResource(mx, my);
     if (city) showCityTooltip(mx, my, city);
     else if (tip != null && tip !== "") showHtmlTooltip(mx, my, tip);
+    else if (resource) showResourceTooltip(mx, my, w, resource);
     else if (cell >= 0) showCellTooltip(mx, my, w, cell, state.lens, state.showResources, muniUnder(mx, my));
     else hideTooltip();
     if (events.has("hover")) emitHover(cell, city || w.cityByCell.get(cell) || null, hitResource(mx, my), mx, my, lh);

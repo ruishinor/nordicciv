@@ -929,3 +929,30 @@ body.minimap-collapsed #lens-area { left:calc(64px + var(--dock-left, 0px)); }
   body.panel-open .maplayers-mobile { display:none; }
   #map-layers-pop { margin-bottom:52px; max-height: min(60vh, calc(100dvh - 180px)); }
 }
+
+/* U-series: readable labels, compact statistics and predictable lens shortcuts. */
+.country-flag { width: 1.4em; height: 1em; vertical-align: -.08em; display:inline-block; object-fit:contain; }
+.cp-save-star { color: var(--ink); background: transparent; border: 0; font: inherit; cursor: pointer; padding: 0 .3em; }
+.cp-save-star[aria-pressed="true"] { color: var(--gold-bright); }
+.yield-tile { padding: 8px 4px; cursor: default; min-width: 0; }
+.yield-tile .lbl { font-size: 13px; font-weight: 700; letter-spacing: 0; text-transform: none; color: var(--ink); }
+.yield-tile .rank { font-size: 13px; font-weight: 700; color: var(--ink); }
+.yield-unit { font-size: 11px; color: var(--ink-dim); }
+.yield-info { position: relative; }
+.yield-info summary { display: inline-flex; cursor: pointer; justify-content: center; list-style: none; }
+.yield-info summary::-webkit-details-marker { display:none; }
+.metric-pop { margin: 4px 0; font-size: 11px; line-height:1.4; color:var(--ink); overflow-wrap:anywhere; }
+.metric-source { display:inline-block; font-size: 12px; vertical-align: middle; }
+.metric-source summary { cursor:pointer; list-style:none; color:var(--gold-bright); padding: 0 3px; }
+.metric-source summary::-webkit-details-marker { display:none; }
+.metric-source[open] { display:block; }
+.metric-source a { color:var(--ink); text-decoration:underline; }
+.yield-explanation { font-size: 11px; color:var(--ink-dim); margin-bottom:4px; }
+.yield-explanation summary { cursor:pointer; }
+.lens-picker { width: 850px; }
+.lp-body { grid-template-columns: repeat(auto-fit,minmax(min(235px,100%),1fr)); gap: 8px; align-items:start; }
+.lp-tiles { grid-template-columns: 1fr; }
+.lp-tile { padding: 4px 6px; grid-template-columns: 26px minmax(0,1fr) auto; }
+.lp-nm { white-space: normal; overflow: visible; text-overflow: clip; }
+.lp-pin { color: var(--gold-bright); font-weight: bold; }
+@container (max-width:560px) { .lens-quick .lens-btn span { display:none; } }

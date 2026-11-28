@@ -51,7 +51,7 @@ export function lensValueAt(lens, t) {
 }
 
 const TERRAIN = { id: null, icon: "terrain", emoji: "🗺️", name: "Terrain" };
-const RECENT_KEY = "nordicciv.recentLenses";
+const RECENT_KEY = "nordicciv.pinnedLenses";
 const DEFAULT_RECENT = ["density", "growth", "specialisation"];
 const BINS = 40;
 const HOVER_HALF = 0.08; // half-width of the hover band, in ramp units
@@ -59,7 +59,7 @@ const QUANT = 80; // band edges snap to 1/80 of the ramp so tiny mouse moves don
 
 const loadRecent = () => {
   try {
-    const v = JSON.parse(localStorage.getItem(RECENT_KEY) || "null");
+    const v = JSON.parse(localStorage.getItem(RECENT_KEY) ?? localStorage.getItem("nordicciv.recentLenses") ?? "null");
     return Array.isArray(v) ? v.filter((x) => typeof x === "string") : null;
   } catch {
     return null;
@@ -84,27 +84,24 @@ export function initLensDock(opts) {
   let active = null;
   let band = null;
   let recent = (loadRecent() || DEFAULT_RECENT).filter((id) => byId.has(id));
-  for (const l of lenses) if (recent.length < 3 && !recent.includes(l.id)) recent.push(l.id);
-  recent = recent.slice(0, 3);
+  recent = [...new Set(recent)].slice(0, 3);
+  let editingPins = false;
   let restoreFocus = null;
   const histCache = new Map();
 
   // ---- quick row + picker -------------------------------------------------------------------------------------
   // CSS gradient stops: a smooth ramp, or hard-edged blocks for a categorical lens.
-  const rampStops = (l) => (l.format === "category"
-    ? l.ramp.map((c, k, a) => `${esc(c)} ${(k / a.length) * 100}% ${((k + 1) / a.length) * 100}%`).join(",")
-    : l.ramp.map(esc).join(","));
   const isActive = (l) => (l.id ?? null) === (active?.id ?? null);
   const quickBtn = (l) =>
     `<button class="lens-btn ${isActive(l) ? "active" : ""}" data-id="${esc(l.id ?? "")}" aria-pressed="${isActive(l)}"
-      title="${esc(l.name)}${l.id ? " lens" : " (no lens)"}">${glyph(l, 15)}<span>${esc(l.name)}</span></button>`;
+      title="${esc(l.name)}${l.id ? " lens" : " (no lens)"}">${glyph(l, 15)}<span>${esc(l.id === "growth" ? "Population change" : l.name)}</span></button>`;
 
   function renderQuick() {
     const row = [TERRAIN, ...recent.map((id) => byId.get(id)).filter(Boolean)];
     quick.innerHTML = row.map(quickBtn).join("");
     const inRow = !active || recent.includes(active.id);
     moreBtn.classList.toggle("active", !inRow);
-    moreBtn.innerHTML = `${icon("layers", "▤", { size: 15 })}<span>${inRow ? "Lenses" : esc(active.name)}</span><span class="caret" aria-hidden="true">▾</span>`;
+    moreBtn.innerHTML = `${icon("layers", "▤", { size: 15 })}<span>Lenses</span><span class="caret" aria-hidden="true">▾</span>`;
     moreBtn.title = "All lenses (L cycles)";
     moreBtn.hidden = !lenses.length;
   }
@@ -113,14 +110,14 @@ export function initLensDock(opts) {
     const groups = [...(lensFile?.groups || [])];
     const known = new Set(groups.map((g) => g.id));
     if (lenses.some((l) => !known.has(l.group))) groups.push({ id: "__other", name: "Other" });
-    const tile = (l) => `<button class="lp-tile ${isActive(l) ? "active" : ""}" data-id="${esc(l.id ?? "")}" aria-pressed="${isActive(l)}"
+    const tile = (l) => `<button class="lp-tile ${isActive(l) ? "active" : ""}" data-id="${esc(l.id ?? "")}" aria-pressed="${editingPins ? recent.includes(l.id) : isActive(l)}" ${editingPins && !l.id ? "disabled" : ""}
         title="${esc(l.description || l.name)}">
         <span class="lp-ic">${glyph(l, 20)}</span><span class="lp-nm">${esc(l.name)}</span>
-        ${l.ramp ? `<i class="lp-ramp" style="background:linear-gradient(90deg, ${rampStops(l)})"></i>` : `<i class="lp-ramp terrain"></i>`}
+        ${editingPins && l.id ? `<span class="lp-pin" aria-hidden="true">${recent.includes(l.id) ? "✓" : "+"}</span>` : ""}
       </button>`;
     const sec = (g, items) => !items.length ? "" : `<section class="lp-group"><h4>${icon(g.icon || `g-${g.id}`, "", { size: 14 })}${esc(g.name)}</h4>
         <div class="lp-tiles">${items.map(tile).join("")}</div></section>`;
-    picker.innerHTML = `<div class="lp-head"><span>Choose a lens</span><button class="icon-btn lp-close" aria-label="Close lens picker">${icon("close", "✕", { size: 12 })}</button></div>
+    picker.innerHTML = `<div class="lp-head"><span>Map lenses</span><button type="button" class="chip" data-edit-pins aria-pressed="${editingPins}">${editingPins ? `Done (${recent.length}/3)` : "Edit shortcuts"}</button><button class="icon-btn lp-close" aria-label="Close lens picker">${icon("close", "✕", { size: 12 })}</button></div>
       <div class="lp-body">
       ${sec({ id: "base", name: "Base map", icon: "terrain" }, [TERRAIN])}
       ${groups.map((g) => sec(g, lenses.filter((l) => (g.id === "__other" ? !known.has(l.group) : l.group === g.id)))).join("")}
@@ -129,11 +126,7 @@ export function initLensDock(opts) {
 
   function pick(id, fromPicker) {
     const lens = id ? byId.get(id) || null : null;
-    if (lens && fromPicker && !recent.includes(lens.id)) {
-      recent = [lens.id, ...recent].slice(0, 3);
-      saveRecent(recent);
-    }
-    opts.onPick(lens);
+    opts.onPick(lens && lens.id === active?.id ? null : lens);
   }
 
   quick.onclick = (e) => {
@@ -142,8 +135,15 @@ export function initLensDock(opts) {
   };
   picker.onclick = (e) => {
     if (e.target.closest(".lp-close")) return closePicker();
+    if (e.target.closest("[data-edit-pins]")) { editingPins = !editingPins; renderPicker(); picker.querySelector("[data-edit-pins]")?.focus(); return; }
     const b = e.target.closest("button[data-id]");
     if (!b) return;
+    if (editingPins) {
+      const id = b.dataset.id;
+      if (!id || (!recent.includes(id) && recent.length >= 3)) return;
+      recent = recent.includes(id) ? recent.filter(x => x !== id) : [...recent, id];
+      saveRecent(recent); renderQuick(); renderPicker(); picker.querySelector(`[data-id="${CSS.escape(id)}"]`)?.focus(); return;
+    }
     pick(b.dataset.id, true);
     closePicker();
   };
@@ -173,6 +173,7 @@ export function initLensDock(opts) {
   function closePicker(restore = true) {
     if (picker.hidden) return;
     picker.hidden = true;
+    editingPins = false;
     legend.classList.remove("behind");
     moreBtn.setAttribute("aria-expanded", "false");
     if (restore && restoreFocus && document.contains(restoreFocus)) restoreFocus.focus();
@@ -454,9 +455,7 @@ export function initLensDock(opts) {
       showBand();
     },
     remember(id) {
-      if (!byId.has(id) || recent.includes(id)) return;
-      recent = [id, ...recent].slice(0, 3);
-      saveRecent(recent);
+      // Explicitly pinned shortcuts are never replaced by navigation.
       renderQuick();
     },
     openPicker,

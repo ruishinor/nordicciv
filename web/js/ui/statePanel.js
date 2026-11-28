@@ -9,7 +9,7 @@ import { mapsLink, regionTarget } from "../app/maps.js";
 
 const COUNTRY = { NO: "Norway", SE: "Sweden", DK: "Denmark" };
 const KIND = { NO: "County (fylke)", SE: "County (län)", DK: "Region" };
-const FLAG = { NO: "🇳🇴", SE: "🇸🇪", DK: "🇩🇰" };
+import { flag } from "./placeDetails.js";
 const LAND = [["forest", "Forest", "#2f5a3a"], ["crop", "Farmland", "#c9b955"], ["pasture", "Pasture", "#8fb04e"], ["heath", "Fjell heath", "#9c9a6e"],
   ["bare", "Bare rock", "#a8a196"], ["wetland", "Mire & wetland", "#5f8a74"], ["shrub", "Woodland & scrub", "#8f9a58"], ["developed", "Built-up", "#8a8378"],
   ["ice", "Glacier", "#e8eef2"], ["grass", "Grassland", "#a9b35a"]];
@@ -52,12 +52,12 @@ export function openStatePanel(idx, ctx) {
     kind: "state",
     stripe: css(w.stateColor[idx] || [190, 190, 190]),
     title: st.name || geo.name,
-    sub: `${FLAG[cc] || ""} ${KIND[cc] || "Region"} · ${COUNTRY[cc] || ""} · ${int(st.municipalities)} municipalities · ${int(st.land_km2)} km² land`,
+    sub: `${flag(cc)} ${KIND[cc] || "Region"} · ${COUNTRY[cc] || ""} · ${int(st.municipalities)} municipalities · ${int(st.land_km2)} km² land`,
     headExtra: `<div class="cp-pop">${icon("pop", "👥", { size: 16 })} <b>${int(st.population)}</b> residents${growth}</div>
       <div class="cp-pop"><span class="muted">${int(st.jobs_total)} jobs · ${Number.isFinite(st.density) ? st.density.toFixed(1) : "–"} residents/km² · aged 65+ ${pct(st.share_65plus)}</span></div>`,
     sections: [
-      st.yields && { title: `Yields · rank among the ${count} regions`, html: `<div class="yield-grid">${yieldTiles(nation, st, nation.rank_of?.regions || count)}</div>
-        <p class="muted small">Gold is the sum of the municipalities' output estimates: for Swedish län and Danish regions it equals the published regional output; for Norway's 2024 counties split from Viken, Vestfold og Telemark and Troms og Finnmark it is an estimate (≈). ≥ = lower bound.</p>` },
+      st.yields && { title: "Yields", html: `<p class="muted small">Rank among regions in Scandinavia (1 = highest)</p><div class="yield-grid">${yieldTiles(nation, st, nation.rank_of?.regions || count)}</div>
+        <details class="yield-explanation"><summary>About yields</summary><p>Gold shows economic output. Some Norwegian regional figures are estimated. At least (≥) means that some job figures are not published.</p></details>` },
       { title: "Population 2008–2026", html: popChart(st) + popBasis(st) },
       { title: "Land", html: landBar },
       ...extra,
