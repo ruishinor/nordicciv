@@ -60,7 +60,7 @@ KNOWN_PLACES = {  # name: (lon, lat) of the main town, for a placement check (±
     "Tromsø": (18.96, 69.65), "Kiruna": (20.23, 67.86), "Luleå": (22.15, 65.58), "Stavanger": (5.73, 58.97),
 }
 DATA_FILES = ["world", "cities", "states", "nation", "lenses", "sources", "resources", "infrastructure", "wonders",
-              "detail", "munis", "climate", "nve_environment", "commuting"]
+              "detail", "munis", "climate", "nve_environment", "commuting", "commuting_se", "commuting_dk"]
 
 
 class Report:
@@ -611,7 +611,8 @@ def main(argv=None):
     check_uplinks(r, load("uplinks"), cities, world, mode)
     check_climate(r, load("climate"), sources, mode)
     check_nve_environment(r, load("nve_environment"), sources, mode)
-    check_commuting(r, load("commuting"), cities, sources, mode)
+    for country, name in (("NO", "commuting"), ("SE", "commuting_se"), ("DK", "commuting_dk")):
+        check_commuting(r, load(name), cities, sources, mode, country)
     check_version(r, load("version"))
     if res:
         check_resources(r, res, world)
@@ -944,12 +945,15 @@ def check_nve_environment(r, packet, sources, mode):
 
 
 
-def check_commuting(r, packet, cities, sources, mode):
+def check_commuting(r, packet, cities, sources, mode, country="NO"):
     from .sources.commuting import Commuting, MIN_COMMUTERS
+    from .sources.nordic_commuting import NordicCommuting
+    source = Commuting() if country == "NO" else NordicCommuting(country)
+    period = {"NO":"2024 Q4", "SE":"2024 annual register", "DK":"2024 end November"}[country]
     if not packet:
         r.add("FAIL", "commuting: data missing")
         return
-    ids = {c["id"] for c in cities if c["country"] == "NO"}
+    ids = {c["id"] for c in cities if c["country"] == country}
     flows = packet.get("flows", [])
     pairs = set()
     bad = 0
@@ -963,14 +967,14 @@ def check_commuting(r, packet, cities, sources, mode):
         pairs.add((a,b))
     audit = packet.get("audit", {})
     counts = sum(audit.get(k,0) for k in ("published","within_municipality","below_threshold","missing"))
-    r.ok(packet.get("country")=="NO" and packet.get("period")=="2024 Q4" and
+    r.ok(packet.get("country")==country and packet.get("period")==period and
          packet.get("unit")=="employed people" and packet.get("minimum")==MIN_COMMUTERS and
-         packet.get("municipality_count")==len(ids) and len(ids)==357 and
+         packet.get("municipality_count")==len(ids) and len(ids)=={"NO":357,"SE":290,"DK":98}[country] and
          audit.get("published")==len(flows) and counts==len(ids)**2 and len(flows)>0 and not bad,
-         f"commuting: {len(flows)} unique directed qualifying pairs from {counts:,} requested municipality pairs")
+         f"commuting {country}: {len(flows)} unique directed qualifying pairs from {counts:,} requested municipality pairs")
     files = packet.get("source",{}).get("files",[])
-    expected = {f.rel_path:f.url for f in Commuting().files()}
-    catalogue = next((s for s in sources if s["id"]=="commuting"),{})
+    expected = {f.rel_path:f.url for f in source.files()}
+    catalogue = next((s for s in sources if s["id"]==source.id),{})
     r.ok({f["file"]:f["url"] for f in files}==expected and len(files)==len(expected) and
          catalogue.get("file_count")==len(expected) and
          catalogue.get("license")==packet["source"].get("license") and
@@ -978,10 +982,10 @@ def check_commuting(r, packet, cities, sources, mode):
          "commuting: complete pinned request set, hashes and source catalogue")
     if mode!="built":
         try:
-            actual=Commuting().process()
+            actual=source.process()
             def without_dates(p):
                 return {**p,"source":{**p["source"],"files":[{k:v for k,v in f.items() if k!="retrieved"} for f in p["source"]["files"]]}}
-            r.ok(without_dates(actual)==without_dates(packet),"commuting: shipped values equal verified SSB observations")
+            r.ok(without_dates(actual)==without_dates(packet),"commuting: shipped values equal verified national observations")
         except (OSError,ValueError) as error:
             r.add("FAIL",f"commuting: {error}")
 
