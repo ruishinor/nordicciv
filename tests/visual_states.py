@@ -135,7 +135,7 @@ async def main():
         for name, vp, js, extra in STATES:
             if only and name not in only:
                 continue
-            ctx = await b.new_context(viewport=vp, device_scale_factor=1, is_mobile=vp is MOBILE, has_touch=vp is MOBILE)
+            ctx = await b.new_context(viewport=vp, device_scale_factor=2 if vp is MOBILE else 1, is_mobile=vp is MOBILE, has_touch=vp is MOBILE)
             pg = await ctx.new_page()
             if "first-run" not in name:  # the one-time hint would otherwise cover every after-state
                 await pg.add_init_script("try { localStorage.setItem('nc-intro', '1'); } catch (e) {}")

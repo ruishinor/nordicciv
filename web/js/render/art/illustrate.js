@@ -124,7 +124,7 @@ function tile(tx, ty) {
 // Deterministic, seamless patterns. At close zoom the artwork keeps a fixed map scale instead of shrinking
 // as the camera zooms. Repaint the same artwork at a higher raster density for crisp edges on high-DPI screens.
 const PAT = 256;
-const WOOD = 384; // longer repeat period without changing tree size
+const WOOD = 320; // longer repeat period without changing tree size
 const cache = new Map();
 let season = "off";
 const SEASONAL_CLASSES = new Set(["farm", "broadleaf", "conifer"]);
@@ -141,7 +141,7 @@ export const illustrationSeason = () => season;
 export function seasonalPatternKey(key, raster, value = season) {
   return key + ":" + raster + ":" + (SEASONAL_CLASSES.has(key) ? value : "off");
 }
-const PATTERN_BUDGET = 14e6; // at most ~56 MB of pattern canvas pixels, including the larger forest tiles
+const PATTERN_BUDGET = 12e6; // at most ~48 MB of pattern canvas pixels
 let cachedPixels = 0;
 
 /** Logical pattern scale uses CSS pixels so phones and desktops show the same landscape at the same map zoom. */

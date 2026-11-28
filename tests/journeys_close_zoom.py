@@ -36,6 +36,7 @@ async def run(browser, url, ok, errors, out):
             assert before["kmPerPx"] == after["kmPerPx"] == 0.125, (before, after)
             assert after["raster"] > before["raster"], (before, after)
             assert after["cachedPixels"] <= 12000000, after
+            assert after["compositionScale"] == 1, after
             actual = await page.evaluate("() => [__app.cam.x, __app.cam.y]")
             assert all(abs(a - b) < 1e-8 for a, b in zip(actual, centre)), (actual, centre)
             await page.screenshot(path=str(out / f"close-zoom-{'phone' if mobile else 'desktop'}-bergen.png"))
@@ -53,6 +54,19 @@ async def run(browser, url, ok, errors, out):
                     return s && s.at > at && s.classes > 0;
                 }""", arg=after["at"], timeout=30000)
                 await page.screenshot(path=str(out / "close-zoom-desktop-danish-farmland.png"))
+            if mobile:
+                await page.goto(url.split("#")[0].split("?")[0], wait_until="domcontentloaded")
+                await expect(page.locator("#opening")).to_have_count(0, timeout=15000)
+                await page.evaluate("""() => {
+                    const a=__app,c=a.cityById.get('NO-4601');
+                    a.clearSelection(); a.cam.stop(); a.cam.zoomAt(a.cam.w/2,a.cam.h/2,12/a.cam.scale);
+                    a.cam.centerOn(c.x,c.y); a.invalidate();
+                }""")
+                await page.evaluate("async () => {window.__zoomArt = await import('/js/render/art/illustrate.js')}")
+                auto = await (await page.wait_for_function(stats, arg=12, timeout=30000)).json_value()
+                assert 0 < auto["compositionScale"] < 1, auto
+                assert auto["tier"] >= 1 and auto["cachedPixels"] <= 12000000, auto
+                await page.screenshot(path=str(out / "close-zoom-phone-automatic.png"))
             ok(label, True, {"before": before, "after": after, "lens": True})
         except Exception as error:
             ok(label, False, str(error))

@@ -42,10 +42,10 @@ test("seasonal artwork is optional and cache keys distinguish changed covers", (
 import { woodlandPoints, fieldParcels, terrainGrain } from "../web/js/render/art/landscape.js";
 
 test("landscape geometry is deterministic, irregular and periodic", () => {
-  const p=woodlandPoints(384,12.5,2401);
-  assert.deepEqual(p,woodlandPoints(384,12.5,2401));
+  const p=woodlandPoints(320,12.5,2401);
+  assert.deepEqual(p,woodlandPoints(320,12.5,2401));
   assert.ok(p.length>300 && p.length<1200);
-  assert.ok(p.every(([x,y,s])=>x>=0&&x<384&&y>=0&&y<384&&s>0));
+  assert.ok(p.every(([x,y,s])=>x>=0&&x<320&&y>=0&&y<320&&s>0));
   assert.ok(new Set(p.map(a=>Math.round(a[2]*100))).size>40);
   const fields=fieldParcels(512,7177);
   assert.equal(fields.length,90);
