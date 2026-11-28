@@ -20,6 +20,7 @@ export class Camera {
     this.maxScale = 12; // close exploration: 12 CSS pixels per map kilometre
     this.pitch = 0;
     this.elevationAt = null;
+    this.surfaceRay = null;
     this.verticalExaggeration = 1;
     this.zoomTarget = null; // {scale, sx, sy}: eased wheel/keyboard zoom around a screen anchor
     this.flight = null; // {path, x1, y1, s1, t, ms}
@@ -67,6 +68,8 @@ export class Camera {
     let y = (sy - this.h / 2) / this.yScale + this.y;
     if (!this.elevationAt || this.pitch === 0) return [x, y];
     const heightScale = this.verticalExaggeration * Math.tan((this.pitch * Math.PI) / 180) / 1000;
+    const hit = this.surfaceRay?.(x, y, heightScale);
+    if (Number.isFinite(hit)) return [x, hit];
     for (let i = 0; i < 12; i++) {
       const elevationM = this.elevationAt(x, y);
       y = (sy - this.h / 2) / this.yScale + this.y +
@@ -203,6 +206,13 @@ export class Camera {
     // Render bounds describe the projected ground plane, not two unrelated surface hits.
     const hw = this.w / (2 * this.scale), hh = this.h / (2 * this.yScale);
     return { x0: this.x - hw, y0: this.y - hh, x1: this.x + hw, y1: this.y + hh };
+  }
+
+  surfaceView() {
+    if (!this.elevationAt || !this.pitch) return this.view();
+    const corners = [[0, 0], [this.w, 0], [0, this.h], [this.w, this.h]].map(p => this.toWorld(...p));
+    return { x0: Math.min(...corners.map(p => p[0])), x1: Math.max(...corners.map(p => p[0])),
+      y0: Math.min(...corners.map(p => p[1])), y1: Math.max(...corners.map(p => p[1])) };
   }
 }
 

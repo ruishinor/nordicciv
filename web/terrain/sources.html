@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>NordicCiv elevation sources</title>
+<style>body{max-width:760px;margin:40px auto;padding:0 24px;font:17px/1.55 system-ui;color:#24352c;background:#f4f3ec}a{color:#245e72}table{border-collapse:collapse}td,th{padding:8px;border:1px solid #b4bcb5;text-align:left}</style>
+<h1>Elevation in the terrain pilot</h1>
+<p>The close-up view covers Oslo–Lillestrøm, the mountains around Aurland and the low-relief landscape around Herning.
+The rest of the map uses the existing hex elevations. All municipal figures and boundaries keep their existing sources.</p>
+<p>Heights come from <a href="https://copernicus-dem-30m.s3.amazonaws.com/readme.html">Copernicus GLO-30 Public</a>,
+the 2021 distribution of cloud-optimised GeoTIFFs. This is a surface model: Vegetation and buildings can affect the heights.
+It is not a bare-earth lidar survey or a map of individual buildings. Heights refer to EGM2008.</p>
+<table><tr><th>View</th><th>Elevation samples</th></tr><tr><td>Regional terrain</td><td>480 m grid</td></tr>
+<tr><td>Local terrain</td><td>120 m grid</td></tr><tr><td>Close-up terrain</td><td>30 m grid</td></tr></table>
+<p>The source grid is about 30 m. In these areas, latitude spacing is one arc second, about 31 m;
+longitude spacing is 1.5 arc seconds south of 60°N and two arc seconds north of it. Reprojection and interpolation
+put these measurements into NordicCiv’s existing map projection. The output does not add detail below the source resolution.</p>
+<p>The vertical scale is 1×. Shading follows slope and a fixed light from the northwest. Landscape colours follow elevation
+and slope; they are not a new land-cover survey. Existing roads, rivers, coasts and municipal boundaries retain their original
+resolution. Close-up terrain does not add surveyed buildings, trees or infrastructure.</p>
+<h2>Reuse and attribution</h2>
+<p>The <a href="https://documentation.dataspace.copernicus.eu/APIs/SentinelHub/Data/DEM/resources/license/License-COPDEM-30.pdf">Copernicus WorldDEM-30 licence</a>
+allows use, adaptation and redistribution. Anyone redistributing these derived tiles must retain the source notice and liability notice,
+pass the same obligations to subsequent users and avoid suggesting official endorsement. The data licence is separate from NordicCiv’s code licence.</p>
+<p>produced using Copernicus WorldDEM-30 © DLR e.V. 2010-2014 and © Airbus Defence and Space GmbH 2014-2018 provided under COPERNICUS by the European Union and ESA; all rights reserved</p>
+<p>The organisations in charge of the Copernicus programme by law or by delegation do not incur any liability for any use of the Copernicus WorldDEM-30.</p>
+<p><a href="index.json">Tile index and checksums</a> · <a href="provenance.json">Source windows and processing</a> · <a href="../?renderer=webgl">Return to the map</a></p>
+</html>

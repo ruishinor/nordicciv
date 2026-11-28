@@ -1,0 +1,332 @@
+{
+  "source": {
+    "name": "Copernicus GLO-30 Public",
+    "release": "2021 AWS COG distribution",
+    "type": "Surface model including vegetation and buildings",
+    "verticalDatum": "EGM2008",
+    "nominalSpacingM": 30,
+    "license": "https://documentation.dataspace.copernicus.eu/APIs/SentinelHub/Data/DEM/resources/license/License-COPDEM-30.pdf",
+    "attribution": "produced using Copernicus WorldDEM-30 © DLR e.V. 2010-2014 and © Airbus Defence and Space GmbH 2014-2018 provided under COPERNICUS by the European Union and ESA; all rights reserved",
+    "liability": "The organisations in charge of the Copernicus programme by law or by delegation do not incur any liability for any use of the Copernicus WorldDEM-30.",
+    "documentation": "https://copernicus-dem-30m.s3.amazonaws.com/readme.html"
+  },
+  "processing": "Native-resolution HTTP-range windows; bilinear reprojection to the existing Nordic LAEA frame; quarter-metre quantisation; nested grids share samples. No statistical data is rebuilt.",
+  "regions": [
+    {
+      "id": "oslo-lillestrom",
+      "name": "Oslo–Lillestrøm",
+      "bounds": [
+        591.36,
+        1420.8,
+        622.0799999999999,
+        1443.84
+      ],
+      "heightRangeM": [
+        -3.0,
+        536.75
+      ],
+      "center": {
+        "lon": 10.94,
+        "lat": 59.94
+      },
+      "windows": [
+        {
+          "url": "https://copernicus-dem-30m.s3.amazonaws.com/Copernicus_DSM_COG_10_N59_00_E010_00_DEM/Copernicus_DSM_COG_10_N59_00_E010_00_DEM.tif",
+          "etag": "\"03bffdb34c18563257d7d5c95345c4c9\"",
+          "lastModified": "Mon, 09 May 2022 14:36:24 GMT",
+          "rangeProbe": "bytes 0-15/25612714",
+          "nativeShape": [
+            3600,
+            2400
+          ],
+          "nativeSpacingDegrees": [
+            0.00041666666666666664,
+            0.0002777777777777778
+          ],
+          "crs": "EPSG:4326",
+          "transform": [
+            0.00041666666666666664,
+            0.0,
+            9.999791666666667,
+            0.0,
+            -0.0002777777777777778,
+            60.00013888888889
+          ],
+          "window": [
+            1461,
+            0,
+            939,
+            589
+          ],
+          "cropFile": "Copernicus_DSM_COG_10_N59_00_E010_00_DEM-d3bd719088d5f1b0.npz",
+          "cropSha256": "2e368cac26f86d74194da238ebe964a0939212f59064daa0c5e677caf5fb2d25",
+          "cropBytes": 1644370
+        },
+        {
+          "url": "https://copernicus-dem-30m.s3.amazonaws.com/Copernicus_DSM_COG_10_N59_00_E011_00_DEM/Copernicus_DSM_COG_10_N59_00_E011_00_DEM.tif",
+          "etag": "\"37de2ce9b7b43f65ab1a10d5346597cb\"",
+          "lastModified": "Mon, 09 May 2022 14:36:24 GMT",
+          "rangeProbe": "bytes 0-15/30078863",
+          "nativeShape": [
+            3600,
+            2400
+          ],
+          "nativeSpacingDegrees": [
+            0.00041666666666666664,
+            0.0002777777777777778
+          ],
+          "crs": "EPSG:4326",
+          "transform": [
+            0.00041666666666666664,
+            0.0,
+            10.999791666666667,
+            0.0,
+            -0.0002777777777777778,
+            60.00013888888889
+          ],
+          "window": [
+            0,
+            0,
+            473,
+            546
+          ],
+          "cropFile": "Copernicus_DSM_COG_10_N59_00_E011_00_DEM-ea7d8c218780c36c.npz",
+          "cropSha256": "bd7b3cb36fcf8496b8c690011c12c861ad753d12d3ac6ee2b92aaddcfc1b93b8",
+          "cropBytes": 736368
+        },
+        {
+          "url": "https://copernicus-dem-30m.s3.amazonaws.com/Copernicus_DSM_COG_10_N60_00_E010_00_DEM/Copernicus_DSM_COG_10_N60_00_E010_00_DEM.tif",
+          "etag": "\"837f97962a6f517a8f399ecb8b526990\"",
+          "lastModified": "Mon, 09 May 2022 14:37:16 GMT",
+          "rangeProbe": "bytes 0-15/21547276",
+          "nativeShape": [
+            3600,
+            1800
+          ],
+          "nativeSpacingDegrees": [
+            0.0005555555555555556,
+            0.0002777777777777778
+          ],
+          "crs": "EPSG:4326",
+          "transform": [
+            0.0005555555555555556,
+            0.0,
+            9.999722222222223,
+            0.0,
+            -0.0002777777777777778,
+            61.00013888888889
+          ],
+          "window": [
+            1083,
+            3363,
+            717,
+            237
+          ],
+          "cropFile": "Copernicus_DSM_COG_10_N60_00_E010_00_DEM-6cbc3868bdcfca2a.npz",
+          "cropSha256": "3ba0166be0fc2907e229260bf243b5fc7b7f425bf50d46149e340dc9dade0b2e",
+          "cropBytes": 581668
+        },
+        {
+          "url": "https://copernicus-dem-30m.s3.amazonaws.com/Copernicus_DSM_COG_10_N60_00_E011_00_DEM/Copernicus_DSM_COG_10_N60_00_E011_00_DEM.tif",
+          "etag": "\"330a3cdbdf877b51af8928508bf6de3d\"",
+          "lastModified": "Mon, 09 May 2022 14:37:16 GMT",
+          "rangeProbe": "bytes 0-15/22251500",
+          "nativeShape": [
+            3600,
+            1800
+          ],
+          "nativeSpacingDegrees": [
+            0.0005555555555555556,
+            0.0002777777777777778
+          ],
+          "crs": "EPSG:4326",
+          "transform": [
+            0.0005555555555555556,
+            0.0,
+            10.999722222222223,
+            0.0,
+            -0.0002777777777777778,
+            61.00013888888889
+          ],
+          "window": [
+            0,
+            3344,
+            325,
+            256
+          ],
+          "cropFile": "Copernicus_DSM_COG_10_N60_00_E011_00_DEM-b8ee12ecdd555a2c.npz",
+          "cropSha256": "39533b7ccc0e6f56b99ac81f02a4820f82356a3de4fd53dc2b84905103f0b2c7",
+          "cropBytes": 285449
+        }
+      ]
+    },
+    {
+      "id": "aurland",
+      "name": "Aurland mountains",
+      "bounds": [
+        407.03999999999996,
+        1297.9199999999998,
+        422.4,
+        1313.28
+      ],
+      "heightRangeM": [
+        -2.75,
+        1806.75
+      ],
+      "center": {
+        "lon": 7.236,
+        "lat": 60.909
+      },
+      "windows": [
+        {
+          "url": "https://copernicus-dem-30m.s3.amazonaws.com/Copernicus_DSM_COG_10_N60_00_E007_00_DEM/Copernicus_DSM_COG_10_N60_00_E007_00_DEM.tif",
+          "etag": "\"dd5bf03a14a83520b4b75c5221a483f7\"",
+          "lastModified": "Mon, 09 May 2022 14:37:15 GMT",
+          "rangeProbe": "bytes 0-15/20354786",
+          "nativeShape": [
+            3600,
+            1800
+          ],
+          "nativeSpacingDegrees": [
+            0.0005555555555555556,
+            0.0002777777777777778
+          ],
+          "crs": "EPSG:4326",
+          "transform": [
+            0.0005555555555555556,
+            0.0,
+            6.999722222222222,
+            0.0,
+            -0.0002777777777777778,
+            61.00013888888889
+          ],
+          "window": [
+            87,
+            0,
+            609,
+            552
+          ],
+          "cropFile": "Copernicus_DSM_COG_10_N60_00_E007_00_DEM-cf41e8dfa1d13a4b.npz",
+          "cropSha256": "5deed40ea767c887d1a68f06727203654ba838eeba741012de31fd1ae75a0beb",
+          "cropBytes": 1062288
+        },
+        {
+          "url": "https://copernicus-dem-30m.s3.amazonaws.com/Copernicus_DSM_COG_10_N61_00_E007_00_DEM/Copernicus_DSM_COG_10_N61_00_E007_00_DEM.tif",
+          "etag": "\"5778a72027fc25daa8dcf7aa28f22724\"",
+          "lastModified": "Mon, 09 May 2022 14:38:08 GMT",
+          "rangeProbe": "bytes 0-15/20970634",
+          "nativeShape": [
+            3600,
+            1800
+          ],
+          "nativeSpacingDegrees": [
+            0.0005555555555555556,
+            0.0002777777777777778
+          ],
+          "crs": "EPSG:4326",
+          "transform": [
+            0.0005555555555555556,
+            0.0,
+            6.999722222222222,
+            0.0,
+            -0.0002777777777777778,
+            62.00013888888889
+          ],
+          "window": [
+            303,
+            3560,
+            334,
+            40
+          ],
+          "cropFile": "Copernicus_DSM_COG_10_N61_00_E007_00_DEM-5e7820e3666bf91f.npz",
+          "cropSha256": "5bc10f10060b2699c719d37152dd25da54f2a3ddfd45442fee4000a9dd59d1f1",
+          "cropBytes": 44240
+        }
+      ]
+    },
+    {
+      "id": "herning",
+      "name": "Herning",
+      "bounds": [
+        453.12,
+        1835.52,
+        468.47999999999996,
+        1850.8799999999999
+      ],
+      "heightRangeM": [
+        27.5,
+        86.0
+      ],
+      "center": {
+        "lon": 8.973,
+        "lat": 56.139
+      },
+      "windows": [
+        {
+          "url": "https://copernicus-dem-30m.s3.amazonaws.com/Copernicus_DSM_COG_10_N56_00_E008_00_DEM/Copernicus_DSM_COG_10_N56_00_E008_00_DEM.tif",
+          "etag": "\"4a60e5e6ad5add0cace8a6fbb39f8d82\"",
+          "lastModified": "Mon, 09 May 2022 14:34:00 GMT",
+          "rangeProbe": "bytes 0-15/23600714",
+          "nativeShape": [
+            3600,
+            2400
+          ],
+          "nativeSpacingDegrees": [
+            0.00041666666666666664,
+            0.0002777777777777778
+          ],
+          "crs": "EPSG:4326",
+          "transform": [
+            0.00041666666666666664,
+            0.0,
+            7.999791666666667,
+            0.0,
+            -0.0002777777777777778,
+            57.00013888888889
+          ],
+          "window": [
+            1972,
+            2709,
+            428,
+            565
+          ],
+          "cropFile": "Copernicus_DSM_COG_10_N56_00_E008_00_DEM-8db615c94079387d.npz",
+          "cropSha256": "f0167e1dfe2125b065f790433a7e4661ea15081b94e18a7509d6eb2ff219934b",
+          "cropBytes": 807165
+        },
+        {
+          "url": "https://copernicus-dem-30m.s3.amazonaws.com/Copernicus_DSM_COG_10_N56_00_E009_00_DEM/Copernicus_DSM_COG_10_N56_00_E009_00_DEM.tif",
+          "etag": "\"264777b9f0c3f6b804e6e049b046b7d3\"",
+          "lastModified": "Mon, 09 May 2022 14:34:00 GMT",
+          "rangeProbe": "bytes 0-15/30899685",
+          "nativeShape": [
+            3600,
+            2400
+          ],
+          "nativeSpacingDegrees": [
+            0.00041666666666666664,
+            0.0002777777777777778
+          ],
+          "crs": "EPSG:4326",
+          "transform": [
+            0.00041666666666666664,
+            0.0,
+            8.999791666666667,
+            0.0,
+            -0.0002777777777777778,
+            57.00013888888889
+          ],
+          "window": [
+            0,
+            2694,
+            261,
+            552
+          ],
+          "cropFile": "Copernicus_DSM_COG_10_N56_00_E009_00_DEM-0881d20861ac9db9.npz",
+          "cropSha256": "e9264fa00feb6f1385a34eb6942c5b0c45cb96b4001d50321d6594910547c045",
+          "cropBytes": 470404
+        }
+      ]
+    }
+  ]
+}

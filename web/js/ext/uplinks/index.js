@@ -127,8 +127,9 @@ export function install(app) {
       ctx.globalAlpha = o.lens ? 0.78 : 1;
       for (const it of list) {
         if (it.x < vp.x0 - pad || it.x > vp.x1 + pad || it.y < vp.y0 - pad || it.y > vp.y1 + pad) continue;
-        if (it.kind === "one") drawUplink(ctx, it.x, it.y, size, { selected: it.members[0].id === selected });
-        else drawUplinkGroup(ctx, it.x, it.y, size * 1.06, it.n, o, { selected: !!selected && it.members.some((c) => c.id === selected) });
+        const y = vp.surfaceY ? vp.surfaceY(it.x, it.y) : it.y;
+        if (it.kind === "one") drawUplink(ctx, it.x, y, size, { selected: it.members[0].id === selected });
+        else drawUplinkGroup(ctx, it.x, y, size * 1.06, it.n, o, { selected: !!selected && it.members.some((c) => c.id === selected) });
       }
       ctx.globalAlpha = 1;
     },

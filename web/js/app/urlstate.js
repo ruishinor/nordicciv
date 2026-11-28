@@ -17,7 +17,7 @@ export function formatHash(o) {
   if (o.lens) parts.push(`lens=${encodeURIComponent(o.lens)}`);
   if (o.city) parts.push(`city=${encodeURIComponent(o.city)}`);
   if (o.state) parts.push(`state=${encodeURIComponent(o.state)}`);
-  if (o.at) parts.push(`at=${Math.round(o.at[0])},${Math.round(o.at[1])},${(+o.at[2]).toFixed(2).replace(/\.?0+$/, "") || "0"}`);
+  if (o.at) parts.push(`at=${+o.at[0].toFixed(4)},${+o.at[1].toFixed(4)},${(+o.at[2]).toFixed(4).replace(/\.?0+$/, "") || "0"}`);
   return parts.length ? "#" + parts.join("&") : "";
 }
 

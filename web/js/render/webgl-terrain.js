@@ -1,35 +1,45 @@
-// Optional WebGL terrain surface. The source remains one elevation value per map hex.
+// Optional WebGL surface: Existing hex elevations plus bounded Copernicus elevation tiles.
+import { ElevationTiles } from "./elevation-tiles.js";
+import { buildSurfaceMesh, surfaceHeight, intersectSurface } from "./terrain-surface.js";
 export const TERRAIN_LAYER_TYPES = Object.freeze([
   "elevation", "vegetation", "buildings", "agriculture", "infrastructure",
 ]);
-export const VERTICAL_EXAGGERATION = 2.5;
+export const VERTICAL_EXAGGERATION = 1;
 
 const VERTEX_SHADER = `#version 300 es
 in vec3 a_position;
 in vec3 a_color;
 in float a_shade;
+in float a_coverage;
+uniform vec2 u_origin;
 uniform vec4 u_view; // x0, y0, css width, css height
 uniform vec3 u_camera; // horizontal scale, vertical scale, vertical exaggeration
 uniform vec2 u_pitch; // cosine, sine
 out vec3 v_color;
 out float v_shade;
+out float v_coverage;
 void main() {
-  float x = (a_position.x - u_view.x) * u_camera.x;
-  float y = (a_position.y - u_view.y) * u_camera.y - a_position.z * u_camera.x * u_camera.z * u_pitch.y;
-  float depth = (a_position.y - u_view.y) * u_pitch.y - a_position.z * u_camera.z * u_pitch.x;
-  float depthRange = u_view.w / u_camera.y;
-  gl_Position = vec4(2.0 * x / u_view.z - 1.0, 1.0 - 2.0 * y / u_view.w, 2.0 * depth / depthRange - 1.0, 1.0);
+  vec2 p = a_position.xy + u_origin;
+  float x = (p.x - u_view.x) * u_camera.x;
+  float y = (p.y - u_view.y) * u_camera.y - a_position.z * u_camera.x * u_camera.z * u_pitch.y;
+  // Camera looks north and down. A higher/southerly surface is nearer, including at 45 degrees.
+  float depth = -(p.y - u_view.y) * u_pitch.y - a_position.z * u_camera.z * u_pitch.x;
+  float depthRange = u_view.w / u_camera.y + 20.0;
+  gl_Position = vec4(2.0 * x / u_view.z - 1.0, 1.0 - 2.0 * y / u_view.w, depth / depthRange, 1.0);
   v_color = a_color;
   v_shade = a_shade;
+  v_coverage = a_coverage;
 }`;
 
 const FRAGMENT_SHADER = `#version 300 es
 precision mediump float;
 in vec3 v_color;
 in float v_shade;
+in float v_coverage;
+uniform float u_opacity;
 out vec4 out_color;
 void main() {
-  out_color = vec4(v_color * v_shade, 0.38);
+  out_color = vec4(v_color * v_shade, u_opacity * v_coverage);
 }`;
 
 function compileShader(gl, type, source) {
@@ -177,7 +187,8 @@ export function buildTerrainMesh(world) {
 }
 
 export class WebGLTerrainRenderer {
-  constructor(world, { onUnavailable = null } = {}) {
+  constructor(world, { onUnavailable = null, onChange = null } = {}) {
+    this.world = world;
     this.canvas = document.createElement("canvas");
     this.available = false;
     this.error = null;
@@ -201,6 +212,8 @@ export class WebGLTerrainRenderer {
       return;
     }
     this.gl = gl;
+    const info = gl.getExtension("WEBGL_debug_renderer_info");
+    this.device = info ? gl.getParameter(info.UNMASKED_RENDERER_WEBGL) : gl.getParameter(gl.RENDERER);
     try {
       this.timerQueryExtension = gl.getExtension("EXT_disjoint_timer_query_webgl2");
       this.mesh = buildTerrainMesh(world);
@@ -227,8 +240,15 @@ export class WebGLTerrainRenderer {
         view: gl.getUniformLocation(this.program, "u_view"),
         camera: gl.getUniformLocation(this.program, "u_camera"),
         pitch: gl.getUniformLocation(this.program, "u_pitch"),
+        origin: gl.getUniformLocation(this.program, "u_origin"),
+        opacity: gl.getUniformLocation(this.program, "u_opacity"),
+        coverage: gl.getAttribLocation(this.program, "a_coverage"),
       };
+      this.detailBuffers = Object.fromEntries(["position", "color", "shade", "coverage", "index"].map(k => [k, gl.createBuffer()]));
+      if (Object.values(this.detailBuffers).some(b => !b)) throw new Error("Could not create terrain detail buffers");
       this.available = true;
+      this.tiles = new ElevationTiles(world.raw.projection, onChange);
+      void this.tiles.init();
       this.canvas.addEventListener("webglcontextlost", (event) => {
         event.preventDefault();
         this.disable(new Error("WebGL context was lost"));
@@ -241,7 +261,49 @@ export class WebGLTerrainRenderer {
   disable(error) {
     this.available = false;
     this.error = error;
+    this.tiles?.dispose();
+    if (this.gl) {
+      for (const buffer of [this.positionBuffer, this.colorBuffer, this.shadeBuffer, this.indexBuffer, ...Object.values(this.detailBuffers || {})]) {
+        if (buffer) this.gl.deleteBuffer(buffer);
+      }
+      if (this.program) this.gl.deleteProgram(this.program);
+      if (this.pendingGpuQuery) this.gl.deleteQuery(this.pendingGpuQuery);
+    }
+    this.detailMesh = null;
     this.onUnavailable?.(error);
+  }
+
+  elevationAt(x, y) {
+    return surfaceHeight(this.detailMesh, x, y) ?? terrainElevationAt(this.world, x, y);
+  }
+
+  raycast(x, groundY, heightScale) {
+    return intersectSurface(this.detailMesh, x, groundY, heightScale);
+  }
+
+  covers(vp, pitch = 0) {
+    if (vp.s < 8 || !this.tiles?.cache.size) return false;
+    const pad = 4 * Math.tan(pitch * Math.PI / 180);
+    return this.tiles.index.regions.some(({bounds: b}) =>
+      vp.x0 >= b[0] + 0.96 && vp.y0 - 0.2 >= b[1] + 0.96 && vp.x1 <= b[2] - 0.96 && vp.y1 + pad <= b[3] - 0.96);
+  }
+
+  prepareDetail(vp, pitch) {
+    this.tiles.update(vp, pitch);
+    const signature = `${vp.x0},${vp.y0},${vp.x1},${vp.y1},${vp.s},${pitch},${this.tiles.revision}`;
+    if (signature === this.detailSignature) return;
+    this.detailSignature = signature;
+    this.surfaceRevision = (this.surfaceRevision || 0) + 1;
+    const start = performance.now();
+    this.detailMesh = buildSurfaceMesh(this.tiles, (x, y) => terrainElevationAt(this.world, x, y), vp, pitch, VERTICAL_EXAGGERATION);
+    this.meshBuildMs = performance.now() - start;
+    if (!this.detailMesh) return;
+    const gl = this.gl;
+    for (const [name, array] of [["position", this.detailMesh.positions], ["color", this.detailMesh.colors],
+      ["shade", this.detailMesh.shades], ["coverage", this.detailMesh.coverage], ["index", this.detailMesh.indices]]) {
+      const target = name === "index" ? gl.ELEMENT_ARRAY_BUFFER : gl.ARRAY_BUFFER;
+      gl.bindBuffer(target, this.detailBuffers[name]); gl.bufferData(target, array, gl.DYNAMIC_DRAW);
+    }
   }
 
   collectGpuTiming() {
@@ -280,6 +342,7 @@ export class WebGLTerrainRenderer {
       this.canvas.height = height;
     }
     try {
+      this.prepareDetail(vp, pitch);
       this.collectGpuTiming();
       const gpuQuery = this.timerQueryExtension && !this.pendingGpuQuery ? gl.createQuery() : null;
       const t0 = performance.now();
@@ -297,6 +360,10 @@ export class WebGLTerrainRenderer {
       gl.enableVertexAttribArray(this.locations.shade);
       gl.vertexAttribPointer(this.locations.shade, 1, gl.FLOAT, false, 0, 0);
       gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.indexBuffer);
+      gl.disableVertexAttribArray(this.locations.coverage);
+      gl.vertexAttrib1f(this.locations.coverage, 1);
+      gl.uniform2f(this.locations.origin, 0, 0);
+      gl.uniform1f(this.locations.opacity, 0.38);
       const radians = (pitch * Math.PI) / 180;
       gl.uniform4f(this.locations.view, vp.x0, vp.y0, vp.cssW, vp.cssH);
       gl.uniform3f(this.locations.camera, vp.s, vp.yScale ?? vp.s, VERTICAL_EXAGGERATION);
@@ -305,7 +372,23 @@ export class WebGLTerrainRenderer {
       gl.depthFunc(gl.LEQUAL);
       if (gpuQuery) gl.beginQuery(this.timerQueryExtension.TIME_ELAPSED_EXT, gpuQuery);
       try {
-        gl.drawElements(gl.TRIANGLES, this.mesh.indices.length, gl.UNSIGNED_INT, 0);
+        if (!this.detailMesh || !this.covers(vp, pitch)) gl.drawElements(gl.TRIANGLES, this.mesh.indices.length, gl.UNSIGNED_INT, 0);
+        if (this.detailMesh) {
+          // A single regular grid shares every edge. Clear coarse depth so an inaccurate hex height cannot hide it.
+          gl.clear(gl.DEPTH_BUFFER_BIT);
+          for (const [name, size, type, normalized] of [["position", 3, gl.FLOAT, false], ["color", 3, gl.UNSIGNED_BYTE, true],
+            ["shade", 1, gl.FLOAT, false], ["coverage", 1, gl.FLOAT, false]]) {
+            gl.bindBuffer(gl.ARRAY_BUFFER, this.detailBuffers[name]);
+            gl.enableVertexAttribArray(this.locations[name]);
+            gl.vertexAttribPointer(this.locations[name], size, type, normalized, 0, 0);
+          }
+          gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.detailBuffers.index);
+          gl.uniform2f(this.locations.origin, this.detailMesh.x0, this.detailMesh.y0);
+          gl.uniform1f(this.locations.opacity, 1);
+          gl.enable(gl.BLEND); gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+          gl.drawElements(gl.TRIANGLES, this.detailMesh.indices.length, gl.UNSIGNED_INT, 0);
+          gl.disable(gl.BLEND);
+        }
         const frame = { world, view: vp, pitch, scale: vp.s, verticalExaggeration: VERTICAL_EXAGGERATION,
           project: (x, y, elevationM = 0) => projectTerrainPoint(vp, x, y, elevationM, pitch) };
         for (const [id, layer] of this.layers) {
@@ -349,6 +432,7 @@ export class WebGLTerrainRenderer {
     };
     return {
       available: this.available, error: this.error?.message || null,
+      device: this.device ?? null,
       hexRadiusKm: this.mesh?.hexRadiusKm ?? null, verticalExaggeration: VERTICAL_EXAGGERATION, cells: this.mesh?.cells ?? 0,
       triangles: this.mesh?.triangles ?? 0, uploadMs: +this.uploadMs.toFixed(2),
       cpuSubmissionMedianMs: median(this.submissionMs),
@@ -358,6 +442,12 @@ export class WebGLTerrainRenderer {
       gpuTimingSupported: !!this.timerQueryExtension,
       gpuMedianMs: median(this.gpuMs),
       gpuSamples: this.gpuMs.length,
+      tiles: this.tiles?.stats() ?? null,
+      detailVertices: this.detailMesh?.vertices ?? 0,
+      detailTriangles: this.detailMesh?.triangles ?? 0,
+      detailSpacingM: this.detailMesh ? this.detailMesh.step * 1000 : null,
+      meshBuildMs: this.meshBuildMs ?? null,
+      detailBytes: this.detailMesh ? ["positions", "colors", "shades", "coverage", "indices", "heights"].reduce((n, k) => n + this.detailMesh[k].byteLength, 0) : 0,
     };
   }
 }

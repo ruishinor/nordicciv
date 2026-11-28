@@ -1,0 +1,34 @@
+name: Terrain pilot visual and performance comparison
+on:
+  workflow_dispatch:
+  push:
+    branches: [feature/d01-d02-terrain-pilot]
+permissions:
+  contents: read
+jobs:
+  compare:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 0}
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - run: pip install -r requirements.txt
+      - run: python -m playwright install --with-deps chromium
+      - name: Capture fixed geographical cameras
+        run: |
+          set -e
+          git worktree add --detach "$RUNNER_TEMP/nc-terrain-baseline" 2488c94caf899d71e625c1329ed0a111954bf5e5
+          mkdir -p tests/results/terrain-review
+          git rev-parse HEAD > tests/results/terrain-review/revision.txt
+          python -m http.server 8765 --directory web > /tmp/nc-terrain-server.log 2>&1 &
+          python -m http.server 8766 --directory "$RUNNER_TEMP/nc-terrain-baseline/web" > /tmp/nc-terrain-baseline.log 2>&1 &
+          sleep 2
+          python tests/terrain_review.py http://127.0.0.1:8766 tests/results/terrain-review/before --baseline
+          python tests/terrain_review.py http://127.0.0.1:8765 tests/results/terrain-review/after
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: terrain-pilot-comparison
+          path: tests/results/terrain-review/

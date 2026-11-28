@@ -4,7 +4,7 @@ import test from "node:test";
 import { Camera } from "../web/js/camera.js";
 import { makeGrid } from "../web/js/hex.js";
 import {
-  buildTerrainMesh, projectTerrainPoint, TERRAIN_LAYER_TYPES, terrainElevationAt, WebGLTerrainRenderer,
+  buildTerrainMesh, projectTerrainPoint, TERRAIN_LAYER_TYPES, terrainElevationAt, WebGLTerrainRenderer, VERTICAL_EXAGGERATION,
 } from "../web/js/render/webgl-terrain.js";
 
 function smallWorld() {
@@ -100,13 +100,13 @@ test("pitched terrain projection and hit testing stay aligned across scales, hei
   const world = smallWorld();
   const cam = new Camera(1000, 800);
   cam.resize(800, 600);
-  cam.maxScale = 48;
+  cam.maxScale = 720;
   cam.minScale = 0.1;
-  cam.verticalExaggeration = 2.5;
+  cam.verticalExaggeration = VERTICAL_EXAGGERATION;
   cam.elevationAt = (x, y) => terrainElevationAt(world, x, y);
   const cells = [0, 1, 3, 4, 5];
 
-  for (const scale of [0.5, 4, 12, 28, 48]) {
+  for (const scale of [0.5, 4, 12, 28, 48, 160, 720]) {
     for (const pitch of [0, 14, 30, 45]) {
       cam.scale = scale;
       cam.setPitch(pitch);

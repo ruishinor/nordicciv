@@ -70,12 +70,13 @@ export function install(app) {
         if (x < vp.x0 - radius || x > vp.x1 + radius || y < vp.y0 - radius || y > vp.y1 + radius) continue;
         ctx.fillStyle = stations.some((s) => s.id === selected) ? "#c4772e" : "#295d5a";
         ctx.beginPath();
-        ctx.arc(x, y, radius, 0, 2 * Math.PI);
+        const screenY = vp.surfaceY ? vp.surfaceY(x, y) : y;
+        ctx.arc(x, screenY, radius, 0, 2 * Math.PI);
         ctx.fill();
         ctx.stroke();
         if (stations.length > 1) {
           ctx.fillStyle = "#f5edda";
-          ctx.fillRect(x - 2 / view.s, y - 0.5 / view.s, 4 / view.s, 1 / view.s);
+          ctx.fillRect(x - 2 / view.s, screenY - 0.5 / view.s, 4 / view.s, 1 / view.s);
         }
       }
     },
