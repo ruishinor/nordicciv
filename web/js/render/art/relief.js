@@ -300,28 +300,35 @@ export const fallbackHexes = () => {
 };
 
 /** Stroke border lines of one kind ("country" | "region" | "municipality") inside the viewport. */
-export function drawBorderLines(ctx, vp, kind, { width, color, dash = null }) {
+export function drawBorderLines(ctx, vp, kind, { width, color, dash = null, surfaceY = null }) {
   const L = state?.borders?.[kind];
   if (!L) return;
-  strokeLines(ctx, vp, L, width, color, dash);
+  strokeLines(ctx, vp, L, width, color, dash, false, surfaceY);
 }
 
 /** Stroke the shore lines inside the viewport (world units). */
-export function drawCoast(ctx, vp, { width, color }) {
+export function drawCoast(ctx, vp, { width, color, surfaceY = null }) {
   if (!state?.coast) return;
-  strokeLines(ctx, vp, state.coast, width, color, null, true);
+  strokeLines(ctx, vp, state.coast, width, color, null, true, surfaceY);
 }
 
 // smooth = curves through the midpoints of the traced segments (the shore traced from a 0.5 km raster would otherwise
 // show its vertices as corners at close zoom)
-function strokeLines(ctx, vp, lines, width, color, dash = null, smooth = false) {
+function strokeLines(ctx, vp, lines, width, color, dash = null, smooth = false, surfaceY = null) {
   ctx.beginPath();
   for (const { r, b } of lines) {
     if (b[2] < vp.x0 || b[0] > vp.x1 || b[3] < vp.y0 || b[1] > vp.y1) continue;
     const n = r.length;
-    if (!smooth || n < 6) {
-      ctx.moveTo(r[0], r[1]);
-      for (let k = 2; k < n; k += 2) ctx.lineTo(r[k], r[k + 1]);
+    if (!smooth || n < 6 || surfaceY) {
+      ctx.moveTo(r[0], surfaceY ? surfaceY(r[0], r[1]) : r[1]);
+      for (let k = 2; k < n; k += 2) {
+        const x0 = r[k - 2], y0 = r[k - 1], x1 = r[k], y1 = r[k + 1];
+        const steps = surfaceY ? Math.ceil(Math.hypot(x1 - x0, y1 - y0) / 3) : 1;
+        for (let j = 1; j <= steps; j++) {
+          const x = x0 + (x1 - x0) * j / steps, y = y0 + (y1 - y0) * j / steps;
+          ctx.lineTo(x, surfaceY ? surfaceY(x, y) : y);
+        }
+      }
       continue;
     }
     const closed = r[0] === r[n - 2] && r[1] === r[n - 1];

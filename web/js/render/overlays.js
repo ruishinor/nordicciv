@@ -73,6 +73,7 @@ export function drawHighlight(ctx, cam, w, state, opts = {}) {
   const h = state.highlight;
   if (!h) return;
   const s = cam.scale;
+  const surfaceY = !state.lens && cam.pitch > 0 && cam.elevationAt ? (x, y) => cam.toSurfaceY(x, y) : null;
   const color = h.color || DEFAULT_COLOR;
   const g = geometry(w, h);
   ctx.save();
@@ -91,6 +92,7 @@ export function drawHighlight(ctx, cam, w, state, opts = {}) {
     ctx.stroke(g.edge);
   }
   const ring = (x, y, r) => {
+    if (surfaceY) y = surfaceY(x, y);
     ctx.beginPath();
     ctx.arc(x, y, r, 0, Math.PI * 2);
     ctx.strokeStyle = "rgba(20,14,4,.8)";
@@ -107,7 +109,7 @@ export function drawHighlight(ctx, cam, w, state, opts = {}) {
       if (!city || city.cell == null) continue;
       if (h.dimOthers && !g.mask[city.cell]) {
         // Lift the city's own hex out of the dimming.
-        hexPath(ctx, w.grid, city.cell, 1);
+        hexPath(ctx, w.grid, city.cell, 1, surfaceY);
         ctx.fillStyle = "rgba(255,240,200,.08)";
         ctx.fill();
       }
@@ -139,7 +141,7 @@ export function drawOverlays(ctx, cam, overlays, app, { dpr = 1, zMin = -Infinit
     if (z < zMin || z >= zMax || o.hidden) continue;
     ctx.save();
     if (o.space === "screen") ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    else ctx.setTransform(dpr * s, 0, 0, dpr * s, dpr * (cam.w / 2 - cam.x * s), dpr * (cam.h / 2 - cam.y * s));
+    else ctx.setTransform(dpr * s, 0, 0, dpr * cam.yScale, dpr * (cam.w / 2 - cam.x * s), dpr * (cam.h / 2 - cam.y * cam.yScale));
     try {
       o.draw(ctx, cam, app);
     } catch (err) {
