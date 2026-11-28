@@ -42,8 +42,10 @@ const LAKE_CSS = `rgb(${LAKE_RGB.join(",")})`;
 
 let pendingShore = null; // {w, cells, opts}: queued by drawWater, drawn by the next drawRivers (or drawShore)
 
-const worldT = (ctx, vp) =>
-  ctx.setTransform(vp.dpr * vp.s, 0, 0, vp.dpr * vp.s, -vp.x0 * vp.dpr * vp.s, -vp.y0 * vp.dpr * vp.s);
+const worldT = (ctx, vp) => {
+  const yScale = vp.yScale ?? vp.s;
+  ctx.setTransform(vp.dpr * vp.s, 0, 0, vp.dpr * yScale, -vp.x0 * vp.dpr * vp.s, -vp.y0 * vp.dpr * yScale);
+};
 
 export function drawWater(ctx, vp, w, cells, opts = {}) {
   const s = opts.s ?? vp.s;

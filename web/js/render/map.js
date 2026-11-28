@@ -78,15 +78,16 @@ export function layerError(l, what, err) {
 // Options handed to a layer's draw() / warm(): the zoom, the visible cells and transform helpers.
 function layerOpts(ctx, vp, w, opts, extra) {
   const { s, dpr } = vp;
+  const yScale = vp.yScale ?? s;
   const Rpx = w.grid.R * s;
   return {
     Rpx, s, dpr, lod: lodFor(Rpx),
     lens: opts.lens || null, selectedCity: opts.selectedCity || null, showResources: !!opts.showResources,
     snapshot: !!opts.snapshot, app: opts.app || null,
     // ctx back to world units (km, the default when draw() is called) or to screen css px of this canvas
-    world: () => ctx.setTransform(dpr * s, 0, 0, dpr * s, -vp.x0 * dpr * s, -vp.y0 * dpr * s),
+    world: () => ctx.setTransform(dpr * s, 0, 0, dpr * yScale, -vp.x0 * dpr * s, -vp.y0 * dpr * yScale),
     screen: () => ctx.setTransform(dpr, 0, 0, dpr, 0, 0),
-    toScreen: (x, y) => [(x - vp.x0) * s, (y - vp.y0) * s],
+    toScreen: (x, y) => [(x - vp.x0) * s, (y - vp.y0) * yScale],
     ...extra,
   };
 }
@@ -114,12 +115,13 @@ function layerOpts(ctx, vp, w, opts, extra) {
 export function drawStatic(ctx, vp, w, opts) {
   const { grid } = w;
   const { s, dpr } = vp;
+  const yScale = vp.yScale ?? s;
   const R = grid.R;
   const Rpx = R * s;
   const lod = lodFor(Rpx);
   const W = w.raw.width, H = w.raw.height;
   const { r0, r1, c0, c1 } = grid.range(vp.x0, vp.y0, vp.x1, vp.y1);
-  const worldT = () => ctx.setTransform(dpr * s, 0, 0, dpr * s, -vp.x0 * dpr * s, -vp.y0 * dpr * s);
+  const worldT = () => ctx.setTransform(dpr * s, 0, 0, dpr * yScale, -vp.x0 * dpr * s, -vp.y0 * dpr * yScale);
 
   const T = opts.timings; // optional {section: ms} for profiling
   let tMark = T ? performance.now() : 0;
@@ -197,7 +199,15 @@ export function drawStatic(ctx, vp, w, opts) {
 
   // 2. Land: the relief image (Explore), lens colours clipped to the land and shaded by the relief (Analyze), or tiles.
   upTo(Z.LAND);
-  if (relief && !opts.lens) {
+  const useTerrain = !opts.lens && opts.terrainRenderer?.available;
+  if (useTerrain) {
+    drawReliefTextured(ctx, vp);
+    worldT();
+  }
+  const terrainGround = useTerrain && opts.terrainRenderer.draw(ctx, vp, w, opts.pitch ?? 0);
+  if (terrainGround) {
+    worldT();
+  } else if (relief && !opts.lens) {
     drawReliefTextured(ctx, vp);
     worldT();
     for (const i of cells) if (!w.water[i] && fallback.has(i)) tile(i);
@@ -211,7 +221,7 @@ export function drawStatic(ctx, vp, w, opts) {
 
   // 3. Hex grid lines once hexes are big enough to read.
   upTo(Z.GRID);
-  if (Rpx > 11) {
+  if (Rpx > 11 && !terrainGround) {
     ctx.beginPath();
     for (const i of cells) {
       if (w.water[i]) continue; // open water and lakes read as one surface, without the grid
@@ -312,7 +322,8 @@ export function warmSprites(ctx, vp, w, opts = {}) {
   const { s, dpr } = vp;
   const Rpx = grid.R * s;
   const lod = lodFor(Rpx);
-  ctx.setTransform(dpr * s, 0, 0, dpr * s, -vp.x0 * dpr * s, -vp.y0 * dpr * s);
+  const yScale = vp.yScale ?? s;
+  ctx.setTransform(dpr * s, 0, 0, dpr * yScale, -vp.x0 * dpr * s, -vp.y0 * dpr * yScale);
   if (!opts.lens && Rpx > GLYPHS_MIN_RPX) {
     const { r0, r1, c0, c1 } = grid.range(vp.x0, vp.y0, vp.x1, vp.y1);
     const cells = [];

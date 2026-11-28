@@ -114,6 +114,8 @@ STATES = [
      "setTimeout(() => document.querySelector('#city-panel .site-list')?.scrollIntoView({block: 'center'}), 200); }, 300);", 0),
     ("45-maps-region", DESKTOP, "__app.selectState('NO-15', {fly: false});" + SCROLL_TO("The real place"), 0),
     ("46-maps-mobile-municipality", MOBILE, select("Stranda", 5) + SCROLL_TO("The real place"), 0),
+    ("47-webgl-terrain-pitch", DESKTOP, at_city("Lom", 28) + ";__app.setPitch(24);", 0),
+    ("48-canvas-lom-overview", DESKTOP, at_city("Lom", 6), 0),
 ]
 
 
@@ -158,13 +160,23 @@ async def main():
                 print(f"{name}: {timings[name]['wall_s']}s")
                 await ctx.close()
                 continue
-            await pg.goto(base, wait_until="networkidle")
+            url = base
+            if name == "47-webgl-terrain-pitch":
+                url += ("&" if "?" in url else "?") + "renderer=webgl&pitch=24"
+            await pg.goto(url, wait_until="networkidle")
             await pg.wait_for_function("window.__app && window.__app.data && window.__app.data.cities", timeout=30000)
+            if name == "47-webgl-terrain-pitch":
+                await pg.wait_for_function("window.__app.terrain.stats()?.available", timeout=30000)
             await pg.wait_for_timeout(2500 + extra)
             try:
                 await pg.evaluate(js)
             except Exception as e:  # a state the old version cannot show
                 errs.append(f"state: {e}")
+            if name == "47-webgl-terrain-pitch":
+                ready = await pg.evaluate("""() => __app.cam.scale === 28 && __app.cam.pitch === 24 &&
+                  __app.terrain.stats().cells > 0 && __app.terrain.stats().triangles > 0""")
+                if not ready:
+                    raise AssertionError("WebGL terrain state did not reach the requested zoom and pitch")
             await pg.wait_for_timeout(2600)
             await pg.screenshot(path=str(out / f"{name}.png"))
             perf = await pg.evaluate("window.__perf ? window.__perf() : null")

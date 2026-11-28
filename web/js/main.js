@@ -22,6 +22,9 @@ import { initShare } from "./app/share.js";
 import { initHelp } from "./app/help.js";
 import { initMaps } from "./app/maps.js";
 import { opening } from "./opening.js";
+import {
+  TERRAIN_LAYER_TYPES, VERTICAL_EXAGGERATION, WebGLTerrainRenderer, terrainElevationAt,
+} from "./render/webgl-terrain.js";
 
 const { drawStatic, drawOverlay, OCEAN_BG } = mapRender;
 
@@ -98,6 +101,37 @@ async function main() {
   const canvas = document.getElementById("map");
   const ctx = canvas.getContext("2d");
   const cam = new Camera(world.width, world.height);
+  const terrainStatus = document.getElementById("terrain-status");
+  const params = new URLSearchParams(location.search);
+  const rendererRequested = params.get("renderer") === "webgl";
+  const pitchValue = params.get("pitch");
+  const requestedPitch = pitchValue == null ? 0 : Number(pitchValue);
+  const terrainRenderer = rendererRequested ? new WebGLTerrainRenderer(w, {
+    onUnavailable: (error) => {
+      if (terrainStatus) {
+        terrainStatus.hidden = false;
+        terrainStatus.textContent = "3D terrain is unavailable. Showing the standard map.";
+      }
+      if (window.__app) {
+        console.warn("WebGL terrain unavailable; showing the standard map.", error);
+        window.__app.invalidate();
+      }
+    },
+  }) : null;
+  if (terrainRenderer?.available) {
+    cam.maxScale = 48;
+    cam.verticalExaggeration = VERTICAL_EXAGGERATION;
+    cam.elevationAt = (x, y) => terrainElevationAt(w, x, y);
+    cam.setPitch(Number.isFinite(requestedPitch) ? requestedPitch : 0);
+    if (terrainStatus) {
+      terrainStatus.hidden = false;
+      terrainStatus.textContent = `Terrain preview · ${VERTICAL_EXAGGERATION}× vertical scale · one height per 6 km-radius hex.`;
+    }
+  } else if (rendererRequested && terrainStatus && terrainRenderer) {
+    terrainStatus.hidden = false;
+    terrainStatus.textContent = "3D terrain is unavailable. Showing the standard map.";
+    console.warn("WebGL terrain unavailable; showing the standard map.", terrainRenderer.error);
+  }
   let dpr = 1;
   let hits = [];
   let queued = false;
@@ -139,7 +173,7 @@ async function main() {
     return `${l.id}:${vis}:${sig}`;
   }).join(";");
   const cacheKey = () =>
-    `${state.lens?.id ?? "terrain"}|${state.band ? state.band.join(",") : ""}|${state.showResources ? 1 : 0}|${dpr}|${cam.w}x${cam.h}` +
+    `${state.lens?.id ?? "terrain"}|${state.band ? state.band.join(",") : ""}|${state.showResources ? 1 : 0}|${dpr}|${cam.w}x${cam.h}|${cam.pitch}|${terrainRenderer?.available ? "webgl" : "canvas"}` +
     `|${state.selectedCity?.id ?? ""}|${resourceFilterSig(state.resourceFilter)}|${layersSig()}`;
 
   // lead: [-1|0|1, -1|0|1], the direction a pan ran off the cache; the new cache reaches further that way (and less
@@ -151,7 +185,7 @@ async function main() {
     const m = CACHE_MARGIN / s;
     const ox = lead ? lead[0] * PAN_LEAD * m : 0, oy = lead ? lead[1] * PAN_LEAD * m : 0;
     const vp = {
-      x0: v.x0 - m + ox, y0: v.y0 - m + oy, x1: v.x1 + m + ox, y1: v.y1 + m + oy, s, dpr,
+      x0: v.x0 - m + ox, y0: v.y0 - m + oy, x1: v.x1 + m + ox, y1: v.y1 + m + oy, s, yScale: cam.yScale, dpr,
       cssW: cam.w + 2 * CACHE_MARGIN, cssH: cam.h + 2 * CACHE_MARGIN,
     };
     const W = Math.ceil(vp.cssW * dpr), H = Math.ceil(vp.cssH * dpr);
@@ -162,7 +196,7 @@ async function main() {
     const hitsOut = {};
     drawStatic(cctx, vp, w, {
       lens: state.lens, showResources: state.showResources, resourceFilter: state.resourceFilter, selectedCity: state.selectedCity, hits: hitsOut,
-      layers: staticLayers, app,
+      layers: staticLayers, app, terrainRenderer: terrainRenderer?.available ? terrainRenderer : null, pitch: cam.pitch,
     });
     cache.hits = { resources: hitsOut.resources || [] };
     cache.vp = vp;
@@ -271,7 +305,7 @@ async function main() {
     ctx.drawImage(cache.cv, dx, dy, vp.cssW * k, vp.cssH * k);
 
     const s = cam.scale;
-    ctx.setTransform(dpr * s, 0, 0, dpr * s, dpr * (cam.w / 2 - cam.x * s), dpr * (cam.h / 2 - cam.y * s));
+    ctx.setTransform(dpr * s, 0, 0, dpr * cam.yScale, dpr * (cam.w / 2 - cam.x * s), dpr * (cam.h / 2 - cam.y * cam.yScale));
     drawOverlay(ctx, cam, w, state);
     if (state.highlight) drawHighlight(ctx, cam, w, state, { resourceHits: cache.hits.resources, items: resources?.items, cityById });
     if (overlays.length) drawOverlays(ctx, cam, overlays, app, { dpr, zMax: 100 });
@@ -292,7 +326,7 @@ async function main() {
     const moving = cam.step(dt);
     draw(moving);
     lastFrame = moving ? now : 0;
-    const camSig = `${cam.x},${cam.y},${cam.scale}`;
+    const camSig = `${cam.x},${cam.y},${cam.scale},${cam.pitch}`;
     if (camSig !== lastCamSig) {
       lastCamSig = camSig;
       emitCamera();
@@ -349,7 +383,8 @@ async function main() {
   // The scale that frames the whole land in the visible area (URL zoom levels are relative to it).
   const fitIn = (a, padFrac = 0.1) => {
     const padX = Math.min(HOME_PAD_X, (a.x1 - a.x0) * padFrac);
-    const s = Math.min((a.x1 - a.x0 - 2 * padX) / (landBox.x1 - landBox.x0), (a.y1 - a.y0 - 2 * HOME_PAD_Y) / (landBox.y1 - landBox.y0));
+    const s = Math.min((a.x1 - a.x0 - 2 * padX) / (landBox.x1 - landBox.x0),
+      (a.y1 - a.y0 - 2 * HOME_PAD_Y) / ((landBox.y1 - landBox.y0) * cam.pitchCos));
     return s > 0 && Number.isFinite(s) ? s : cam.scale || 1;
   };
   const fitScale = () => fitIn(visibleArea(false, false));
@@ -368,7 +403,8 @@ async function main() {
     const a = visibleArea(false, false);
     const cx = (landBox.x0 + landBox.x1) / 2, cy = (landBox.y0 + landBox.y1) / 2;
     // Put the land's centre in the middle of the visible area, not of the whole canvas.
-    return { x: cx - ((a.x0 + a.x1) / 2 - cam.w / 2) / s, y: cy - ((a.y0 + a.y1) / 2 - cam.h / 2) / s, s, fs };
+    const [x, y] = cam.centerAt(cx, cy, (a.x0 + a.x1) / 2, (a.y0 + a.y1) / 2, s);
+    return { x, y, s, fs };
   }
   function home() {
     if (!(cam.w > 160 && cam.h > 160)) return false; // hidden or still being laid out
@@ -433,7 +469,8 @@ async function main() {
         const fit = fitIn(a, 0.08);
         const s = cam.clampScale(Math.min(h.s, fit));
         const cx = (landBox.x0 + landBox.x1) / 2, cy = (landBox.y0 + landBox.y1) / 2;
-        cam.flyTo(cx - (acx - cam.w / 2) / s, cy - (acy - cam.h / 2) / s, s, 450);
+        const [x, y] = cam.centerAt(cx, cy, acx, acy, s);
+        cam.flyTo(x, y, s, 450);
         userMoved = true;
         dockFramed = true;
       } else if (dockFramed) {
@@ -446,7 +483,8 @@ async function main() {
       const p = visibleArea(panel, prevD);
       const [wx, wy] = cam.toWorld((p.x0 + p.x1) / 2, (p.y0 + p.y1) / 2);
       const s = cam.scale;
-      cam.flyTo(wx - (acx - cam.w / 2) / s, wy - (acy - cam.h / 2) / s, s, 350);
+      const [x, y] = cam.centerAt(wx, wy, acx, acy, s);
+      cam.flyTo(x, y, s, 350);
     }
     requestDraw();
   }
@@ -469,7 +507,8 @@ async function main() {
     hideTooltip();
     const a = visibleArea();
     const vx = (a.x0 + a.x1) / 2, vy = (a.y0 + a.y1) / 2;
-    cam.flyTo(x - (vx - cam.w / 2) / s, y - (vy - cam.h / 2) / s, s, ms);
+    const [cx, cy] = cam.centerAt(x, y, vx, vy, s);
+    cam.flyTo(cx, cy, s, ms);
     userMoved = true;
     dockFramed = false;
     requestDraw();
@@ -505,11 +544,12 @@ async function main() {
     const a = visibleArea();
     const ax0 = a.x0 + padLeft, ax1 = a.x1 - padRight, ay0 = a.y0 + padTop, ay1 = a.y1 - padBottom;
     const bw = Math.max(1e-6, x1 - x0), bh = Math.max(1e-6, y1 - y0);
-    let s = Math.min(Math.max(20, ax1 - ax0) / bw, Math.max(20, ay1 - ay0) / bh);
+    let s = Math.min(Math.max(20, ax1 - ax0) / bw, Math.max(20, ay1 - ay0) / (bh * cam.pitchCos));
     s = cam.clampScale(Math.min(maxScale, s));
     const vx = (ax0 + ax1) / 2, vy = (ay0 + ay1) / 2;
     const cx = (x0 + x1) / 2, cy = (y0 + y1) / 2;
-    cam.flyTo(cx - (vx - cam.w / 2) / s, cy - (vy - cam.h / 2) / s, s, ms);
+    const [centerX, centerY] = cam.centerAt(cx, cy, vx, vy, s);
+    cam.flyTo(centerX, centerY, s, ms);
     userMoved = true;
     dockFramed = false;
     requestDraw();
@@ -521,7 +561,8 @@ async function main() {
     if (!b) return;
     const a = visibleArea(true);
     const pad = 36;
-    const s = Math.min((a.x1 - a.x0 - 2 * pad) / (b.x1 - b.x0), (a.y1 - a.y0 - 2 * pad) / (b.y1 - b.y0));
+    const s = Math.min((a.x1 - a.x0 - 2 * pad) / (b.x1 - b.x0),
+      (a.y1 - a.y0 - 2 * pad) / ((b.y1 - b.y0) * cam.pitchCos));
     flyToVisible((b.x0 + b.x1) / 2, (b.y0 + b.y1) / 2, Math.min(2.2, Math.max(fitScale(), s * 0.85))); // a little context around it
   }
 
@@ -733,32 +774,36 @@ async function main() {
   function renderShareMap(target, W, H) {
     const a = visibleArea();
     const [cx, cy] = cam.toWorld((a.x0 + a.x1) / 2, (a.y0 + a.y1) / 2);
-    const vw = (a.x1 - a.x0) / cam.scale, vh = (a.y1 - a.y0) / cam.scale;
+    const vw = (a.x1 - a.x0) / cam.scale, vh = (a.y1 - a.y0) / cam.yScale;
     // Lay the frame out at about the on-screen size and render it at a higher pixel ratio, so banners and labels
     // keep the proportions they have on screen instead of shrinking on a 1600 px canvas.
     const k = Math.min(2, Math.max(1, W / Math.max(1, a.x1 - a.x0)));
     const cssW = W / k, cssH = H / k;
     const snap = new Camera(world.width, world.height);
     snap.resize(cssW, cssH);
+    snap.setPitch(cam.pitch);
+    snap.elevationAt = cam.elevationAt;
+    snap.verticalExaggeration = cam.verticalExaggeration;
     snap.minScale = 1e-6;
     snap.maxScale = 1e6;
     // The image (about 2:1) is wider than most screens. "Contain" framing would pad it with wide bands of
     // off-world fog, "cover" would crop a lot of the view: zoom in from contain until the frame is no wider than
     // the world plus a little (the whole country still fits at home; the vignette sinks the rest into deep
     // water), but never past cover.
-    const sContain = Math.min(cssW / vw, cssH / vh), sCover = Math.max(cssW / vw, cssH / vh);
+    const sContain = Math.min(cssW / vw, cssH / (vh * snap.pitchCos));
+    const sCover = Math.max(cssW / vw, cssH / (vh * snap.pitchCos));
     // ...and, zoomed out, keep the whole height of the land (with the northern banners) in the frame.
-    const sNoFog = Math.min(cssW / (world.width * 1.2), (cssH - 16) / (landBox.y1 - landBox.y0));
+    const sNoFog = Math.min(cssW / (world.width * 1.2), (cssH - 16) / ((landBox.y1 - landBox.y0) * snap.pitchCos));
     snap.scale = Math.min(sCover, Math.max(sContain, sNoFog));
     // Keep the frame (nearly) inside the world rectangle: it may overhang by a tenth of its size, which the
     // vignette turns into open water, so a coastal selection is not shoved against the image edge.
-    const fw = cssW / snap.scale, fh = cssH / snap.scale;
+    const fw = cssW / snap.scale, fh = cssH / (snap.scale * snap.pitchCos);
     const inside = (c, f, W) => {
       const m = f * 0.1;
       return f >= W + 2 * m ? W / 2 : Math.min(W - f / 2 + m, Math.max(f / 2 - m, c));
     };
     snap.x = inside(cx, fw, world.width);
-    snap.y = inside(cy - 14 / snap.scale, fh, world.height); // nudged up: banners stand above their cities
+    snap.y = inside(cy - 14 / (snap.scale * snap.pitchCos), fh, world.height); // nudged up: banners stand above their cities
     const shot = { ...state, hoverCell: -1 };
     const c = target.getContext("2d");
     c.fillStyle = OCEAN_BG;
@@ -769,13 +814,15 @@ async function main() {
       snapshot.renderToCanvas(target, snap, w, shot, nation, {
         banners: false, dpr: k, scale: s, x: snap.x, y: snap.y, app, overlays: overlays.filter((o) => o.snapshot && (o.z ?? 0) < 100),
         staticLayers: staticLayers.filter((l) => l.snapshot !== false),
+        terrainRenderer: terrainRenderer?.available ? terrainRenderer : null,
       });
     } else {
       const v = snap.view();
-      drawStatic(c, { x0: v.x0, y0: v.y0, x1: v.x1, y1: v.y1, s, dpr: k, cssW, cssH }, w, {
+      drawStatic(c, { x0: v.x0, y0: v.y0, x1: v.x1, y1: v.y1, s, yScale: snap.yScale, dpr: k, cssW, cssH }, w, {
         lens: state.lens, showResources: state.showResources, layers: staticLayers.filter((l) => l.snapshot !== false), app, snapshot: true,
+        terrainRenderer: terrainRenderer?.available ? terrainRenderer : null, pitch: snap.pitch,
       });
-      c.setTransform(k * s, 0, 0, k * s, k * (cssW / 2 - snap.x * s), k * (cssH / 2 - snap.y * s));
+      c.setTransform(k * s, 0, 0, k * snap.yScale, k * (cssW / 2 - snap.x * s), k * (cssH / 2 - snap.y * snap.yScale));
       drawOverlay(c, snap, w, shot, 0);
     }
     c.setTransform(1, 0, 0, 1, 0, 0);
@@ -941,7 +988,7 @@ async function main() {
     const fire = () => {
       camEmitAt = performance.now();
       camTimer = 0;
-      events.emit("camera", { x: cam.x, y: cam.y, scale: cam.scale, Rpx: w.grid.R * cam.scale, moving: cam.moving });
+      events.emit("camera", { x: cam.x, y: cam.y, scale: cam.scale, pitch: cam.pitch, Rpx: w.grid.R * cam.scale, moving: cam.moving });
     };
     if (now - camEmitAt >= 100) {
       clearTimeout(camTimer);
@@ -1266,6 +1313,25 @@ async function main() {
       if (!!on !== state.showResources && w.resources) resBtn?.click();
     },
     // selection, lenses, camera
+    terrain: {
+      layerTypes: TERRAIN_LAYER_TYPES,
+      registerLayer(layer) {
+        if (!terrainRenderer?.available) throw new Error("enable the WebGL renderer with ?renderer=webgl before registering terrain layers");
+        const remove = terrainRenderer.registerLayer(layer);
+        cache.key = null;
+        requestDraw();
+        return () => { remove(); cache.key = null; requestDraw(); };
+      },
+      stats: () => terrainRenderer?.stats() ?? null,
+    },
+    setPitch(degrees) {
+      if (!terrainRenderer?.available) throw new Error("enable the WebGL renderer with ?renderer=webgl before setting camera pitch");
+      const pitch = cam.setPitch(degrees);
+      updateMinScale();
+      cache.key = null;
+      requestDraw();
+      return pitch;
+    },
     selectCity(city, { fly = true } = {}) {
       if (typeof city === "string") city = cityById.get(city) || null;
       return city ? selectCity(city, { fly }) : clearSelection();
@@ -1319,7 +1385,7 @@ async function main() {
   const mx = (a) => (a.length ? +Math.max(...a).toFixed(1) : null);
   window.__perf = () => ({ static_ms: med(perf.static), static_p95_ms: q95(perf.static), static_max_ms: mx(perf.static),
     frame_ms: med(perf.frame), frame_p95_ms: q95(perf.frame), frame_max_ms: mx(perf.frame), warm_ms: med(perf.warm),
-    static_n: perf.static.length, frame_n: perf.frame.length });
+    static_n: perf.static.length, frame_n: perf.frame.length, terrain: terrainRenderer?.stats() ?? null });
 
   // --- go --------------------------------------------------------------------------------------------------------
   renderTopbar(nation);

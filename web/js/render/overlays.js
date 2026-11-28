@@ -139,7 +139,7 @@ export function drawOverlays(ctx, cam, overlays, app, { dpr = 1, zMin = -Infinit
     if (z < zMin || z >= zMax || o.hidden) continue;
     ctx.save();
     if (o.space === "screen") ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    else ctx.setTransform(dpr * s, 0, 0, dpr * s, dpr * (cam.w / 2 - cam.x * s), dpr * (cam.h / 2 - cam.y * s));
+    else ctx.setTransform(dpr * s, 0, 0, dpr * cam.yScale, dpr * (cam.w / 2 - cam.x * s), dpr * (cam.h / 2 - cam.y * cam.yScale));
     try {
       o.draw(ctx, cam, app);
     } catch (err) {

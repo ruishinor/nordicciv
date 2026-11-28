@@ -18,6 +18,9 @@ export class Camera {
     this.h = 1;
     this.minScale = 0.05;
     this.maxScale = 6;
+    this.pitch = 0;
+    this.elevationAt = null;
+    this.verticalExaggeration = 1;
     this.zoomTarget = null; // {scale, sx, sy}: eased wheel/keyboard zoom around a screen anchor
     this.flight = null; // {path, x1, y1, s1, t, ms}
     this.pan = { x: 0, y: 0 }; // keyboard panning, screen px per second
@@ -32,7 +35,7 @@ export class Camera {
   // e.g. a hidden tab or an iframe that is still being laid out.
   fit(x0, y0, x1, y1, pad = 40) {
     if (!(this.w > 2 * pad + 20 && this.h > 2 * pad + 20)) return false;
-    const s = Math.min((this.w - 2 * pad) / (x1 - x0), (this.h - 2 * pad) / (y1 - y0));
+    const s = Math.min((this.w - 2 * pad) / (x1 - x0), (this.h - 2 * pad) / ((y1 - y0) * this.pitchCos));
     if (!(s > 0) || !Number.isFinite(s)) return false;
     this.scale = s;
     this.fitScale = s;
@@ -44,11 +47,54 @@ export class Camera {
   }
 
   toScreen(x, y) {
-    return [(x - this.x) * this.scale + this.w / 2, (y - this.y) * this.scale + this.h / 2];
+    return [(x - this.x) * this.scale + this.w / 2, (y - this.y) * this.yScale + this.h / 2];
+  }
+
+  toScreenSurface(x, y) {
+    const [sx, flatSy] = this.toScreen(x, y);
+    let sy = flatSy;
+    const elevationM = this.elevationAt?.(x, y);
+    if (Number.isFinite(elevationM)) {
+      sy -= (elevationM / 1000) * this.verticalExaggeration * this.scale * Math.sin((this.pitch * Math.PI) / 180);
+    }
+    return [sx, sy];
   }
 
   toWorld(sx, sy) {
-    return [(sx - this.w / 2) / this.scale + this.x, (sy - this.h / 2) / this.scale + this.y];
+    const x = (sx - this.w / 2) / this.scale + this.x;
+    let y = (sy - this.h / 2) / this.yScale + this.y;
+    if (!this.elevationAt || this.pitch === 0) return [x, y];
+    const heightScale = this.verticalExaggeration * Math.tan((this.pitch * Math.PI) / 180) / 1000;
+    for (let i = 0; i < 4; i++) {
+      const elevationM = this.elevationAt(x, y);
+      y = (sy - this.h / 2) / this.yScale + this.y +
+        (Number.isFinite(elevationM) ? elevationM * heightScale : 0);
+    }
+    return [x, y];
+  }
+
+  centerAt(x, y, sx, sy, scale = this.scale) {
+    const elevationM = this.elevationAt?.(x, y);
+    const heightOffset = Number.isFinite(elevationM) ? (elevationM / 1000) * this.verticalExaggeration *
+      Math.tan((this.pitch * Math.PI) / 180) : 0;
+    return [
+      x - (sx - this.w / 2) / scale,
+      y - heightOffset - (sy - this.h / 2) / (scale * this.pitchCos),
+    ];
+  }
+
+  setPitch(degrees) {
+    if (!Number.isFinite(degrees)) throw new TypeError("camera pitch must be a finite number");
+    this.pitch = Math.min(45, Math.max(0, degrees));
+    return this.pitch;
+  }
+
+  get pitchCos() {
+    return Math.cos((this.pitch * Math.PI) / 180);
+  }
+
+  get yScale() {
+    return this.scale * this.pitchCos;
   }
 
   clampScale(s) {
@@ -59,9 +105,11 @@ export class Camera {
   zoomAt(sx, sy, factor) {
     const [wx, wy] = this.toWorld(sx, sy);
     this.scale = this.clampScale(this.scale * factor);
-    const [nx, ny] = this.toWorld(sx, sy);
-    this.x += wx - nx;
-    this.y += wy - ny;
+    for (let i = 0; i < 4; i++) {
+      const [nx, ny] = this.toWorld(sx, sy);
+      this.x += wx - nx;
+      this.y += wy - ny;
+    }
     this.clamp();
   }
 
@@ -75,7 +123,7 @@ export class Camera {
   panBy(dx, dy) {
     this.flight = null;
     this.x -= dx / this.scale;
-    this.y -= dy / this.scale;
+    this.y -= dy / this.yScale;
     this.clamp();
   }
 
@@ -113,7 +161,7 @@ export class Camera {
     if (this.pan.x || this.pan.y) {
       const pdt = Math.min(0.1, dt); // ...but a stalled frame must not fling the view
       this.x += (this.pan.x * pdt) / this.scale;
-      this.y += (this.pan.y * pdt) / this.scale;
+      this.y += (this.pan.y * pdt) / this.yScale;
       this.clamp();
     }
     if (this.flight) {

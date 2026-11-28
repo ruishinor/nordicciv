@@ -31,6 +31,9 @@ export function renderToCanvas(target, cam, w, state, nation, opts = {}) {
 
   const tmp = new Camera(cam.worldW, cam.worldH);
   tmp.resize(cssW, cssH);
+  tmp.setPitch(cam.pitch);
+  tmp.elevationAt = cam.elevationAt;
+  tmp.verticalExaggeration = cam.verticalExaggeration;
   tmp.minScale = 1e-4;
   tmp.maxScale = Infinity;
   tmp.fitScale = cam.fitScale;
@@ -41,18 +44,18 @@ export function renderToCanvas(target, cam, w, state, nation, opts = {}) {
   tmp.y = opts.y ?? cam.y;
 
   const v = tmp.view();
-  const vp = { ...v, s: tmp.scale, dpr, cssW, cssH };
+  const vp = { ...v, s: tmp.scale, yScale: tmp.yScale, dpr, cssW, cssH };
   ctx.save();
   const hitsOut = {};
   const app = opts.app ?? null;
   drawStatic(ctx, vp, w, {
     lens: state.lens, showResources: state.showResources, resourceFilter: state.resourceFilter, selectedCity: state.selectedCity, hits: hitsOut,
-    layers: opts.staticLayers || [], app, snapshot: true,
+    layers: opts.staticLayers || [], app, snapshot: true, terrainRenderer: opts.terrainRenderer || null, pitch: tmp.pitch,
   });
 
   const s = tmp.scale;
   if (overlay) {
-    ctx.setTransform(dpr * s, 0, 0, dpr * s, dpr * (cssW / 2 - tmp.x * s), dpr * (cssH / 2 - tmp.y * s));
+    ctx.setTransform(dpr * s, 0, 0, dpr * tmp.yScale, dpr * (cssW / 2 - tmp.x * s), dpr * (cssH / 2 - tmp.y * tmp.yScale));
     drawOverlay(ctx, tmp, w, { ...state, hoverCell: -1 }, 0);
     if (state.highlight) {
       drawHighlight(ctx, tmp, w, state, {
