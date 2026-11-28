@@ -179,7 +179,7 @@ async def main():
             except Exception as e:  # a state the old version cannot show
                 errs.append(f"state: {e}")
             if name == "53-webgl-terrain-pitch":
-                ready = await pg.evaluate("""() => __app.cam.scale === 28 && __app.cam.pitch === 24 &&
+                ready = await pg.evaluate("""() => __app.cam.maxScale === 48 && __app.cam.scale === 28 && __app.cam.pitch === 24 &&
                   __app.terrain.stats().cells > 0 && __app.terrain.stats().triangles > 0""")
                 if not ready:
                     raise AssertionError("WebGL terrain state did not reach the requested zoom and pitch")
