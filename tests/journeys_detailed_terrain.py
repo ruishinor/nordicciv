@@ -19,8 +19,9 @@ async def ready(page):
 async def settle(page):
     await page.wait_for_function("() => __app.terrain.stats().detailVertices > 0", timeout=30000)
     await page.wait_for_function("""() => {
-        const stats=__app.terrain.stats(), width=__app.cam.w/__app.cam.scale;
-        return stats.tiles && Math.abs(stats.tiles.widthKm-width)<0.05;
+        const stats=__app.terrain.stats(), width=__app.cam.w/__app.cam.scale, center=stats.tiles?.centerKm;
+        return stats.tiles && center && Math.abs(stats.tiles.widthKm-width)<0.05
+          && Math.abs(center[0]-__app.cam.x)<0.05 && Math.abs(center[1]-__app.cam.y)<0.05;
     }""", timeout=30000)
     await page.wait_for_function("() => __app.terrain.stats().tiles.pending === 0", timeout=30000)
     await page.wait_for_timeout(180)

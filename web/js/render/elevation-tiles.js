@@ -53,7 +53,8 @@ export class ElevationTiles {
     this.projection = projection; this.onChange = onChange; this.fetcher = fetcher; this.limits = limits;
     this.index = null; this.descriptors = new Map(); this.cache = new Map(); this.running = new Map();
     this.failed = new Map(); this.wanted = new Set(); this.queue = []; this.bytes = 0; this.peakBytes = 0;
-    this.revision = 0; this.disposed = false; this.error = null; this.level = -1; this.widthKm = Infinity; this.evictions = 0;
+    this.revision = 0; this.disposed = false; this.error = null; this.level = -1; this.widthKm = Infinity;
+    this.centerKm = null; this.evictions = 0;
   }
 
   async init() {
@@ -76,6 +77,8 @@ export class ElevationTiles {
     if (!this.index || this.disposed) return;
     this.widthKm = Number.isFinite(vp.widthKm) ? vp.widthKm :
       (Number.isFinite(vp.cssW) && vp.s > 0 ? vp.cssW / vp.s : Infinity);
+    this.centerKm = Array.isArray(vp.cameraCenterKm) && vp.cameraCenterKm.length === 2 && vp.cameraCenterKm.every(Number.isFinite)
+      ? [...vp.cameraCenterKm] : [(vp.x0 + vp.x1) / 2, (vp.y0 + vp.y1) / 2];
     this.level = terrainLevelForWidth(this.widthKm);
     const span = this.index.tileSpanKm;
     const yPad = 4 * Math.tan(pitch * Math.PI / 180);
@@ -176,7 +179,7 @@ export class ElevationTiles {
     return { entries: this.cache.size, bytes: this.bytes, peakBytes: this.peakBytes, pending: this.running.size + this.queue.length,
       requests: this.running.size, failed: this.failed.size, level: this.level,
       spacingM: this.level < 0 ? null : [480, 120, 30][this.level], widthKm: this.widthKm,
-      physicalLod: physicalLodForWidth(this.widthKm),
+      centerKm: this.centerKm, physicalLod: physicalLodForWidth(this.widthKm),
       loadedByLevel: [0, 1, 2].map(l => [...this.cache.values()].filter(t => t.level === l).length),
       limits: this.limits, evictions: this.evictions, error: this.error };
   }

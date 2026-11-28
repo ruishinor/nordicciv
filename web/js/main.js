@@ -221,7 +221,7 @@ async function main() {
     let vp = {
       x0: v.x0 - m + ox, y0: v.y0 - my + oy, x1: v.x1 + m + ox, y1: v.y1 + my + oy, s, yScale: cam.yScale, dpr,
       cssW: cam.w + 2 * CACHE_MARGIN, cssH: cam.h + 2 * CACHE_MARGIN,
-      widthKm: cam.w / s,
+      widthKm: cam.w / s, cameraCenterKm: [cam.x, cam.y],
       surfaceY: terrainRenderer?.available && !state.lens ? (x, y) => cam.toSurfaceY(x, y) : null,
     };
     if (terrainRenderer?.available && !state.lens) {
@@ -232,7 +232,7 @@ async function main() {
       if (anchor) {
         [cam.x, cam.y] = cam.centerAt(...anchor, cam.w / 2, cam.h / 2);
         cam.clamp(); v = cam.view();
-        vp = { ...vp, x0:v.x0-m+ox, y0:v.y0-my+oy, x1:v.x1+m+ox, y1:v.y1+my+oy };
+        vp = { ...vp, x0:v.x0-m+ox, y0:v.y0-my+oy, x1:v.x1+m+ox, y1:v.y1+my+oy, cameraCenterKm:[cam.x,cam.y] };
       }
     }
     const W = Math.ceil(vp.cssW * dpr), H = Math.ceil(vp.cssH * dpr);
