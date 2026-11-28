@@ -5,6 +5,7 @@ import {
 } from "../../util/solar.js";
 import { icon } from "../../ui/icon.js";
 import { daylightLayer } from "./light.js";
+import { SEASON_DATES, seasonalLight, seasonInstant, AURORA_FORECAST } from "./seasons.js";
 
 const COUNTRY = { NO: "Norway", SE: "Sweden", DK: "Denmark" };
 const MINUTE = 60_000;
@@ -35,6 +36,8 @@ export function install(app) {
   if (!projection) return;
   let mode = null, parameters = null, timer = 0, opener = null, lastDay = null;
   let layerRegistered = false;
+  const referenceYear = Math.max(SOLAR_YEARS.min, Math.min(SOLAR_YEARS.max, new Date().getUTCFullYear()));
+  const seasonCache = new Map();
   const selectedZone = () => zoneForCountry(app.state.selectedCity?.country);
   const panel = document.createElement("section");
   panel.id = "daylight-controls";
@@ -70,6 +73,12 @@ export function install(app) {
     <ul class="daylight-key" aria-label="Map lighting">
       <li>Daylight</li><li>Twilight</li><li>Darkness</li>
     </ul>
+    <details class="daylight-seasons">
+      <summary>Explore the seasons</summary>
+      <p class="muted small">Compare the same local time in different seasons (${referenceYear}).</p>
+      <div class="chips">${SEASON_DATES.map(s => `<button type="button" class="chip" data-season="${s.id}">${s.label}</button>`).join("")}</div>
+      <div class="chips"><button type="button" class="chip" data-season-hour="12:00">Noon</button><button type="button" class="chip" data-season-hour="00:00">Midnight</button></div>
+    </details>
     <p class="daylight-local muted">Pick a municipality for local times.</p>
     <button type="button" class="link daylight-local-link" hidden>See local times</button>`;
   document.body.append(panel);
@@ -123,9 +132,25 @@ export function install(app) {
       <p class="muted small">Times are for the municipality’s map location and a clear, level horizon.</p>`;
   }
 
+  function seasonalSummary(city) {
+    const point = Number.isFinite(city.lat) && Number.isFinite(city.lon) ? city : mapToLonLat(projection, city.x, city.y);
+    if (!point) return "";
+    const key = city.id;
+    if (!seasonCache.has(key)) {
+      if (seasonCache.size >= 64) seasonCache.delete(seasonCache.keys().next().value);
+      seasonCache.set(key, seasonalLight(referenceYear, point.lat, point.lon, zoneForCountry(city.country)));
+    }
+    const rows = seasonCache.get(key);
+    return `<p class="muted small">Four dates in ${referenceYear}, at the municipality’s map location.</p>
+      <dl class="daylight-stats">${rows.map(r => `<div><dt>${r.label}<br><span class="muted small">${r.date}</span></dt>
+        <dd>${duration(r.daylight)} daylight<br><span class="muted small">${duration(r.darkness)} astronomical darkness</span></dd></div>`).join("")}</dl>
+      <p class="muted small">Astronomical darkness starts when the sun is 18° below the horizon.</p>
+      <p>To see the northern lights, you also need clear skies and aurora activity.</p>
+      <div class="chips"><a class="chip" href="${esc(AURORA_FORECAST)}" target="_blank" rel="noopener noreferrer external" referrerpolicy="no-referrer">Aurora forecast (NOAA) ↗</a></div>`;
+  }
   app.addCitySections((city) => [{
     tab: "Daylight", title: "Daylight", html: `<div data-daylight-city="${esc(city.id)}">${citySummary(city)}</div>`,
-  }]);
+  }, {tab: "Daylight", title: "Daylight through the year", html: `<div data-seasonal-city>${seasonalSummary(city)}</div>`}]);
   panelRoot.addEventListener("click", (event) => {
     const button = event.target.closest("[data-daylight-start]");
     if (button && !mode) toggle(button);
@@ -212,6 +237,18 @@ export function install(app) {
     find("h2").focus({ preventScroll: true });
   }
 
+  let chosenSeason = "summer", chosenHour = "12:00";
+  function applySeason() {
+    const instant = seasonInstant(referenceYear, chosenSeason, chosenHour, selectedZone());
+    if (!instant) return;
+    set("manual", solarParameters(instant));
+  }
+  panel.querySelectorAll("[data-season]").forEach(b => b.onclick = () => {
+    chosenSeason = b.dataset.season; applySeason();
+  });
+  panel.querySelectorAll("[data-season-hour]").forEach(b => b.onclick = () => {
+    chosenHour = b.dataset.seasonHour; applySeason();
+  });
   find("[data-off]").onclick = () => turnOff(true);
   nowButton.onclick = () => { if (mode !== "now") set("now", solarParameters(currentMinute())); };
   chooseButton.onclick = () => {
