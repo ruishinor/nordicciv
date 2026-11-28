@@ -1,0 +1,331 @@
+{
+  "upstream": "https://github.com/jgaffuri/tiledgrids",
+  "revision": "2ed940249a842bbb054d17685ac7359e82267e42",
+  "files": [
+    {
+      "file": "clc_/1000m/13/12.parquet",
+      "git_blob": "571b564257a6121b6d7b1d91928a09451dcef2c8",
+      "bytes": 74251
+    },
+    {
+      "file": "clc_/1000m/13/13.parquet",
+      "git_blob": "0223ff6051aedbaef8b166d70625c71abdaa7e82",
+      "bytes": 67682
+    },
+    {
+      "file": "clc_/1000m/13/14.parquet",
+      "git_blob": "9824ffb409a85f8e9dc3f5e2fb99e06bbbd51731",
+      "bytes": 88680
+    },
+    {
+      "file": "clc_/1000m/13/15.parquet",
+      "git_blob": "9f423183274018eb416696da3494099f9fea61e7",
+      "bytes": 57020
+    },
+    {
+      "file": "clc_/1000m/13/17.parquet",
+      "git_blob": "426557922c0f788eded84796d6459e8cff3836db",
+      "bytes": 1983
+    },
+    {
+      "file": "clc_/1000m/14/12.parquet",
+      "git_blob": "624101783a96adaaa9d6753a1f95d511f2ae1945",
+      "bytes": 54594
+    },
+    {
+      "file": "clc_/1000m/14/13.parquet",
+      "git_blob": "c49d68d362db4d3041e95935e4d57856d58ddc41",
+      "bytes": 21813
+    },
+    {
+      "file": "clc_/1000m/14/14.parquet",
+      "git_blob": "09d0bf154767e8c3f916ab905d916f9be3b1970e",
+      "bytes": 2606
+    },
+    {
+      "file": "clc_/1000m/14/15.parquet",
+      "git_blob": "2bb9790f314ebe0959ade2361f536757cb4c2560",
+      "bytes": 4713
+    },
+    {
+      "file": "clc_/1000m/14/16.parquet",
+      "git_blob": "05432ef9eadb0bab3020ba1e78bb006d2cdceb5c",
+      "bytes": 4325
+    },
+    {
+      "file": "clc_/1000m/15/12.parquet",
+      "git_blob": "13a4104c20ff2f130422fbbbe9f6514c4780b7d6",
+      "bytes": 113571
+    },
+    {
+      "file": "clc_/1000m/15/13.parquet",
+      "git_blob": "f22309672fb0497c9f09b05f9b69f1258000b68b",
+      "bytes": 8690
+    },
+    {
+      "file": "clc_/1000m/15/15.parquet",
+      "git_blob": "0c6ccf7e573374979d25dca0e8a1974e1652cafc",
+      "bytes": 11012
+    },
+    {
+      "file": "clc_/1000m/15/16.parquet",
+      "git_blob": "89f74f14f7e596a2f23c6408a4376a46424bec4c",
+      "bytes": 20246
+    },
+    {
+      "file": "clc_/1000m/15/17.parquet",
+      "git_blob": "597e2be68e3ebf53e74bb5206d8a35a8c9909908",
+      "bytes": 1324
+    },
+    {
+      "file": "clc_/1000m/16/12.parquet",
+      "git_blob": "dbf875a1271f5bb90dfb0b3898132078117a5bfe",
+      "bytes": 133479
+    },
+    {
+      "file": "clc_/1000m/16/13.parquet",
+      "git_blob": "336231794f9c84b76c49af49d0696f1d2dffdf97",
+      "bytes": 76482
+    },
+    {
+      "file": "clc_/1000m/16/14.parquet",
+      "git_blob": "9b43e59f866b840599255043abdb038c0f48583e",
+      "bytes": 48713
+    },
+    {
+      "file": "clc_/1000m/16/15.parquet",
+      "git_blob": "be5e35adaf8a5fa93de96c8c283fb72be76982c4",
+      "bytes": 61951
+    },
+    {
+      "file": "clc_/1000m/16/16.parquet",
+      "git_blob": "7d6195c4406655c13529da913ec359e9c5233b27",
+      "bytes": 109048
+    },
+    {
+      "file": "clc_/1000m/16/17.parquet",
+      "git_blob": "88dd710eb9527f069245487f4f388e9b26a67c31",
+      "bytes": 52573
+    },
+    {
+      "file": "clc_/1000m/16/18.parquet",
+      "git_blob": "9981186086a3f1d267d49be62b405712bc17360c",
+      "bytes": 847
+    },
+    {
+      "file": "clc_/1000m/17/12.parquet",
+      "git_blob": "ddf192a09035967ad71b62532a30fc25cea9e4a4",
+      "bytes": 118588
+    },
+    {
+      "file": "clc_/1000m/17/13.parquet",
+      "git_blob": "21b0e53585128e494072040f3c58573374506ad5",
+      "bytes": 73284
+    },
+    {
+      "file": "clc_/1000m/17/14.parquet",
+      "git_blob": "741970a6046734601a4531af7832938ce3d46813",
+      "bytes": 56667
+    },
+    {
+      "file": "clc_/1000m/17/15.parquet",
+      "git_blob": "cc7e787622a25410cfe8bb865f60f99bfaba3d0a",
+      "bytes": 72345
+    },
+    {
+      "file": "clc_/1000m/17/16.parquet",
+      "git_blob": "862c6fc4a722c6e1794488628d97431d67a48a71",
+      "bytes": 82225
+    },
+    {
+      "file": "clc_/1000m/17/17.parquet",
+      "git_blob": "e840dec06c5d653f28b2f8e25a4edce2903ac411",
+      "bytes": 106251
+    },
+    {
+      "file": "clc_/1000m/17/18.parquet",
+      "git_blob": "4a4d8efd185dbc9c079c801329da0594afa8618a",
+      "bytes": 75662
+    },
+    {
+      "file": "clc_/1000m/17/19.parquet",
+      "git_blob": "0ef373e0a08176a8c21317f9afae0969e70a1a43",
+      "bytes": 37436
+    },
+    {
+      "file": "clc_/1000m/17/20.parquet",
+      "git_blob": "f74fdecc6a0c27eb5a56657ae92e8bbdd7ed00ff",
+      "bytes": 2127
+    },
+    {
+      "file": "clc_/1000m/18/12.parquet",
+      "git_blob": "957015fe5666c461ad4ab76781608318ea03db10",
+      "bytes": 125491
+    },
+    {
+      "file": "clc_/1000m/18/13.parquet",
+      "git_blob": "9e3fd5c444ccf709a224235a4fb8e49699a109fd",
+      "bytes": 88467
+    },
+    {
+      "file": "clc_/1000m/18/14.parquet",
+      "git_blob": "672c357614c18d8e1e71c0d4c42c5e4c383ffcfb",
+      "bytes": 23565
+    },
+    {
+      "file": "clc_/1000m/18/15.parquet",
+      "git_blob": "2f2f976f21c7b357060b6f166437964c58a8b0e4",
+      "bytes": 59027
+    },
+    {
+      "file": "clc_/1000m/18/16.parquet",
+      "git_blob": "5406ff886a9098368204b5ca2c0b0fff45271e5c",
+      "bytes": 45677
+    },
+    {
+      "file": "clc_/1000m/18/17.parquet",
+      "git_blob": "0521938da479115fad6998b4f815b3c1be98a753",
+      "bytes": 57810
+    },
+    {
+      "file": "clc_/1000m/18/18.parquet",
+      "git_blob": "86f7711b799236d39347a1e1644621006f12c127",
+      "bytes": 88277
+    },
+    {
+      "file": "clc_/1000m/18/19.parquet",
+      "git_blob": "b3886bbf525b63c929b66a01d2d84c1887faacb0",
+      "bytes": 100325
+    },
+    {
+      "file": "clc_/1000m/18/20.parquet",
+      "git_blob": "c3249409560428f58a3ef93b35ce8bc8f91a832d",
+      "bytes": 53467
+    },
+    {
+      "file": "clc_/1000m/18/21.parquet",
+      "git_blob": "86d6d972ab7c3128a12b97c37bf3e4f33785c133",
+      "bytes": 1052
+    },
+    {
+      "file": "clc_/1000m/19/12.parquet",
+      "git_blob": "50d8ae1969d2fa4d9553cac882a69623385e4d07",
+      "bytes": 136629
+    },
+    {
+      "file": "clc_/1000m/19/13.parquet",
+      "git_blob": "7fb2169651e368570476563728c02de7b0c9dd23",
+      "bytes": 95226
+    },
+    {
+      "file": "clc_/1000m/19/14.parquet",
+      "git_blob": "48a4d2669fa86c8ae8779728298918f201ee7c9e",
+      "bytes": 66249
+    },
+    {
+      "file": "clc_/1000m/19/15.parquet",
+      "git_blob": "1552552d79e20034f338eba823e3fb0bf0a61324",
+      "bytes": 34383
+    },
+    {
+      "file": "clc_/1000m/19/16.parquet",
+      "git_blob": "1fae94a4a540379aae0405232f30285c2e6fd7ba",
+      "bytes": 63315
+    },
+    {
+      "file": "clc_/1000m/19/17.parquet",
+      "git_blob": "5f7c93d5c0b5ad5fa273f8fb91a14c86b867af99",
+      "bytes": 86335
+    },
+    {
+      "file": "clc_/1000m/19/18.parquet",
+      "git_blob": "fbd60467a63c9873e9c6f0e9299a2440c0516c86",
+      "bytes": 69287
+    },
+    {
+      "file": "clc_/1000m/19/19.parquet",
+      "git_blob": "7e43cc301d7ea93543f7a4082c7b54430ad6c8c9",
+      "bytes": 100876
+    },
+    {
+      "file": "clc_/1000m/19/20.parquet",
+      "git_blob": "98254ed9279dbe3ff4e3e02cf21630e1d4a7cfe9",
+      "bytes": 73131
+    },
+    {
+      "file": "clc_/1000m/19/21.parquet",
+      "git_blob": "95ce9a71d81a94951178c91c205020cb4f706793",
+      "bytes": 4909
+    },
+    {
+      "file": "clc_/1000m/20/12.parquet",
+      "git_blob": "b25d5e105157e71b4216853861f07450c5bd72ae",
+      "bytes": 86820
+    },
+    {
+      "file": "clc_/1000m/20/13.parquet",
+      "git_blob": "5fbed159ca7a9081d508a877e618cf421733d652",
+      "bytes": 77484
+    },
+    {
+      "file": "clc_/1000m/20/14.parquet",
+      "git_blob": "f2a7fe7deb0b1bcc67523da34d600332f8be58da",
+      "bytes": 154901
+    },
+    {
+      "file": "clc_/1000m/20/15.parquet",
+      "git_blob": "51c1431774af4d76e687c47763c858e42ad3e61b",
+      "bytes": 141740
+    },
+    {
+      "file": "clc_/1000m/20/16.parquet",
+      "git_blob": "ae416d0351c3c66c81ce3baafe327c714c5bf770",
+      "bytes": 70203
+    },
+    {
+      "file": "clc_/1000m/20/17.parquet",
+      "git_blob": "3270a3ed161b951075688ab24e39c5a90b235fdf",
+      "bytes": 100914
+    },
+    {
+      "file": "clc_/1000m/20/18.parquet",
+      "git_blob": "7bff2802d3541afc6631a8ce4749060f2359d02f",
+      "bytes": 64049
+    },
+    {
+      "file": "clc_/1000m/20/19.parquet",
+      "git_blob": "b2962e6cb1afef1cacadcb99ea91ea49fb38f59f",
+      "bytes": 22306
+    },
+    {
+      "file": "clc_/1000m/20/20.parquet",
+      "git_blob": "09d72ce33817e1d469f7bbc7f41ec4b6bd89120f",
+      "bytes": 1451
+    },
+    {
+      "file": "clc_/1000m/21/14.parquet",
+      "git_blob": "d45d5571495c537c95b86eb7e0944f9be30b8f5e",
+      "bytes": 13310
+    },
+    {
+      "file": "clc_/1000m/21/15.parquet",
+      "git_blob": "c0f4a9853fb8b25f594c71ecdd1a978eb35ea98a",
+      "bytes": 9076
+    },
+    {
+      "file": "clc_/1000m/21/17.parquet",
+      "git_blob": "ed5e929af1f668cbded7160bea17559e61bdf319",
+      "bytes": 5173
+    },
+    {
+      "file": "clc_/1000m/21/18.parquet",
+      "git_blob": "37c04dc70034dd2c50b82ec0b24b48224cf5430e",
+      "bytes": 1013
+    },
+    {
+      "file": "clc_/1000m/info.json",
+      "git_blob": "8676e7b60e33f6a7f7ddcdad0dde0c759670e520",
+      "bytes": 431
+    }
+  ]
+}

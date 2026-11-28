@@ -1,4 +1,5 @@
 """Environmental history in the Council and regional panel."""
+from pathlib import Path
 from playwright.async_api import expect
 
 
@@ -26,6 +27,17 @@ async def run(browser, url, ok, errors):
         await expect(history).to_have_count(0)
         await page.get_by_role("button", name="Show new built-up land").click()
         assert await page.evaluate("__app.state.lens?.id === 'urban_growth' || __app.state.lens === 'urban_growth'")
+        await page.get_by_role("button", name="Forest cover change 1990–2018").click()
+        assert await page.evaluate("__app.state.lens?.id === 'forest_change'")
+        await page.get_by_role("button", name="Agricultural land change 1990–2018").click()
+        assert await page.evaluate("__app.state.lens?.id === 'agriculture_change'")
+        await page.get_by_role("tab", name="Advisors").click()
+        await page.locator('[data-adv="environment"]').click()
+        await expect(page.locator(".nc")).to_contain_text("one-kilometre cells across")
+        await expect(page.locator(".nc")).to_contain_text("km² gained")
+        out = Path(__file__).parent / "results"
+        out.mkdir(exist_ok=True)
+        await page.screenshot(path=str(out / "corine-environment-desktop.png"))
         await page.get_by_role("button", name="Close the council").click()
         await page.evaluate("__app.selectState('NO-46', {fly: false})")
         await expect(page.locator("#city-panel .environment-history")).to_contain_text("Jostedalsbreen")

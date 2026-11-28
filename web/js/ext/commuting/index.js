@@ -29,13 +29,9 @@ export function install(app) {
       '<h4>Residents working elsewhere</h4>'+rows(p.outgoing)+
       '<h4>Workers living elsewhere</h4>'+rows(p.incoming)+
       '<div class="chips"><button class="chip" data-commuting-map>Show connections</button></div>'+
-      '<p class="muted small">Map lines connect municipality centres, not actual transport routes. <a href="'+esc(packet.source.url)+'" target="_blank" rel="noopener noreferrer external" referrerpolicy="no-referrer">SSB table 03321 ↗</a></p></div>'}];
+      '<p class="muted small">Blue dashed lines: incoming. Gold solid lines: outgoing. Lines connect municipality centres, not actual transport routes. <a href="'+esc(packet.source.url)+'" target="_blank" rel="noopener noreferrer external" referrerpolicy="no-referrer">SSB table 03321 ↗</a></p></div>'}];
   }
-  const coords = city => {
-    const cell=city?.cell;
-    return Number.isFinite(city?.x)&&Number.isFinite(city?.y) ? [city.x,city.y] :
-      Number.isInteger(cell) && cell>=0 && cell<app.w.grid.N ? app.w.grid.center(cell) : null;
-  };
+  const coords = city => Number.isFinite(city?.x)&&Number.isFinite(city?.y) ? [city.x,city.y] : null;
   app.registerStaticLayer({id:"commuting-connections",z:app.layerZ.RESOURCES+1,
     visible:()=>on && !!packet && selected()?.country==="NO",
     sig:()=>String(on)+"|"+(selected()?.id||""),
@@ -44,7 +40,7 @@ export function install(app) {
       if(!a) return;
       const p=list(city);
       ctx.save();
-      for(const [key,color] of [["incoming","#68c5ff"],["outgoing","#e4a34f"]]) {
+      for(const [key,color] of [["outgoing","#e4a34f"],["incoming","#68c5ff"]]) {
         ctx.strokeStyle=color;
         ctx.globalAlpha=.85;
         for(const item of p[key]) {
@@ -66,6 +62,12 @@ export function install(app) {
     if(!b||!packet)return;
     if(b.dataset.commutingCity){app.selectCity(b.dataset.commutingCity);return;}
     app.ui.setMapToggle("commuting-connections",true);
+    const city=selected();
+    if(!city)return;
+    const p=list(city);
+    const points=[coords(city),...p.incoming.concat(p.outgoing).map(x=>coords(byId.get(x.id)))].filter(Boolean);
+    if(points.length>1)app.fitBounds(Math.min(...points.map(x=>x[0])),Math.min(...points.map(x=>x[1])),
+      Math.max(...points.map(x=>x[0])),Math.max(...points.map(x=>x[1])),{maxScale:8});
     app.ui.toast("Blue dashed: incoming · Gold: outgoing · Schematic connections");
   });
   app.loadData("commuting").then(data=>{
@@ -77,7 +79,7 @@ export function install(app) {
       buckets.get(id).push(flow);
     }
     for(const [id,flows] of buckets)index.set(id,partners(flows,id));
-    app.commuting={packet,index};
+    app.commuting={packet,index,get on(){return on;}};
     app.addCitySections(section);
     app.invalidate();
   });
