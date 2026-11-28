@@ -1,11 +1,11 @@
 {
-  "version": 1,
+  "version": 2,
   "reviewed": "2026-11-28",
   "baselineCommit": "a0f144548b9f99d2618ef319954edd4d2d26eea6",
   "d05Manifest": "../d05/sources.json",
   "gridAuthority": "../../web/terrain/index.json",
   "d05Utility": "../../tools/d05_landcover.py",
-  "status": "No actual source acquisition; official documentation checked selectively; live endpoints untested",
+  "status": "Actual bounded D04 N50 and Overture fallback acquisition completed; source coverage and renderer integration outstanding. D05 live acquisition remains separate.",
   "sources": {
     "n50": {
       "rank": 1,
@@ -21,9 +21,9 @@
       "classes": [
         "Havflate",
         "Innsjø",
-        "Arealdekke",
-        "HavInnsjøSperre",
-        "havElvSperre"
+        "InnsjøRegulert",
+        "Elv",
+        "ElvBekk"
       ],
       "metadata": "https://kartkatalog.geonorge.no/metadata/uuid/ea192681-d039-42ec-b1bc-f3ce04c189ac",
       "capabilities": "https://nedlasting.geonorge.no/api/capabilities/ea192681-d039-42ec-b1bc-f3ce04c189ac",
@@ -32,8 +32,22 @@
       "license": "CC-BY-4.0",
       "attribution": "Kartverket, N50 Kartdata, CC BY 4.0; indicate modifications",
       "licenseStatus": "official catalogue confirmed",
-      "endpointStatus": "documented, not executed",
-      "limitations": "Inspect actual layer schema, inland river polygons and island holes; no extrapolation beyond territorial coverage."
+      "endpointStatus": "executed successfully via Geonorge municipal order API on 2026-11-28",
+      "limitations": "Inspect actual layer schema, inland river polygons and island holes; no extrapolation beyond territorial coverage.",
+      "observedLayers": [
+        "N50_Arealdekke_omrade",
+        "N50_Arealdekke_senterlinje"
+      ],
+      "acquisition": {
+        "runId": 46181266975,
+        "archiveCount": 15,
+        "archiveBytes": 96850418,
+        "coverageStatus": "unverified; simplified municipal bbox selection",
+        "assetPath": "../../data/prepared/d04/n50",
+        "assetCommit": "a0e7f2f3c1f839510f65cb1cfdbaa01e9ef009c4",
+        "finalizedArtifactId": 15277327886,
+        "finalizationRunId": 46181553623
+      }
     },
     "geodanmark": {
       "rank": 1,
@@ -122,9 +136,18 @@
       "license": "ODbL",
       "licenseStatus": "official documentation confirmed",
       "attribution": "Follow full release-specific Overture base attribution and OSM ODbL obligations",
-      "endpointStatus": "documented, not executed",
+      "endpointStatus": "executed successfully for Herning only on 2026-11-28",
       "access": "DuckDB bbox intersection and spatial clipping; no entire theme; public anonymous S3",
-      "limitations": "Isolated fallback only; land mask subtype=land AND class=land; water physical named features are not surface masks; no automatic merge into permissive national datasets."
+      "limitations": "Isolated fallback only; land mask subtype=land AND class=land; water physical named features are not surface masks; no automatic merge into permissive national datasets.",
+      "acquisition": {
+        "runId": 46181344653,
+        "artifactId": 15277538543,
+        "finalizationRunId": 46181553623,
+        "finalizedArtifactId": 15277198026,
+        "coverageStatus": "unverified",
+        "transferBytes": null,
+        "publication": "ODbL-separated fallback artifact; not committed to Git or production"
+      }
     },
     "eu-hydro": {
       "rank": 4,
@@ -153,5 +176,45 @@
     "licenses": "Separate ODbL processing and outputs; Marker publication held until official layer terms confirmed; no restricted AR5",
     "missing": "Unknown remains unknown; valid zero is not missing",
     "storage": "D05 10 m uint8 all pilots = 11.25 MiB per band, 30 m = 1.25 MiB; vector transfer and compressed bytes unmeasured"
+  },
+  "acquisitionResults": {
+    "report": "ACQUISITION_RESULTS.md",
+    "finalizer": "../../tools/d04_finalize.py",
+    "nationalAssetCommit": "a0e7f2f3c1f839510f65cb1cfdbaa01e9ef009c4",
+    "finalizationRunId": 46181553623,
+    "geographicCoverageVerified": false,
+    "runtimeIntegrated": false,
+    "pilots": [
+      {
+        "id": "oslo-lillestrom",
+        "source": "n50",
+        "waterPolygons": 429,
+        "lineFeatures": 1972,
+        "visibleLineFeatures": 1973,
+        "holes": 209,
+        "exportRepairs": 1,
+        "artifactId": 15278215141
+      },
+      {
+        "id": "aurland",
+        "source": "n50",
+        "waterPolygons": 483,
+        "lineFeatures": 1012,
+        "visibleLineFeatures": 1012,
+        "holes": 28,
+        "exportRepairs": 0,
+        "artifactId": 15277302574
+      },
+      {
+        "id": "herning",
+        "source": "overture",
+        "waterPolygons": 704,
+        "lineFeatures": 655,
+        "visibleLineFeatures": 664,
+        "holes": 10,
+        "exportRepairs": 0,
+        "artifactId": 15277538543
+      }
+    ]
   }
 }

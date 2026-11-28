@@ -1,5 +1,7 @@
 # D04/D05 preparation and Codex handoff
 
+> **Acquisition update (28 November 2026):** The earlier intake status below is historical. Actual bounded water data has now been acquired and finalized for all three pilots. See [ACQUISITION_RESULTS.md](ACQUISITION_RESULTS.md), [N50 staging assets](../../data/prepared/d04/n50), and the [separate Herning ODbL finalized artifact](https://github.com/ruishinor/nordicciv/actions/runs/46181553623/artifacts/15277198026). Norway uses the primary source; Herning uses the fallback, not GeoDanmark. Reuse these assets before reacquisition. Coverage completeness, visual geographical review and D03R integration are outstanding. D05 live acquisition is not part of this D04 run.
+
 Prepared 2026-11-28 on the isolated D05 parent 0e2c2493374af915815ea103e1f46fa33797eac1. Main was a0f144548b9f99d2618ef319954edd4d2d26eea6 and D03R PR #17 was open at 37e08f4f45a25baccf3326c79eebbfa049d8ebe5. Do not merge this branch into the active D03R work.
 
 ## Sources and what is actually available
@@ -48,7 +50,7 @@ D04: actual bounded inputs with version, rights, attribution, checksums and meas
 
 ## Codex continuation — D04
 
-Read docs/d04-d05/{README.md,sources.json}, tools/d04_water_prep.py and docs/d05/sources.json on prep/d04-d05-intake. After D03R integration, incorporate only preparatory paths into a new D04 branch. Acquire N50 bounded municipal extracts covering both Norwegian pilot footprints; inspect actual water schema and island topology. Obtain bounded GeoDanmark for Herning when access permits; use isolated Overture only if necessary and retain licence obligations. Reuse plan/clip and existing projection/tiles/caches. Build water surfaces and line treatment through the completed shared geographical surface interface, preserve unknown coverage and validate fixed-camera pilot details and seam behaviour. Record actual bytes, revisions, attribution and coverage. No D05 rendering, national downloads, camera change or parallel runtime.
+Read docs/d04-d05/{README.md,sources.json}, tools/d04_water_prep.py and docs/d05/sources.json on prep/d04-d05-intake. After D03R integration, incorporate only preparatory paths into a new D04 branch. Reuse the acquired and finalized N50 assets in data/prepared/d04/n50 and the separately licensed Herning artifact; inspect actual coverage, water geometry and island topology. Obtain bounded GeoDanmark for Herning when access permits and replace the isolated Overture fallback without mixing licences. Reuse plan/clip and existing projection/tiles/caches. Build water surfaces and line treatment through the completed shared geographical surface interface, preserve unknown coverage and validate fixed-camera pilot details and seam behaviour. Record actual bytes, revisions, attribution and coverage. No D05 rendering, national downloads, camera change or parallel runtime.
 
 ## Codex continuation — D05
 
