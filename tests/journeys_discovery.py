@@ -14,7 +14,7 @@ async def run(browser, url, ok, errors):
         try:
             await page.goto(url.split("#")[0], wait_until="domcontentloaded")
             await expect(page.locator("#opening")).to_have_count(0, timeout=15000)
-            await page.wait_for_function("window.__app?.explore?.journeys?.length >= 4")
+            await page.wait_for_function("() => window.__app?.explore?.journeys?.length >= 4")
             await page.locator('[data-mnav="discover"]' if mobile else "#btn-discover").click()
             card = page.locator("#discovery")
             await card.get_by_role("button", name="Journeys", exact=True).click()
@@ -26,14 +26,14 @@ async def run(browser, url, ok, errors):
             await expect(card).to_contain_text("2 of 3")
             second = await page.evaluate("__app.state.selectedCity.id")
             assert first != second
-            await page.wait_for_function("new URLSearchParams(location.hash.slice(1)).get('journey') === 'daylight:1'")
+            await page.wait_for_function("() => new URLSearchParams(location.hash.slice(1)).get('journey') === 'daylight:1'")
             await page.reload(wait_until="domcontentloaded")
             await expect(card).to_contain_text("2 of 3", timeout=15000)
             assert await page.evaluate("__app.state.selectedCity.id") == second
             assert await card.evaluate("(el) => {const r=el.getBoundingClientRect(); return r.left>=0 && r.right<=innerWidth && r.bottom<=innerHeight && el.scrollWidth<=el.clientWidth}")
             await card.get_by_role("button", name="Close", exact=True).click()
             await expect(card).to_be_hidden()
-            await page.wait_for_function("!new URLSearchParams(location.hash.slice(1)).has('journey')")
+            await page.wait_for_function("() => !new URLSearchParams(location.hash.slice(1)).has('journey')")
             await page.locator('#city-panel [data-cptab="Overview"]').click()
             link = page.get_by_role("link", name="Satellite imagery (Copernicus)")
             await expect(link).to_have_attribute("target", "_blank")
