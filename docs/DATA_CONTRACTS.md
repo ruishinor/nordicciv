@@ -82,3 +82,7 @@ To update this dataset alone, run `python -m pipeline fetch climate_normals`, `p
 | `nation.gdp_fallbacks` | per region, value added shared by total jobs because no municipality has a job in that industry (`value_added` in the source unit, `share_of_region`) |
 | `nation.gdp_sensitivity` | per alternative key and country: `n`, `over_1pct`, `over_5pct`, `median_abs`, `p95_abs`, `max`, `max_name` |
 | `relief/cover/{A,B,C}_{x}_{y}.webp`, `relief/index.json → cover` | 1 km land-cover masks for the illustration layer, 16 levels, three per image: A conifer, broadleaf, farmland; B rock, mire, heath; C built-up |
+
+## Historical CORINE land cover
+
+`lenses.json.land_history` contains the paired observation years (1990, 2018), pinned upstream revision, tile paths, Git blob IDs and SHA-256 hashes. `paired_cells` and each group's `gain` / `loss` arrays use the existing owned-hex packing. Forest classes are 23–25, agricultural classes 12–22. Net change is gain minus loss, null where no cell has both observations. Counts are 1 km cell classes, not polygon-based municipal areas. The builder checks all existing urban-growth values before writing new layers.

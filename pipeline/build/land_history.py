@@ -49,7 +49,7 @@ def verified_tiles(acquire=False):
     return inventory, records
 
 
-def build(acquire=False):
+def build(acquire=False, write=True):
     import pyarrow.parquet as pq
     inventory, records = verified_tiles(acquire)
     world = read_json(WEB_DATA / "world.json")
@@ -102,10 +102,12 @@ def build(acquire=False):
         "revision": inventory["revision"], "files": records, "paired_cells": [int(p) for p in paired],
         "groups": {key: {"gain": [int(x) for x in accum[key+"_gain"][owned]],
                          "loss": [int(x) for x in accum[key+"_loss"][owned]]} for key in GROUPS}}
-    write_json(WEB_DATA / "lenses.json", lenses)
+    if write:
+        write_json(WEB_DATA / "lenses.json", lenses)
     print(f"CORINE: {len(records)-1} tiles, {int(paired.sum()):,} paired cells, existing urban lens reproduced exactly")
     for key in GROUPS:
         print(f"{key}: gained {int(accum[key+'_gain'][owned].sum()):,}; lost {int(accum[key+'_loss'][owned].sum()):,} one-kilometre cells")
+    return lenses
 
 
 if __name__ == "__main__":

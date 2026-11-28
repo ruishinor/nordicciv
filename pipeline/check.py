@@ -307,6 +307,43 @@ def check_munis(r, munis, cities):
                   f"{munis.get('vertices', '?')} vertices at full detail")
 
 
+def check_land_history(r, lenses, world, mode):
+    from .build.land_history import INVENTORY, GROUPS, build
+    history = lenses.get("land_history")
+    if not history:
+        r.add("FAIL", "land history: paired CORINE data missing")
+        return
+    inventory = json.loads(INVENTORY.read_text(encoding="utf-8"))
+    files = history.get("files", [])
+    stripped = [{k: v for k, v in f.items() if k != "sha256"} for f in files]
+    r.ok(history.get("period") == [1990, 2018] and history.get("revision") == inventory["revision"]
+         and history.get("upstream") == inventory["upstream"] and stripped == inventory["files"]
+         and all(re.fullmatch(r"[0-9a-f]{64}", f.get("sha256", "")) for f in files),
+         "land history: paired years and all pinned tile identities and hashes match the inventory")
+    owned = [i for i, o in enumerate(world["owner"]) if o >= 0]
+    paired = history.get("paired_cells", [])
+    valid = len(paired) == len(owned) and all(type(p) is int and p >= 0 for p in paired)
+    r.ok(valid and any(paired), "land history: paired cell counts have the packed owned-hex length")
+    if not valid:
+        return
+    for key in GROUPS:
+        group = history.get("groups", {}).get(key, {})
+        gain, loss = group.get("gain", []), group.get("loss", [])
+        layer = next((l for l in lenses["lenses"] if l["id"] == key), None)
+        valid = (len(gain) == len(loss) == len(owned) and layer is not None
+                 and all(type(g) is int and type(l) is int and g >= 0 and l >= 0 and g+l <= p
+                         for g,l,p in zip(gain,loss,paired)))
+        r.ok(valid and layer["values"] == [g-l if p else None for g,l,p in zip(gain,loss,paired)],
+             f"land history: {key} net values match gains and losses; no paired cells means no value")
+    r.add("NOTE", f"land history: {sum(paired):,} paired 1 km cells in {sum(p > 0 for p in paired):,} of {len(owned):,} mapped hexes")
+    if mode != "built":
+        try:
+            actual = build(write=False)
+            r.ok(actual == lenses, "land history: shipped lenses and hashes equal the pinned source tiles")
+        except (OSError, ValueError) as error:
+            r.add("FAIL", f"land history: {error}")
+
+
 def check_lenses(r, lenses, sources, world):
     ids = {s["id"] for s in sources}
     if lenses.get("packed") == "owned":
@@ -568,6 +605,7 @@ def main(argv=None):
     by_region = check_cities(r, cities, world, nation, states)
     check_places(r, cities, world)
     check_munis(r, munis, cities)
+    check_land_history(r, lenses, world, mode)
     check_lenses(r, lenses, sources, world)
     check_shelters(r, load("shelters"), cities, world, lenses, mode)
     check_uplinks(r, load("uplinks"), cities, world, mode)
