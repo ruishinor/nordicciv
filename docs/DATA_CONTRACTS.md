@@ -14,6 +14,15 @@ km in the Nordic LAEA frame described in `world.json.projection` (x right, y dow
 | `infrastructure.json` | `roads [[a, b, class, name]]`, `rail [[a, b, tier]]` (hex links), `ferries [{name, pts, seasonal}]`, `ports [...]`, `airports [...]`, `rules`, `vintage`. |
 | `wonders.json` | `rules [{id, kind, text}]`, `wonders [{id, name, kind, category, rule, rank, motif, metrics, x, y, cell, county, state}]`. |
 | `sources.json` | the source registry with licence, publisher, description and every downloaded file (URL, SHA-256, bytes, retrieval time, via). |
+| `climate.json` | WMO `period` and `archive_version`, source and licence, `stations [{id, country, name, lat, lon, elevation_m, temperature_c[12], precipitation_mm[12], annual_temperature_c, annual_precipitation_mm, temperature_years[13], precipitation_years[13], source_url, sha256, retrieved}]`. Year counts follow Jan–Dec and then annual. Each value belongs to one station. |
+
+### Climate stations
+
+The 48 station CSVs come from [WMO submissions in NOAA NCEI archive 0253808, version 6.6](https://www.ncei.noaa.gov/data/oceans/archive/arc0216/0253808/6.6/data/0-data/Region-6-WMO-Normals-9120/). The [archive record lists CC0 1.0](https://catalog.data.gov/dataset/wmo-climatological-standard-normals-for-1991-2020-ncei-accession-0253808). The app credits MET Norway, SMHI and DMI at each station. Temperature is parameter 5 (mean, °C) and precipitation is parameter 1 (monthly or annual total, mm). Annual values come from the annual field. Counts below 24 years hide the corresponding figure, and a blank count stays unknown.
+
+Place profiles choose the closest sampled station in the same country within 100 km for each measurement. Distances start at the mapped settlement. Region panels use the largest municipality as a named reference. The map shows station locations.
+
+To update this dataset alone, run `python -m pipeline fetch climate_normals`, `python -m pipeline process climate_normals --strict`, then `python -m pipeline build climate`.
 
 ## Added in v0.2
 

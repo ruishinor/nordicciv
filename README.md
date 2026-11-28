@@ -31,6 +31,7 @@ towns, Danish farmland or the Øresund.
   industry concentrates, ask the Council), Economy (output estimate and method, specialisations, jobs by 14 industries,
   sites), Society (population chart with boundary breaks, age, density, income relative to the national reference),
   Sources (data status per value, tables) and Daylight (local sun and daylight times).
+- **Climate.** Turn on **Climate stations** under **Map**, or look under **Climate** for a municipality or region. The 1991–2020 station averages cover temperature and precipitation.
 - **Daylight.** Open **Daylight** to see where the sun is up, where there is twilight and where it is dark.
   Use the current time or choose a date and local time. Pick a municipality to see its sunrise, sunset, and
   daylight hours, including midnight sun and polar night. **Turn off** brings back the usual map colours.

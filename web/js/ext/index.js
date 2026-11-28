@@ -7,7 +7,8 @@
 // shelters/: public civil-defence shelters (Norway, DSB): map layer, card, municipality section, Almanac page.
 // uplinks/: public camera uplinks (outbound links to webcams their operators publish): layer, card, panel, Discover.
 // daylight/: optional sun and twilight lighting, time controls and municipality times.
-const MODULES = ["./layers/index.js", "./nordic/index.js", "./explore/index.js", "./shelters/index.js", "./uplinks/index.js", "./daylight/index.js"];
+// climate/: station climate normals in the map, panels and Environment advisor.
+const MODULES = ["./layers/index.js", "./nordic/index.js", "./explore/index.js", "./shelters/index.js", "./uplinks/index.js", "./daylight/index.js", "./climate/index.js"];
 
 export async function installExtensions(app, list = MODULES) {
   const loads = list.map((spec) => import(spec).then((m) => ({ m }), (err) => ({ err })));
