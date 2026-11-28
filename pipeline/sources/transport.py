@@ -40,10 +40,12 @@ def read_cells(text, selection):
     dims = [d.upper() for d in selection]
     expected = set(itertools.product(*selection.values()))
     reader = csv.DictReader(io.StringIO(text.lstrip("\ufeff")), delimiter=";")
-    if set(reader.fieldnames or []) != set(dims + ["INDHOLD"]):
+    if len(reader.fieldnames or []) != len(dims) + 1 or set(reader.fieldnames or []) != set(dims + ["INDHOLD"]):
         raise ValueError("Transport CSV dimensions changed")
     result = {}
     for row in reader:
+        if None in row or any(v is None for v in row.values()):
+            raise ValueError("Malformed transport CSV row")
         key = tuple(row[d] for d in dims)
         if key not in expected or key in result:
             raise ValueError("Unexpected or duplicate transport cell")
@@ -91,6 +93,10 @@ class Transport(Source):
             for n in records:
                 nodes[kind+":"+n["id"]] = {"name": n["name"], "kind": kind, "city": municipalities.get(n["id"], n.get("cbsa")),
                     "x": n["x"], "y": n["y"], "country": n["country"]}
+        # The existing Nordby port position is inconsistent with Fanø. Keep the named
+        # endpoint and municipality link, but do not draw a line from an unverified position.
+        nodes["port:DK_0DKNDB"] = {"name": "Fanø (port position unavailable)", "kind": "port",
+            "city": "DK-563", "country": "DK"}
         c = cities["DK-825"]
         nodes["municipality:DK-825"] = {"name": "Læsø (municipality centre)", "kind": "municipality", "city": c["id"], "x": c["x"], "y": c["y"], "country": "DK"}
         for code, name in (("NO", "Norway"), ("SE", "Sweden")):
