@@ -390,6 +390,54 @@ def _jsonstat_by(path, keydims):
     return out, dup
 
 
+def regional_source_totals(raw, year=2023):
+    """Read official regional accounts directly; do not depend on a previous build's interim totals."""
+    from .core import jsonstat
+    from .sources.stats import estat_records
+
+    ra = raw / "regional_accounts"
+    rates = {}
+    for row in estat_records(json.loads((ra / "ert_bil_eur_a.json").read_text(encoding="utf-8"))):
+        if row["time"] == str(year) and row["currency"] in ("NOK", "SEK", "DKK"):
+            cur, rate = row["currency"], row["value"]
+            if cur in rates or not isinstance(rate, (int, float)) or not math.isfinite(rate) or rate <= 0:
+                raise ValueError(f"invalid or duplicate exchange rate: {cur}")
+            rates[cur] = rate
+    if set(rates) != {"NOK", "SEK", "DKK"}:
+        raise ValueError("missing regional accounts exchange rates")
+    totals = {}
+
+    def add(country, code, value, currency):
+        key = f"{country}-{code}"
+        if key in totals or not isinstance(value, (int, float)) or not math.isfinite(value) or value <= 0:
+            raise ValueError(f"invalid or duplicate regional total: {key}")
+        totals[key] = value / rates[currency] * 1e6
+
+    for d, value, _ in jsonstat.records(jsonstat.load(ra / "ssb_09391.json")):
+        code = d["Region"]
+        if d["ContentsCode"] == "BNPB" and len(code) == 2 and code not in ("21", "22", "23", "25", "26", "88", "99"):
+            add("NO", code, value, "NOK")
+    for d, value, _ in jsonstat.records(jsonstat.load(ra / "scb_TAB3138.json")):
+        code = d["Region"]
+        if d["ContentsCode"] == "NR0105AH" and len(code) == 2 and code not in ("00", "90"):
+            add("SE", code, value, "SEK")
+    with (ra / "dst_NRHP.csv").open(encoding="utf-8-sig", newline="") as stream:
+        for row in csv.DictReader(stream, delimiter=";"):
+            if row["PRISENHED"] == "V_T" and len(row["OMRÅDE"]) == 2:
+                add("DK", row["OMRÅDE"], float(row["INDHOLD"]), "DKK")
+    if {key.split("-")[0] for key in totals} != {"NO", "SE", "DK"}:
+        raise ValueError("missing national regional accounts")
+    return totals, rates
+
+
+def reconcile_regional_totals(expected, actual):
+    """Keep the existing €50,001 tolerance for regional totals and require coverage in both directions."""
+    missing = sorted(set(expected) - set(actual))
+    extra = sorted(set(actual) - set(expected))
+    worst = max((abs(actual[k] - expected[k]) for k in set(expected) & set(actual)), default=0)
+    return not missing and not extra and bool(expected) and worst <= 50_001, worst, missing, extra
+
+
 def check_source(r, cities, nation, states, gdp_by_region):
     raw_missing = [p for p in ("ssb/07459_pop_age.json", "ssb/07459_pop_country.json", "scb/TAB628_pop_area.json",
                                "dst/FOLK1A_pop.csv", "regional_accounts/ssb_09391.json") if not (RAW / p).exists()]
@@ -461,13 +509,15 @@ def check_source(r, cities, nation, states, gdp_by_region):
     mism = [c["name"] for c in cities if c["country"] == "DK" and dk.get((c["id"][3:], 2026)) != c["population"]]
     r.ok(not mism, f"source join: every Danish municipality's 2026 population equals DST FOLK1A ({len(mism)} off)")
     # --- regional output: Σ municipal estimates = published region totals (in euro)
-    g = json.loads((INTERIM / "_gdp_regions.json").read_text(encoding="utf-8"))["regions"] if (INTERIM / "_gdp_regions.json").exists() else None
-    if g:
-        # the interim file stores regional totals rounded to €0.1 million
-        worst = max(abs(gdp_by_region.get(k, 0) - v["eur"] * 1e6) for k, v in g.items())
-        r.ok(worst <= 0.05e6 + 1, f"economy: Σ municipal estimates reconcile with all {len(g)} published regional totals (worst Δ €{worst:,.0f}; totals stored to €0.1 m)")
-    else:
-        r.skip("economy: regional totals not available", mandatory_in=("source", "release"))
+    try:
+        g, rates = regional_source_totals(RAW)
+        valid, worst, missing, extra = reconcile_regional_totals(g, gdp_by_region)
+        r.ok(valid, f"economy: Σ municipal estimates reconcile with all {len(g)} published regional totals "
+             f"(worst Δ €{worst:,.0f}; missing {missing}, unexpected {extra})")
+        r.ok(all(abs(nation["fx"].get(cur, 0) - rate) <= 1e-9 for cur, rate in rates.items()),
+             "economy: published exchange rates equal the cached Eurostat rates")
+    except (OSError, ValueError, KeyError, TypeError) as error:
+        r.add("FAIL", f"economy: regional source totals unavailable or invalid: {error}")
     from .core import jsonstat
     js = jsonstat.load(RAW / "regional_accounts/ssb_09391.json")
     shelf = next(v for d, v, _ in jsonstat.records(js) if d["Region"] == "23" and d["ContentsCode"] == "BNPB")
