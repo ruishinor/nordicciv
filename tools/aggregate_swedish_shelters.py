@@ -2,6 +2,7 @@
 Do not publish individual shelter coordinates, identifiers, addresses or technical fields.
 The full download is used only for the aggregate; fail if the schema or coverage is ambiguous.
 """
+import argparse
 import hashlib
 import io
 import json
@@ -38,13 +39,33 @@ def select(fields, names, purpose):
 
 
 def main():
+    parser=argparse.ArgumentParser()
+    parser.add_argument("--verify", action="store_true", help="Compare against the published aggregate; do not overwrite it")
+    parser.add_argument("--cache-dir", type=Path, help="Private local directory for raw source snapshots")
+    parser.add_argument("--report", type=Path, help="Write aggregate comparison only")
+    args=parser.parse_args()
+    cache=args.cache_dir
+    if cache:
+        cache.mkdir(parents=True,exist_ok=True)
     errors=[]
     for url in URLS:
         try:
-            with urllib.request.urlopen(urllib.request.Request(url,headers={"User-Agent":"NordicCiv aggregate shelter statistics"}),timeout=90) as response:
-                raw=response.read(100_000_001)
+            cached=cache/"Skyddsrum.zip" if cache else None
+            if cached and cached.exists():
+                raw=cached.read_bytes()
+                info=json.loads((cache/"source.json").read_text(encoding="utf-8"))
+                if info["url"]!=url or info["sha256"]!=hashlib.sha256(raw).hexdigest():
+                    raise ValueError("Cached archive URL or SHA-256 differs")
+                retrieved=info["retrieved"]
+            else:
+                with urllib.request.urlopen(urllib.request.Request(url,headers={"User-Agent":"NordicCiv aggregate shelter statistics"}),timeout=90) as response:
+                    raw=response.read(100_000_001)
+                retrieved=datetime.now(timezone.utc).isoformat()
             if len(raw)>100_000_000: raise ValueError("Archive exceeds size budget")
             z=zipfile.ZipFile(io.BytesIO(raw))
+            if cached and not cached.exists():
+                cached.write_bytes(raw)
+                (cache/"source.json").write_text(json.dumps({"url":url,"retrieved":retrieved,"sha256":hashlib.sha256(raw).hexdigest()}),encoding="utf-8")
             break
         except Exception as e:
             errors.append(f"{url}: {e}")
@@ -71,10 +92,16 @@ def main():
     if len(ids)!=290: raise ValueError("Unexpected Swedish geography")
     sources=json.loads((ROOT/"web/data/sources.json").read_text(encoding="utf-8"))
     boundary=next(f for s in sources if s["id"]=="boundaries" for f in s["files"] if f["file"]=="se_kommuner.geojson")
-    with urllib.request.urlopen(boundary["url"],timeout=60) as response:
-        boundary_bytes=response.read()
+    boundary_cache=cache/"se_kommuner.geojson" if cache else None
+    if boundary_cache and boundary_cache.exists():
+        boundary_bytes=boundary_cache.read_bytes()
+    else:
+        with urllib.request.urlopen(boundary["url"],timeout=60) as response:
+            boundary_bytes=response.read()
     if hashlib.sha256(boundary_bytes).hexdigest()!=boundary["sha256"]:
         raise ValueError("Boundary snapshot differs from the published map")
+    if boundary_cache and not boundary_cache.exists():
+        boundary_cache.write_bytes(boundary_bytes)
     to_metric=Transformer.from_crs("EPSG:4326","EPSG:3006",always_xy=True).transform
     shelter_to_metric=Transformer.from_crs(crs,"EPSG:3006",always_xy=True).transform
     by_id=defaultdict(list)
@@ -126,13 +153,35 @@ def main():
         raise ValueError(f"Too many unassigned records: {unassigned[0]}")
     print(f"Assigned by nearest outline: {nearest}; unassigned: {unassigned}; ambiguous: {ambiguous}",flush=True)
     data=json.loads(TARGET.read_text(encoding="utf-8").removeprefix(PREFIX).strip().removesuffix(";"))
+    previous=dict(data["SE"])
     data["SE"].update(municipalities=counts,totals=totals,register_url=url,sha256=hashlib.sha256(raw).hexdigest(),
-                      bytes=len(raw),retrieved=datetime.now(timezone.utc).isoformat(),fields={"capacity":"numberOfOc","identity":"InspireID"},boundary_sha256=boundary["sha256"],
+                      bytes=len(raw),retrieved=retrieved,fields={"capacity":"numberOfOc","identity":"InspireID"},boundary_sha256=boundary["sha256"],
                       boundary_url=boundary["url"],nearest=nearest,unassigned=unassigned,assignment="Point in municipality; nearest outline within 1500 m; ambiguous or distant points excluded from municipal totals",
                       terms="Attribution: Myndigheten för civilt försvar (MCF); derived municipal totals, no individual records",
                       metadata="https://geodirekt.sokigohosting.com/dataset/skyddsrum1-kopia")
-    TARGET.write_text(PREFIX+json.dumps(data,ensure_ascii=False,indent=2)+";\n",encoding="utf-8")
+    report=compare_aggregate(previous,data["SE"])
+    if args.report:
+        args.report.parent.mkdir(parents=True,exist_ok=True)
+        args.report.write_text(json.dumps(report,indent=2),encoding="utf-8")
+    if args.verify:
+        print(json.dumps(report,indent=2),flush=True)
+        if not report["aggregate_matches"]:
+            raise SystemExit("The current register produces different aggregates; review before updating.")
+    else:
+        TARGET.write_text(PREFIX+json.dumps(data,ensure_ascii=False,indent=2)+";\n",encoding="utf-8")
     print(f"Sweden: {len(counts)} municipalities; {totals[0]} shelters; {totals[1]} known places; {totals[2]} missing capacities",flush=True)
+
+def compare_aggregate(previous, current):
+    old,new=previous.get("municipalities",{}),current["municipalities"]
+    changed=sorted(k for k in set(old)|set(new) if old.get(k)!=new.get(k))
+    fields=("totals","nearest","unassigned","boundary_sha256")
+    mismatches=[f for f in fields if previous.get(f)!=current.get(f)]
+    return {"archive_matches":previous.get("sha256")==current.get("sha256"),
+            "aggregate_matches":not changed and not mismatches and bool(old),
+            "published_sha256":previous.get("sha256"),"current_sha256":current.get("sha256"),
+            "current_retrieved":current["retrieved"],"changed_municipalities":changed,
+            "changed_fields":mismatches,"published_totals":previous.get("totals"),"current_totals":current["totals"]}
+
 
 if __name__=="__main__":
     main()

@@ -89,3 +89,8 @@ Remaining work: independent parser/contract tests (missing/duplicate/invalid cel
 - Optional Daylight seasonal artwork uses existing masks and bounded cache. Swedish shelter wording now explains the 1.5 km assignment rule. New browser and unit assertions require validation.
 - Nordic Statistics COMP53 reuse terms (https://nordicstatistics.org/about/) cover personal use, internal information and news media; public interactive redistribution is not clearly covered. Keep the recovered data local until permission or a reusable alternative is verified. COMP53 covers the Øresund region, not all Scandinavian commuting.
 - Full candidate browser tests, representative visual/performance review, Swedish shelter source reproducibility and release gates remain outstanding.
+
+## Owner-directed continuation
+
+- 850d272 publishes the two attributed 2023 Øresund observations and adds six Discover journeys from the national commuting, transport and cross-border datasets. No municipal cross-border line is drawn. Owner approved publication of the two observations; no blanket reuse licence is asserted.
+- Swedish shelter aggregator now supports private local snapshot caching and a read-only comparison. CI publishes only an aggregate comparison report, never the individual source records. A different archive hash with identical aggregates is not an exact reproduction of the original bytes. Exact original source bytes remain unavailable unless recovered separately.
