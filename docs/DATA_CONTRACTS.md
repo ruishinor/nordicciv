@@ -86,3 +86,7 @@ To update this dataset alone, run `python -m pipeline fetch climate_normals`, `p
 ## Historical CORINE land cover
 
 `lenses.json.land_history` contains the paired observation years (1990, 2018), pinned upstream revision, tile paths, Git blob IDs and SHA-256 hashes. `paired_cells` and each group's `gain` / `loss` arrays use the existing owned-hex packing. Forest classes are 23–25, agricultural classes 12–22. Net change is gain minus loss, null where no cell has both observations. Counts are 1 km cell classes, not polygon-based municipal areas. The builder checks all existing urban-growth values before writing new layers.
+
+## Scandinavian shelter overview
+
+The shelter overview data module contains separate source figures. DK: the official 19 June 2024 municipal inventory (FOU 2023–24, annex 205), all 98 municipality codes, four capacity categories and the published total. Each row and national column reconciles to the published totals. SE: MCF national guidance and official location map; Swedish municipal totals may be added from its downloadable register. The DSB point layer and Norway-only lens remain unchanged. The national definitions are different; no cross-country ranking or coverage ratio is computed.

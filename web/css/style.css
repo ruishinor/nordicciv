@@ -867,3 +867,8 @@ a.maps-open svg { flex-shrink: 0; }
 /* Keep Council and Timeline actions large enough for keyboard and pointer use. */
 .nc .chip { min-height: 24px; min-width: 24px; white-space: normal; }
 .nc .obs .chips { gap: 6px; }
+
+.shelter-overview-list { margin:8px 0; font-size:12px; }
+.shelter-overview-list > div { display:flex; align-items:baseline; justify-content:space-between; gap:12px; padding:5px 0; border-bottom:1px solid rgba(255,255,255,.12); }
+.shelter-overview-list dd { margin:0; font-variant-numeric:tabular-nums; white-space:nowrap; font-weight:600; }
+.shelter-overview a { color:var(--gold-bright); display:inline-flex; align-items:center; min-height:24px; }
