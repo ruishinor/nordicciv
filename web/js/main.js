@@ -205,10 +205,10 @@ async function main() {
     const t0 = performance.now();
     const s = cam.scale;
     const v = cam.view();
-    const m = CACHE_MARGIN / s;
-    const ox = lead ? lead[0] * PAN_LEAD * m : 0, oy = lead ? lead[1] * PAN_LEAD * m : 0;
+    const m = CACHE_MARGIN / s, my = CACHE_MARGIN / cam.yScale;
+    const ox = lead ? lead[0] * PAN_LEAD * m : 0, oy = lead ? lead[1] * PAN_LEAD * my : 0;
     const vp = {
-      x0: v.x0 - m + ox, y0: v.y0 - m + oy, x1: v.x1 + m + ox, y1: v.y1 + m + oy, s, yScale: cam.yScale, dpr,
+      x0: v.x0 - m + ox, y0: v.y0 - my + oy, x1: v.x1 + m + ox, y1: v.y1 + my + oy, s, yScale: cam.yScale, dpr,
       cssW: cam.w + 2 * CACHE_MARGIN, cssH: cam.h + 2 * CACHE_MARGIN,
       surfaceY: terrainRenderer?.available && !state.lens ? (x, y) => cam.toSurfaceY(x, y) : null,
     };
@@ -606,6 +606,14 @@ async function main() {
 
   function setLens(lens) {
     const changed = lens !== state.lens;
+    // Lenses draw on the ground plane; their input projection must use that plane too.
+    if (terrainRenderer?.available && !!cam.elevationAt !== !lens) {
+      const [x, y] = cam.toWorld(cam.w / 2, cam.h / 2);
+      cam.stop();
+      cam.elevationAt = lens ? null : (wx, wy) => terrainElevationAt(w, wx, wy);
+      [cam.x, cam.y] = cam.centerAt(x, y, cam.w / 2, cam.h / 2);
+      cam.clamp();
+    }
     state.lens = lens;
     state.band = null;
     applyLens(w, lens, null);

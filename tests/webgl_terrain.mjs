@@ -120,8 +120,7 @@ test("pitched terrain projection and hit testing stay aligned across scales, hei
         assert.ok(Math.abs(hit[1] - point[1]) < 1e-5, `y round trip: ${scale}px/km, ${pitch}° pitch, cell ${cell}`);
 
         const view = {
-          x0: cam.x - cam.w / (2 * scale),
-          y0: cam.y - cam.h / (2 * cam.yScale),
+          ...cam.view(),
           s: scale,
           yScale: cam.yScale,
           cssW: cam.w,
@@ -136,6 +135,25 @@ test("pitched terrain projection and hit testing stay aligned across scales, hei
       }
     }
   }
+});
+
+test("pitched render bounds stay rectangular even over unequal elevations", () => {
+  const cam = new Camera(1000, 800);
+  cam.resize(800, 600);
+  cam.x = 420;
+  cam.y = 310;
+  cam.scale = 48;
+  cam.setPitch(45);
+  cam.verticalExaggeration = 2.5;
+  cam.elevationAt = (x, y) => 1000 + x + y;
+  const {x0, y0, x1, y1} = cam.view();
+  for (const [actual, expected] of [
+    [cam.toScreen(x0, y0), [0, 0]], [cam.toScreen(x1, y1), [cam.w, cam.h]],
+  ]) {
+    assert.ok(Math.abs(actual[0] - expected[0]) < 1e-8);
+    assert.ok(Math.abs(actual[1] - expected[1]) < 1e-8);
+  }
+  assert.notEqual(cam.toWorld(0, 0)[1], y0);
 });
 
 test("terrain projection shares the pitched camera's ground coordinates", () => {

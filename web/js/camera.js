@@ -200,9 +200,9 @@ export class Camera {
   }
 
   view() {
-    const [x0, y0] = this.toWorld(0, 0);
-    const [x1, y1] = this.toWorld(this.w, this.h);
-    return { x0, y0, x1, y1 };
+    // Render bounds describe the projected ground plane, not two unrelated surface hits.
+    const hw = this.w / (2 * this.scale), hh = this.h / (2 * this.yScale);
+    return { x0: this.x - hw, y0: this.y - hh, x1: this.x + hw, y1: this.y + hh };
   }
 }
 

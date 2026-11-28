@@ -80,6 +80,19 @@ async def run(browser, url, ok, errors, out):
         }""")
         await page.wait_for_timeout(500)
         await page.screenshot(path=str(Path(out) / "d01-terrain-current-main.png"))
+        lens_projection = await page.evaluate("""() => {
+            const a = __app, cam = a.cam;
+            const lens = a.data.lenses.lenses[0];
+            a.setLens(lens.id);
+            const flat = !cam.elevationAt;
+            const [x, y] = [cam.x + 1, cam.y + 1];
+            const hit = cam.toWorld(...cam.toScreen(x, y));
+            a.setLens(null);
+            return { flat, aligned: Math.hypot(hit[0] - x, hit[1] - y) < 1e-7,
+                restored: typeof cam.elevationAt === 'function' };
+        }""")
+        ok("62 Pitched statistical lens uses flat hit testing and restores terrain projection",
+           lens_projection["flat"] and lens_projection["aligned"] and lens_projection["restored"], lens_projection)
         before = await page.evaluate("() => __perf().static_n")
         await page.evaluate("""() => {
             const extension = window.__terrainGl.getExtension('WEBGL_lose_context');
