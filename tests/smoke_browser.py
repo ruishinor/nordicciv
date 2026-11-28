@@ -456,19 +456,19 @@ async def main():
         soc = await pg4.evaluate("""(async () => { const a = __app; const out = {};
             const sec = async (id) => { a.selectCity(id, { fly: false }); await new Promise((r) => setTimeout(r, 300));
               document.querySelector('[data-cptab="Society"]')?.click(); await new Promise((r) => setTimeout(r, 200));
-              const h = [...document.querySelectorAll('#city-panel .cp-section')].find((x) => /public shelters/i.test(x.innerText)); return h ? h.innerText : null; };
-            out.oslo = await sec('NO-0301'); out.none = await sec('NO-1856'); out.se = await sec('SE-0180');
+              const h = [...document.querySelectorAll('#city-panel .cp-section')].find((x) => /civil preparedness/i.test(x.innerText) || /shelter-overview/.test(x.innerHTML)); return h ? h.innerText : null; };
+            out.oslo = await sec('NO-0301'); out.none = await sec('NO-1856'); out.se = await sec('SE-0180'); out.dk = await sec('DK-101'); out.dkZero = await sec('DK-825');
             a.ui.setMapToggle('shelters', false); await sec('NO-0301');
             document.querySelector('[data-shelter-show="NO-0301"]')?.click(); await new Promise((r) => setTimeout(r, 300));
             out.layerOn = a.shelters.on;
             document.querySelector('[data-shelter-open]')?.click(); await new Promise((r) => setTimeout(r, 300));
             out.listOpens = !document.getElementById('shelter-card').hidden; a.shelters.closeCard(); return out; })()""")
         hasNone = "NO-1856" not in await pg4.evaluate("Object.keys(__app.shelters.data.munis).join(',')")
-        ok("24 Society tab: shelter count, registered places, source and date, private-shelter caveat; 'none' and 'not integrated' worded as such; 'show on map' turns the layer on",
+        ok("24 Society tab: shelter count, registered places, source and date, private-shelter caveat; Norwegian absence and Swedish official map; 'show on map' turns the layer on",
            soc["oslo"] and "33" in soc["oslo"] and "55,462" in soc["oslo"] and "Most of Norway's shelter places are in private shelters" in soc["oslo"] and "extracted" in soc["oslo"]
            and "All 33 as listed by DSB" in soc["oslo"] and soc.get("listOpens") is True
            and hasNone and soc["none"] and "no public shelter" in soc["none"] and "Private shelters in homes, schools and workplaces" in soc["none"]
-           and soc["se"] and "Shelter data unavailable for Sweden" in soc["se"] and soc["layerOn"] is True,
+           and soc["se"] and "Official Swedish shelter map" in soc["se"] and soc["dk"] and "44,530" in soc["dk"] and "455,131" in soc["dk"] and "2024" in soc["dk"] and soc["dkZero"] and "0 reported public shelter places" in soc["dkZero"] and soc["layerOn"] is True,
            {k: (v[:70] if isinstance(v, str) else v) for k, v in soc.items()})
         # 25. Council, Almanac, lens
         rest = await pg4.evaluate("""(async () => { const a = __app; a.clearSelection();
@@ -480,8 +480,8 @@ async def main():
             const mv = lens?.muni_values || {};
             return { notes, oslo, page: page.slice(0, 4000), lens: !!lens, seNull: mv['SE-0180'] === null, osloBand: mv['NO-0301'],
                      noneZero: mv['NO-1856'] === 0, cats: (lens?.categories || []).length }; })()""")
-        ok("25 Council and Almanac explain public vs private, capacity vs availability, SE/DK not integrated; lens: Norway banded, Sweden/Denmark no data, 'none' its own class",
-           "555 public shelters" in rest["notes"] and "unavailable for Sweden and Denmark" in rest["notes"] and "55,462" in rest["oslo"] and "private" in rest["oslo"].casefold()
+        ok("25 Council and Almanac explain public vs private, capacity vs availability, SE/DK separate overview; lens: Norway banded, Sweden/Denmark no data, 'none' its own class",
+           "555 public shelters" in rest["notes"] and "Official Swedish shelter map" in rest["notes"] and "3,680,747" in rest["notes"] and "55,462" in rest["oslo"] and "private" in rest["oslo"].casefold()
            and "Registered places" in rest["page"] and "Private shelters" in rest["page"] and "Current shelter information" in rest["page"] and "NLOD" in rest["page"]
            and rest["lens"] and rest["seNull"] and rest["noneZero"] and rest["osloBand"] == 4 and rest["cats"] == 5,
            {k: (v[:60] if isinstance(v, str) else v) for k, v in rest.items()})

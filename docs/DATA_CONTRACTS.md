@@ -94,3 +94,6 @@ To update this dataset alone, run `python -m pipeline fetch climate_normals`, `p
 ## Norwegian commuting
 
 `commuting.json`: one 2024 Q4 SSB 03321 snapshot for 357 Norwegian municipalities. `flows` contains `[home municipality ID, workplace municipality ID, employed people]` for directed, intermunicipal pairs with at least 25 people; `audit` counts the full requested Cartesian matrix (published, within municipality, below threshold, missing). `source.files` stores request identity and SHA-256. The municipality panel lists up to eight partners in each direction. Map lines connect municipal centres; they are schematic, not transport routes, trips or travel-mode statistics. No cross-border commuting or unshown totals are inferred.
+## Scandinavian shelter overview
+
+The shelter overview data module contains separate source figures. DK: the official 19 June 2024 municipal inventory (FOU 2023–24, annex 205), all 98 municipality codes, four capacity categories and the published total. Each row and national column reconciles to the published totals. SE: MCF national guidance and official location map; Swedish municipal totals may be added from its downloadable register. The DSB point layer and Norway-only lens remain unchanged. The national definitions are different; no cross-country ranking or coverage ratio is computed.
