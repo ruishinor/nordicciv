@@ -294,7 +294,8 @@ function drawCityTiles(ctx, w, Rpx, s, lod, selectedCity, vp) {
       if (x < vp.x0 - m || x > vp.x1 + m || y < vp.y0 - m || y > vp.y1 + m) continue;
     }
     const stateColor = w.stateColor[w.raw.owner[cell]] || [200, 200, 200];
-    drawCityTile(ctx, city, grid.cx(cell), grid.cy(cell), R, { Rpx, s, lod, stateColor, seed: cell, selected: city === selectedCity });
+    const x = grid.cx(cell), y = grid.cy(cell);
+    drawCityTile(ctx, city, x, vp?.surfaceY ? vp.surfaceY(x, y) : y, R, { Rpx, s, lod, stateColor, seed: cell, selected: city === selectedCity });
   }
   // Big metros spill their mid-rise blocks into the most built-up neighbouring hexes, so a skyline reads as a
   // cluster across several hexes rather than one tower hex in a ring of suburbs.
@@ -303,7 +304,7 @@ function drawCityTiles(ctx, w, Rpx, s, lod, selectedCity, vp) {
     const x = grid.cx(cell), y = grid.cy(cell);
     if (vp && (x < vp.x0 - m || x > vp.x1 + m || y < vp.y0 - m || y > vp.y1 + m)) continue;
     const stateColor = w.stateColor[w.raw.owner[cell]] || [200, 200, 200];
-    drawCityTile(ctx, spill, x, y, R, { Rpx, s, lod, stateColor, seed: cell });
+    drawCityTile(ctx, spill, x, vp?.surfaceY ? vp.surfaceY(x, y) : y, R, { Rpx, s, lod, stateColor, seed: cell });
   }
 }
 
@@ -418,12 +419,13 @@ function drawAnalyzeLand(ctx, vp, w, cells, opts, tile, worldT) {
 // Borders from the administrative polygons (coastline removed): municipal lines at municipal zoom, region lines,
 // and the national borders on top in gold.
 function drawPolygonBorders(ctx, vp, w, s, Rpx, lens) {
-  if (Rpx > 9) drawBorderLines(ctx, vp, "municipality", { width: Math.min(1.1, 0.35 + Rpx * 0.012) / s, color: lens ? "rgba(20,20,20,.32)" : "rgba(30,26,18,.30)", dash: Rpx > 30 ? [4 / s, 3 / s] : null });
-  drawBorderLines(ctx, vp, "region", { width: Math.max(2.2, Math.min(5, Rpx * 0.16)) / s, color: lens ? "rgba(255,255,255,.18)" : "rgba(255,236,190,.16)" });
-  drawBorderLines(ctx, vp, "region", { width: Math.max(0.8, Math.min(1.8, Rpx * 0.07)) / s, color: lens ? "rgba(15,15,15,.6)" : "rgba(20,14,6,.55)" });
-  drawBorderLines(ctx, vp, "country", { width: Math.max(2.5, Math.min(6, Rpx * 0.22)) / s, color: "rgba(20,14,6,.35)" });
-  drawBorderLines(ctx, vp, "country", { width: Math.max(1.3, Math.min(3, Rpx * 0.12)) / s, color: "rgba(255,226,150,.9)" });
-  if (Rpx > 22 && !lens) drawCoast(ctx, vp, { width: Math.min(1.6, 0.6 + Rpx * 0.01) / s, color: "rgba(250,240,210,.38)" });
+  const surface = { surfaceY: vp.surfaceY };
+  if (Rpx > 9) drawBorderLines(ctx, vp, "municipality", { ...surface, width: Math.min(1.1, 0.35 + Rpx * 0.012) / s, color: lens ? "rgba(20,20,20,.32)" : "rgba(30,26,18,.30)", dash: Rpx > 30 ? [4 / s, 3 / s] : null });
+  drawBorderLines(ctx, vp, "region", { ...surface, width: Math.max(2.2, Math.min(5, Rpx * 0.16)) / s, color: lens ? "rgba(255,255,255,.18)" : "rgba(255,236,190,.16)" });
+  drawBorderLines(ctx, vp, "region", { ...surface, width: Math.max(0.8, Math.min(1.8, Rpx * 0.07)) / s, color: lens ? "rgba(15,15,15,.6)" : "rgba(20,14,6,.55)" });
+  drawBorderLines(ctx, vp, "country", { ...surface, width: Math.max(2.5, Math.min(6, Rpx * 0.22)) / s, color: "rgba(20,14,6,.35)" });
+  drawBorderLines(ctx, vp, "country", { ...surface, width: Math.max(1.3, Math.min(3, Rpx * 0.12)) / s, color: "rgba(255,226,150,.9)" });
+  if (Rpx > 22 && !lens) drawCoast(ctx, vp, { ...surface, width: Math.min(1.6, 0.6 + Rpx * 0.01) / s, color: "rgba(250,240,210,.38)" });
 }
 
 function drawBorders(ctx, w, s, Rpx, lens) {
@@ -448,11 +450,15 @@ function drawBorders(ctx, w, s, Rpx, lens) {
 }
 
 
-export function hexPath(ctx, grid, i, f = 1) {
+export function hexPath(ctx, grid, i, f = 1, surfaceY = null) {
   const x = grid.cx(i), y = grid.cy(i);
   ctx.beginPath();
-  ctx.moveTo(x + grid.corners[0][0] * f, y + grid.corners[0][1] * f);
-  for (let k = 1; k < 6; k++) ctx.lineTo(x + grid.corners[k][0] * f, y + grid.corners[k][1] * f);
+  const [x0, y0] = [x + grid.corners[0][0] * f, y + grid.corners[0][1] * f];
+  ctx.moveTo(x0, surfaceY ? surfaceY(x0, y0) : y0);
+  for (let k = 1; k < 6; k++) {
+    const [px, py] = [x + grid.corners[k][0] * f, y + grid.corners[k][1] * f];
+    ctx.lineTo(px, surfaceY ? surfaceY(px, py) : py);
+  }
   ctx.closePath();
 }
 
@@ -538,7 +544,7 @@ function drawResources(ctx, vp, w, r0, r1, c0, c1, Rpx, filterSpec = null) {
   const { typeById, byCell, norm } = w.resources;
   const perCell = overview ? 1 : Rpx < 26 ? 1 : Rpx < 42 ? 2 : 3;
   const badges = !overview && Rpx >= 24;
-  const toS = (x, y) => [(x - vp.x0) * vp.s, (y - vp.y0) * vp.s];
+  const toS = (x, y) => [(x - vp.x0) * vp.s, ((vp.surfaceY ? vp.surfaceY(x, y) : y) - vp.y0) * vp.s];
 
   // Visible cells, best first (the first item of each list is that cell's best), so the most important
   // sites win the screen-space declutter below.
@@ -571,10 +577,11 @@ function drawResources(ctx, vp, w, r0, r1, c0, c1, Rpx, filterSpec = null) {
     for (let k = 0; k < n; k++) {
       const it = list[k];
       const size = resourceIconSize(Rpx, norm?.get(it) ?? 0);
-      const [sx, sy] = toS(grid.cx(i) + slots[k][0] * R, grid.cy(i) + slots[k][1] * R);
+      const wx = grid.cx(i) + slots[k][0] * R, wy = grid.cy(i) + slots[k][1] * R;
+      const [sx, sy] = toS(wx, wy);
       if (!free(sx, sy, size / 2)) continue;
       placed.push([sx, sy, size / 2]);
-      draws.push({ it, sx, sy, size, dim: w.dim && w.dim[i] });
+      draws.push({ it, sx, sy, size, dim: w.dim && w.dim[i], wx, wy });
       shown++;
       last = [sx, sy, size];
     }
@@ -618,7 +625,7 @@ function drawResources(ctx, vp, w, r0, r1, c0, c1, Rpx, filterSpec = null) {
     ctx.fillText(text, bx + bw / 2, by + bh / 2 + 0.5);
   }
   // Where each icon landed, in km (so hit tests and highlight rings survive pans of the cached layer).
-  return draws.map((d) => ({ item: d.it, x: vp.x0 + d.sx / vp.s, y: vp.y0 + d.sy / vp.s, r: d.size / 2 }));
+  return draws.map((d) => ({ item: d.it, x: d.wx, y: d.wy, r: d.size / 2 }));
 }
 
 function pill(ctx, x, y, w, h) {
@@ -755,6 +762,48 @@ const reducedMotion = (() => {
 const SELECT_ANIM_MS = Math.round(420 * (3 * Math.PI - Math.asin(0.2))); // ≈ 3.87 s
 let selAnim = { key: null, t0: 0 };
 
+const projectedPaths = new WeakMap();
+function rememberProjectedPath(paths, key, path) {
+  if (!paths.has(key) && paths.size >= 8) paths.delete(paths.keys().next().value);
+  paths.set(key, path);
+  return path;
+}
+
+function projectRings(owner, key, rings, surfaceY, stepKm) {
+  let paths = projectedPaths.get(owner);
+  if (!paths) projectedPaths.set(owner, (paths = new Map()));
+  if (paths.has(key)) return paths.get(key);
+  const path = new Path2D();
+  for (const ring of rings) {
+    if (ring.length < 4) continue;
+    path.moveTo(ring[0], surfaceY(ring[0], ring[1]));
+    for (let k = 2; k < ring.length; k += 2) {
+      const ax = ring[k - 2], ay = ring[k - 1], bx = ring[k], by = ring[k + 1];
+      const steps = Math.max(1, Math.ceil(Math.hypot(bx - ax, by - ay) / stepKm));
+      for (let j = 1; j <= steps; j++) {
+        const x = ax + (bx - ax) * j / steps, y = ay + (by - ay) * j / steps;
+        path.lineTo(x, surfaceY(x, y));
+      }
+    }
+    path.closePath();
+  }
+  return rememberProjectedPath(paths, key, path);
+}
+
+function projectedStatePaths(cam, w, si, outline) {
+  let paths = projectedPaths.get(w);
+  if (!paths) projectedPaths.set(w, (paths = new Map()));
+  const key = `state:${si}:${cam.pitch}:${cam.verticalExaggeration}`;
+  if (paths.has(key)) return paths.get(key);
+  const surfaceY = (x, y) => cam.toSurfaceY(x, y);
+  const path = projectRings(w, `${key}:outline`, outline.loops, surfaceY, w.grid.R / 2);
+  const dim = new Path2D();
+  dim.rect(-1e5, -1e5, 2e5 + w.raw.width, 2e5 + w.raw.height);
+  dim.addPath(path);
+  const result = { path, dim };
+  return rememberProjectedPath(paths, key, result);
+}
+
 /** True while the overlay animates (the selected state's border); main's draw loop keeps requesting frames. */
 export function isAnimating(state) {
   if (state?.selectedState == null || reducedMotion.matches) return false;
@@ -768,14 +817,18 @@ export function drawOverlay(ctx, cam, w, state, now = performance.now()) {
   const { grid } = w;
   const s = cam.scale;
   const si = state.selectedState != null ? stateIndex(w, state.selectedState) : -1;
+  const surfaceY = !state.lens && cam.pitch > 0 && cam.elevationAt ? (x, y) => cam.toSurfaceY(x, y) : null;
   // now === 0 (share images) draws the still frame and leaves the live animation's clock alone.
   if (now && selAnim.key !== state.selectedState) selAnim = { key: state.selectedState, t0: now };
   const t = now && !reducedMotion.matches && si >= 0 ? Math.min(SELECT_ANIM_MS, Math.max(0, now - selAnim.t0)) : -1;
-  if (si >= 0) drawSelectedState(ctx, cam, w, si, t);
+  if (si >= 0) drawSelectedState(ctx, cam, w, si, t, surfaceY);
   const sf = state.selectedCity && muniFeature(state.selectedCity.id);
   if (sf) {
     // the selected municipality's own territory (its polygon), never the hexes of its neighbours
-    const path = muniPath(sf, muniLevel(s * (ctx.getTransform().a / s || 1)));
+    const level = muniLevel(s * (ctx.getTransform().a / s || 1));
+    const path = surfaceY
+      ? projectRings(sf, `muni:${level}:${cam.pitch}:${cam.verticalExaggeration}`, sf.levels[level], surfaceY, grid.R / 2)
+      : muniPath(sf, level);
     ctx.save();
     ctx.fillStyle = "rgba(255,226,140,.12)";
     ctx.fill(path, "evenodd");
@@ -792,7 +845,7 @@ export function drawOverlay(ctx, cam, w, state, now = performance.now()) {
     ctx.restore();
   } else if (state.selectedCity && state.selectedCity.cell != null) {
     const i = state.selectedCity.cell;
-    hexPath(ctx, grid, i, 1.0);
+    hexPath(ctx, grid, i, 1.0, surfaceY);
     ctx.lineJoin = "round";
     ctx.strokeStyle = `rgba(255,214,110,.5)`;
     ctx.lineWidth = Math.max(5 / s, grid.R * 0.16);
@@ -802,7 +855,7 @@ export function drawOverlay(ctx, cam, w, state, now = performance.now()) {
     ctx.stroke();
   }
   if (state.hoverCell >= 0) {
-    hexPath(ctx, grid, state.hoverCell);
+    hexPath(ctx, grid, state.hoverCell, 1, surfaceY);
     ctx.strokeStyle = "rgba(255,240,200,.9)";
     ctx.lineWidth = 2 / s;
     ctx.stroke();
@@ -811,7 +864,7 @@ export function drawOverlay(ctx, cam, w, state, now = performance.now()) {
 
 let dimPath = null, dimFor = -1, dimWorld = null;
 // t: ms into the selection animation (it rests at SELECT_ANIM_MS), or -1 for the still frame.
-function drawSelectedState(ctx, cam, w, si, t) {
+function drawSelectedState(ctx, cam, w, si, t, surfaceY = null) {
   const s = cam.scale;
   const o = stateOutline(w, si);
   // Everything outside the state, as one even-odd path: a big rectangle with the state's loops cut out.
@@ -822,26 +875,27 @@ function drawSelectedState(ctx, cam, w, si, t) {
     dimFor = si;
     dimWorld = w;
   }
+  const projected = surfaceY ? projectedStatePaths(cam, w, si, o) : null;
   ctx.save();
   ctx.fillStyle = "rgba(6,10,18,.4)";
-  ctx.fill(dimPath, "evenodd");
+  ctx.fill(projected?.dim || dimPath, "evenodd");
   ctx.lineJoin = "round";
   ctx.lineCap = "round";
   const pulse = t >= 0 ? 0.5 + 0.5 * Math.sin(t / 420) : 0.6;
   // Glow: wide soft strokes under a crisp line.
   ctx.strokeStyle = `rgba(255,200,90,${0.12 + 0.1 * pulse})`;
   ctx.lineWidth = 11 / s;
-  ctx.stroke(o.path);
+  ctx.stroke(projected?.path || o.path);
   ctx.strokeStyle = `rgba(255,214,120,${0.28 + 0.14 * pulse})`;
   ctx.lineWidth = 5.5 / s;
-  ctx.stroke(o.path);
+  ctx.stroke(projected?.path || o.path);
   ctx.strokeStyle = "rgba(30,20,6,.85)";
   ctx.lineWidth = 3.2 / s;
-  ctx.stroke(o.path);
+  ctx.stroke(projected?.path || o.path);
   ctx.strokeStyle = "#ffe7a3";
   ctx.lineWidth = 2 / s;
   ctx.setLineDash([9 / s, 6 / s]);
   ctx.lineDashOffset = -((Math.max(0, t) / 1000) * 22) / s;
-  ctx.stroke(o.path);
+  ctx.stroke(projected?.path || o.path);
   ctx.restore();
 }

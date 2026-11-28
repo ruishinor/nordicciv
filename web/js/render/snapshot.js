@@ -44,7 +44,10 @@ export function renderToCanvas(target, cam, w, state, nation, opts = {}) {
   tmp.y = opts.y ?? cam.y;
 
   const v = tmp.view();
-  const vp = { ...v, s: tmp.scale, yScale: tmp.yScale, dpr, cssW, cssH };
+  const vp = {
+    ...v, s: tmp.scale, yScale: tmp.yScale, dpr, cssW, cssH,
+    surfaceY: opts.terrainRenderer?.available && !state.lens ? (x, y) => tmp.toSurfaceY(x, y) : null,
+  };
   ctx.save();
   const hitsOut = {};
   const app = opts.app ?? null;

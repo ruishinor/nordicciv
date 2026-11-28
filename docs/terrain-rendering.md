@@ -11,11 +11,11 @@ artwork stays underneath the lightly shaded mesh, so close zooms can show its fi
 0.5 km relief images are shaded land-cover artwork, not elevation surfaces. Higher-resolution terrain tiles remain
 future work.
 
-The WebGL surface is drawn into the existing cached map. Water, selection, municipality borders, city labels, map
-navigation, lenses and the minimap continue to use their existing paths. Statistical lenses use the Canvas renderer
-so their colours remain unchanged. The feature flag raises the camera limit from the normal 12 to 48 screen pixels
-per km; the standard map keeps its existing limit. Existing borders and map symbols remain on the flat map plane
-above the terrain surface.
+The WebGL surface is drawn into the existing cached map. Municipality and regional borders, coastlines, city markers,
+resource icons and selection outlines follow the sampled surface. City banners, navigation, lenses and the minimap
+keep their existing paths. Statistical lenses use the Canvas renderer so their colours remain unchanged. The feature
+flag raises the camera limit from the normal 12 to 48 screen pixels per km; the standard map keeps its existing limit.
+Rivers and state labels still use the flat map projection.
 
 `window.__app.terrain.registerLayer({id, type, draw})` accepts future WebGL layers with one of these types:
 `elevation`, `vegetation`, `buildings`, `agriculture` or `infrastructure`. The draw callback receives the WebGL
@@ -25,3 +25,8 @@ the preview does not add finer elevation, trees, buildings, fields or transport 
 Run the focused checks with `python -m unittest discover -s tests -p test_webgl_terrain.py`. The visual capture script
 includes `53-webgl-terrain-pitch`:
 `python tests/visual_states.py BASE_URL OUT_DIR 53-webgl-terrain-pitch`.
+
+The browser journey also checks failed WebGL initialization and a lost runtime context. `window.__app.terrain.stats()`
+reports buffer upload time, CPU-side WebGL submission time and Canvas composition time separately. GPU time is reported
+only when the browser supports `EXT_disjoint_timer_query_webgl2`; `gpuMedianMs` stays `null` when no GPU samples are
+available.

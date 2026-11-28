@@ -101,20 +101,43 @@ async function main() {
   const canvas = document.getElementById("map");
   const ctx = canvas.getContext("2d");
   const cam = new Camera(world.width, world.height);
+  const canvasMaxScale = cam.maxScale;
   const terrainStatus = document.getElementById("terrain-status");
   const params = new URLSearchParams(location.search);
   const rendererRequested = params.get("renderer") === "webgl";
   const pitchValue = params.get("pitch");
   const requestedPitch = pitchValue == null ? 0 : Number(pitchValue);
+  function restoreCanvasCamera() {
+    cam.stop();
+    cam.pan.x = 0;
+    cam.pan.y = 0;
+    const [centerX, centerY] = cam.toWorld(cam.w / 2, cam.h / 2);
+    cam.setPitch(0);
+    cam.elevationAt = null;
+    cam.verticalExaggeration = 1;
+    cam.maxScale = canvasMaxScale;
+    cam.x = centerX;
+    cam.y = centerY;
+    if (window.__app) {
+      cam.fitScale = fitScale();
+      updateMinScale(cam.fitScale);
+    }
+    cam.scale = cam.clampScale(cam.scale);
+    cam.clamp();
+    if (window.__app) {
+      // Context loss can happen during renderStatic(); defer invalidation until its old viewport is cached.
+      queueMicrotask(() => window.__app?.invalidate());
+    }
+  }
   const terrainRenderer = rendererRequested ? new WebGLTerrainRenderer(w, {
     onUnavailable: (error) => {
+      restoreCanvasCamera();
       if (terrainStatus) {
         terrainStatus.hidden = false;
         terrainStatus.textContent = "3D terrain is unavailable. Showing the standard map.";
       }
       if (window.__app) {
         console.warn("WebGL terrain unavailable; showing the standard map.", error);
-        window.__app.invalidate();
       }
     },
   }) : null;
@@ -187,6 +210,7 @@ async function main() {
     const vp = {
       x0: v.x0 - m + ox, y0: v.y0 - m + oy, x1: v.x1 + m + ox, y1: v.y1 + m + oy, s, yScale: cam.yScale, dpr,
       cssW: cam.w + 2 * CACHE_MARGIN, cssH: cam.h + 2 * CACHE_MARGIN,
+      surfaceY: terrainRenderer?.available && !state.lens ? (x, y) => cam.toSurfaceY(x, y) : null,
     };
     const W = Math.ceil(vp.cssW * dpr), H = Math.ceil(vp.cssH * dpr);
     if (cache.cv.width !== W || cache.cv.height !== H) {
@@ -820,7 +844,8 @@ async function main() {
       });
     } else {
       const v = snap.view();
-      drawStatic(c, { x0: v.x0, y0: v.y0, x1: v.x1, y1: v.y1, s, yScale: snap.yScale, dpr: k, cssW, cssH }, w, {
+      drawStatic(c, { x0: v.x0, y0: v.y0, x1: v.x1, y1: v.y1, s, yScale: snap.yScale, dpr: k, cssW, cssH,
+        surfaceY: terrainRenderer?.available && !state.lens ? (x, y) => snap.toSurfaceY(x, y) : null }, w, {
         lens: state.lens, showResources: state.showResources, layers: staticLayers.filter((l) => l.snapshot !== false), app, snapshot: true,
         terrainRenderer: terrainRenderer?.available ? terrainRenderer : null, pitch: snap.pitch,
       });
@@ -956,7 +981,7 @@ async function main() {
     if (!state.showResources || !cache.vp) return null;
     const k = cam.scale / cache.vp.s; // the cache is blitted scaled while a zoom settles
     for (const p of cache.hits.resources) {
-      const [sx, sy] = cam.toScreen(p.x, p.y);
+      const [sx, sy] = terrainRenderer?.available && !state.lens ? cam.toScreenSurface(p.x, p.y) : cam.toScreen(p.x, p.y);
       const r = p.r * k + 1;
       if ((mx - sx) ** 2 + (my - sy) ** 2 <= r * r) return p.item;
     }

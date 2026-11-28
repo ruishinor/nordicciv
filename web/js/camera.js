@@ -50,14 +50,16 @@ export class Camera {
     return [(x - this.x) * this.scale + this.w / 2, (y - this.y) * this.yScale + this.h / 2];
   }
 
-  toScreenSurface(x, y) {
-    const [sx, flatSy] = this.toScreen(x, y);
-    let sy = flatSy;
+  toSurfaceY(x, y) {
     const elevationM = this.elevationAt?.(x, y);
-    if (Number.isFinite(elevationM)) {
-      sy -= (elevationM / 1000) * this.verticalExaggeration * this.scale * Math.sin((this.pitch * Math.PI) / 180);
-    }
-    return [sx, sy];
+    if (!Number.isFinite(elevationM)) return y;
+    const pitch = (this.pitch * Math.PI) / 180;
+    return y - (elevationM / 1000) * this.verticalExaggeration * Math.tan(pitch);
+  }
+
+  toScreenSurface(x, y) {
+    const [sx] = this.toScreen(x, y);
+    return [sx, (this.toSurfaceY(x, y) - this.y) * this.yScale + this.h / 2];
   }
 
   toWorld(sx, sy) {
@@ -65,7 +67,7 @@ export class Camera {
     let y = (sy - this.h / 2) / this.yScale + this.y;
     if (!this.elevationAt || this.pitch === 0) return [x, y];
     const heightScale = this.verticalExaggeration * Math.tan((this.pitch * Math.PI) / 180) / 1000;
-    for (let i = 0; i < 4; i++) {
+    for (let i = 0; i < 12; i++) {
       const elevationM = this.elevationAt(x, y);
       y = (sy - this.h / 2) / this.yScale + this.y +
         (Number.isFinite(elevationM) ? elevationM * heightScale : 0);

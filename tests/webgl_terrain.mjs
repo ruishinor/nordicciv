@@ -96,6 +96,48 @@ test("camera pitch preserves screen-to-world round trips and zoom anchors", () =
   assert.throws(() => cam.setPitch(Infinity), TypeError);
 });
 
+test("pitched terrain projection and hit testing stay aligned across scales, heights and map positions", () => {
+  const world = smallWorld();
+  const cam = new Camera(1000, 800);
+  cam.resize(800, 600);
+  cam.maxScale = 48;
+  cam.minScale = 0.1;
+  cam.verticalExaggeration = 2.5;
+  cam.elevationAt = (x, y) => terrainElevationAt(world, x, y);
+  const cells = [0, 1, 3, 4, 5];
+
+  for (const scale of [0.5, 4, 12, 28, 48]) {
+    for (const pitch of [0, 14, 30, 45]) {
+      cam.scale = scale;
+      cam.setPitch(pitch);
+      for (const cell of cells) {
+        const point = [world.grid.cx(cell), world.grid.cy(cell)];
+        cam.x = point[0] - 3;
+        cam.y = point[1] + 2;
+        const screen = cam.toScreenSurface(...point);
+        const hit = cam.toWorld(...screen);
+        assert.ok(Math.abs(hit[0] - point[0]) < 1e-7, `x round trip: ${scale}px/km, ${pitch}° pitch, cell ${cell}`);
+        assert.ok(Math.abs(hit[1] - point[1]) < 1e-5, `y round trip: ${scale}px/km, ${pitch}° pitch, cell ${cell}`);
+
+        const view = {
+          x0: cam.x - cam.w / (2 * scale),
+          y0: cam.y - cam.h / (2 * cam.yScale),
+          s: scale,
+          yScale: cam.yScale,
+          cssW: cam.w,
+          cssH: cam.h,
+        };
+        const elevation = terrainElevationAt(world, ...point);
+        const projected = projectTerrainPoint(view, ...point, elevation, pitch);
+        assert.ok(Math.abs((projected[0] + 1) * cam.w / 2 - screen[0]) < 1e-7,
+          `projected x: ${scale}px/km, ${pitch}° pitch, cell ${cell}`);
+        assert.ok(Math.abs((1 - projected[1]) * cam.h / 2 - screen[1]) < 1e-7,
+          `projected y: ${scale}px/km, ${pitch}° pitch, cell ${cell}`);
+      }
+    }
+  }
+});
+
 test("terrain projection shares the pitched camera's ground coordinates", () => {
   const cam = new Camera(1000, 800);
   cam.resize(800, 600);

@@ -185,6 +185,9 @@ export class WebGLTerrainRenderer {
     this.layers = new Map();
     this.uploadMs = 0;
     this.submissionMs = [];
+    this.compositionMs = [];
+    this.gpuMs = [];
+    this.pendingGpuQuery = null;
     let gl = null;
     try {
       gl = this.canvas.getContext("webgl2", {
@@ -199,6 +202,7 @@ export class WebGLTerrainRenderer {
     }
     this.gl = gl;
     try {
+      this.timerQueryExtension = gl.getExtension("EXT_disjoint_timer_query_webgl2");
       this.mesh = buildTerrainMesh(world);
       this.program = createProgram(gl);
       this.positionBuffer = gl.createBuffer();
@@ -240,6 +244,19 @@ export class WebGLTerrainRenderer {
     this.onUnavailable?.(error);
   }
 
+  collectGpuTiming() {
+    const gl = this.gl;
+    const extension = this.timerQueryExtension;
+    const query = this.pendingGpuQuery;
+    if (!gl || !extension || !query || !gl.getQueryParameter(query, gl.QUERY_RESULT_AVAILABLE)) return;
+    if (!gl.getParameter(extension.GPU_DISJOINT_EXT)) {
+      this.gpuMs.push(gl.getQueryParameter(query, gl.QUERY_RESULT) / 1e6);
+      if (this.gpuMs.length > 60) this.gpuMs.shift();
+    }
+    gl.deleteQuery(query);
+    this.pendingGpuQuery = null;
+  }
+
   registerLayer(layer) {
     if (!this.available) throw new Error("WebGL terrain layers need an active WebGL 2 renderer");
     if (!layer || typeof layer.id !== "string" || !layer.id || !TERRAIN_LAYER_TYPES.includes(layer.type) ||
@@ -263,6 +280,8 @@ export class WebGLTerrainRenderer {
       this.canvas.height = height;
     }
     try {
+      this.collectGpuTiming();
+      const gpuQuery = this.timerQueryExtension && !this.pendingGpuQuery ? gl.createQuery() : null;
       const t0 = performance.now();
       gl.viewport(0, 0, width, height);
       gl.clearColor(0, 0, 0, 0);
@@ -284,19 +303,28 @@ export class WebGLTerrainRenderer {
       gl.uniform2f(this.locations.pitch, Math.cos(radians), Math.sin(radians));
       gl.enable(gl.DEPTH_TEST);
       gl.depthFunc(gl.LEQUAL);
-      gl.drawElements(gl.TRIANGLES, this.mesh.indices.length, gl.UNSIGNED_INT, 0);
-      const frame = { world, view: vp, pitch, scale: vp.s, verticalExaggeration: VERTICAL_EXAGGERATION,
-        project: (x, y, elevationM = 0) => projectTerrainPoint(vp, x, y, elevationM, pitch) };
-      for (const [id, layer] of this.layers) {
-        try {
-          layer.draw(gl, frame);
-        } catch (error) {
-          this.layers.delete(id);
-          console.error(`terrain layer "${id}" failed and was removed`, error);
+      if (gpuQuery) gl.beginQuery(this.timerQueryExtension.TIME_ELAPSED_EXT, gpuQuery);
+      try {
+        gl.drawElements(gl.TRIANGLES, this.mesh.indices.length, gl.UNSIGNED_INT, 0);
+        const frame = { world, view: vp, pitch, scale: vp.s, verticalExaggeration: VERTICAL_EXAGGERATION,
+          project: (x, y, elevationM = 0) => projectTerrainPoint(vp, x, y, elevationM, pitch) };
+        for (const [id, layer] of this.layers) {
+          try {
+            layer.draw(gl, frame);
+          } catch (error) {
+            this.layers.delete(id);
+            console.error(`terrain layer "${id}" failed and was removed`, error);
+          }
+        }
+      } finally {
+        if (gpuQuery) {
+          gl.endQuery(this.timerQueryExtension.TIME_ELAPSED_EXT);
+          this.pendingGpuQuery = gpuQuery;
         }
       }
       this.submissionMs.push(performance.now() - t0);
       if (this.submissionMs.length > 60) this.submissionMs.shift();
+      const compositionStart = performance.now();
       ctx.save();
       try {
         ctx.setTransform(1, 0, 0, 1, 0, 0);
@@ -304,6 +332,8 @@ export class WebGLTerrainRenderer {
       } finally {
         ctx.restore();
       }
+      this.compositionMs.push(performance.now() - compositionStart);
+      if (this.compositionMs.length > 60) this.compositionMs.shift();
       return true;
     } catch (error) {
       this.disable(error);
@@ -312,13 +342,22 @@ export class WebGLTerrainRenderer {
   }
 
   stats() {
-    const sorted = [...this.submissionMs].sort((a, b) => a - b);
+    if (this.available) this.collectGpuTiming();
+    const median = (samples) => {
+      const sorted = [...samples].sort((a, b) => a - b);
+      return sorted.length ? +sorted[sorted.length >> 1].toFixed(2) : null;
+    };
     return {
       available: this.available, error: this.error?.message || null,
       hexRadiusKm: this.mesh?.hexRadiusKm ?? null, verticalExaggeration: VERTICAL_EXAGGERATION, cells: this.mesh?.cells ?? 0,
       triangles: this.mesh?.triangles ?? 0, uploadMs: +this.uploadMs.toFixed(2),
-      submissionMedianMs: sorted.length ? +sorted[sorted.length >> 1].toFixed(2) : null,
-      submissionSamples: sorted.length,
+      cpuSubmissionMedianMs: median(this.submissionMs),
+      submissionSamples: this.submissionMs.length,
+      canvasCompositionMedianMs: median(this.compositionMs),
+      compositionSamples: this.compositionMs.length,
+      gpuTimingSupported: !!this.timerQueryExtension,
+      gpuMedianMs: median(this.gpuMs),
+      gpuSamples: this.gpuMs.length,
     };
   }
 }

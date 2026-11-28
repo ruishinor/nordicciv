@@ -73,6 +73,7 @@ export function drawHighlight(ctx, cam, w, state, opts = {}) {
   const h = state.highlight;
   if (!h) return;
   const s = cam.scale;
+  const surfaceY = !state.lens && cam.pitch > 0 && cam.elevationAt ? (x, y) => cam.toSurfaceY(x, y) : null;
   const color = h.color || DEFAULT_COLOR;
   const g = geometry(w, h);
   ctx.save();
@@ -91,6 +92,7 @@ export function drawHighlight(ctx, cam, w, state, opts = {}) {
     ctx.stroke(g.edge);
   }
   const ring = (x, y, r) => {
+    if (surfaceY) y = surfaceY(x, y);
     ctx.beginPath();
     ctx.arc(x, y, r, 0, Math.PI * 2);
     ctx.strokeStyle = "rgba(20,14,4,.8)";
@@ -107,7 +109,7 @@ export function drawHighlight(ctx, cam, w, state, opts = {}) {
       if (!city || city.cell == null) continue;
       if (h.dimOthers && !g.mask[city.cell]) {
         // Lift the city's own hex out of the dimming.
-        hexPath(ctx, w.grid, city.cell, 1);
+        hexPath(ctx, w.grid, city.cell, 1, surfaceY);
         ctx.fillStyle = "rgba(255,240,200,.08)";
         ctx.fill();
       }
