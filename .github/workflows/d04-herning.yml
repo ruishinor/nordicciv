@@ -1,0 +1,29 @@
+name: D04 Herning ODbL fallback
+on:
+  push:
+    branches: ['prep/d04-d05-intake']
+    paths:
+      - 'tools/d04_acquire_overture.py'
+      - '.github/workflows/d04-herning.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  herning:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: pip install 'numpy>=1.26' 'pyproj>=3.6' 'shapely>=2.0' 'rasterio>=1.4,<2' 'duckdb>=1.4,<2'
+      - name: Acquire bounded Herning water fallback
+        run: python tools/d04_acquire_overture.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: d04-herning-overture-odbl
+          path: data/raw/d04-prep/overture/herning/
+          retention-days: 30
+          if-no-files-found: warn
