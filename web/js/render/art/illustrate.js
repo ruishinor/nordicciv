@@ -124,6 +124,21 @@ function tile(tx, ty) {
 // as the camera zooms. Repaint the same artwork at a higher raster density for crisp edges on high-DPI screens.
 const PAT = 256;
 const cache = new Map();
+let season = "off";
+const SEASONAL_CLASSES = new Set(["farm", "broadleaf", "conifer"]);
+export function seasonForMonth(month) {
+  if (!Number.isInteger(month) || month < 1 || month > 12) return "off";
+  return month <= 2 || month === 12 ? "winter" : month <= 5 ? "spring" : month <= 8 ? "summer" : "autumn";
+}
+export function setIllustrationSeason(value) {
+  if (!["off", "spring", "summer", "autumn", "winter"].includes(value) || value === season) return false;
+  season = value;
+  return true;
+}
+export const illustrationSeason = () => season;
+export function seasonalPatternKey(key, raster, value = season) {
+  return key + ":" + raster + ":" + (SEASONAL_CLASSES.has(key) ? value : "off");
+}
 const PATTERN_BUDGET = 12e6; // at most ~48 MB of pattern canvas pixels
 let cachedPixels = 0;
 
@@ -149,7 +164,7 @@ function wrapDraw(N, x, y, r, fn) {
   }
 }
 
-function conifer(raster = 1) {
+function conifer(raster = 1, appearance = "off") {
   const c = canvas(PAT, raster), g = c.getContext("2d"), r = rng(2401);
   const pts = [];
   for (let gy = 0; gy < 18; gy++) for (let gx = 0; gx < 18; gx++) pts.push([(gx + 0.15 + r() * 0.7) * PAT / 18, (gy + 0.1 + r() * 0.8) * PAT / 18, 0.75 + r() * 0.5, r()]);
@@ -165,17 +180,17 @@ function conifer(raster = 1) {
       const ty = Y - h * (0.18 + 0.27 * k), tw = w * (1 - 0.24 * k), th = h * 0.46;
       g.fillStyle = dark;
       g.beginPath(); g.moveTo(X, ty - th); g.lineTo(X + tw, ty); g.lineTo(X - tw, ty); g.closePath(); g.fill();
-      g.fillStyle = lit;
+      g.fillStyle = appearance === "winter" ? "rgb(151,178,181)" : lit;
       g.beginPath(); g.moveTo(X, ty - th); g.lineTo(X - tw * 0.15, ty); g.lineTo(X - tw, ty); g.closePath(); g.fill();
       // Small branch highlights become visible as the same tree is enlarged.
-      g.strokeStyle = "rgba(174,196,126,0.28)"; g.lineWidth = 0.45 * s;
+      g.strokeStyle = appearance === "winter" ? "rgba(228,239,241,0.7)" : "rgba(174,196,126,0.28)"; g.lineWidth = 0.45 * s;
       g.beginPath(); g.moveTo(X - 0.18 * tw, ty - th * 0.45); g.lineTo(X - tw * 0.68, ty - th * 0.09); g.stroke();
     }
   });
   return c;
 }
 
-function broadleaf(raster = 1) {
+function broadleaf(raster = 1, appearance = "off") {
   const c = canvas(PAT, raster), g = c.getContext("2d"), r = rng(911);
   const pts = [];
   for (let gy = 0; gy < 15; gy++) for (let gx = 0; gx < 15; gx++) pts.push([(gx + 0.1 + r() * 0.8) * PAT / 15, (gy + 0.1 + r() * 0.8) * PAT / 15, 0.8 + r() * 0.45, r()]);
@@ -184,10 +199,20 @@ function broadleaf(raster = 1) {
     const R = 7 * s;
     g.fillStyle = "rgba(12,24,10,0.28)";
     g.beginPath(); g.ellipse(X + 2.5 * s, Y + R * 0.55, R * 0.95, R * 0.38, 0, 0, 2 * Math.PI); g.fill();
+    if (appearance === "winter") {
+      g.strokeStyle = "rgba(79,66,55,0.85)"; g.lineWidth = 0.9 * s;
+      g.beginPath(); g.moveTo(X, Y + R * .55); g.lineTo(X, Y - R * .4);
+      for (let j = 0; j < 6; j++) {
+        const a = j * Math.PI / 3 + v;
+        g.moveTo(X, Y); g.lineTo(X + Math.cos(a) * R * .55, Y + Math.sin(a) * R * .48);
+        g.lineTo(X + Math.cos(a + .18) * R * .9, Y + Math.sin(a + .18) * R * .8);
+      }
+      g.stroke(); return;
+    }
     const gr = g.createRadialGradient(X - R * 0.38, Y - R * 0.45, R * 0.1, X, Y - R * 0.1, R * 1.05);
-    gr.addColorStop(0, `rgb(${150 + v * 20},${178 + v * 14},${86 + v * 10})`);
-    gr.addColorStop(0.55, `rgb(${84 + v * 18},${128 + v * 16},${52 + v * 8})`);
-    gr.addColorStop(1, `rgb(${40 + v * 8},${76 + v * 10},${34 + v * 6})`);
+    gr.addColorStop(0, appearance === "autumn" ? "rgb(230,170,71)" : appearance === "spring" ? "rgb(185,210,115)" : `rgb(${150 + v * 20},${178 + v * 14},${86 + v * 10})`);
+    gr.addColorStop(0.55, appearance === "autumn" ? "rgb(171,97,35)" : appearance === "spring" ? "rgb(111,157,72)" : `rgb(${84 + v * 18},${128 + v * 16},${52 + v * 8})`);
+    gr.addColorStop(1, appearance === "autumn" ? "rgb(93,52,29)" : appearance === "spring" ? "rgb(52,99,43)" : `rgb(${40 + v * 8},${76 + v * 10},${34 + v * 6})`);
     g.fillStyle = gr;
     g.beginPath();
     for (let k = 0; k <= 7; k++) { // a lumpy crown
@@ -207,9 +232,12 @@ function broadleaf(raster = 1) {
   return c;
 }
 
-function farm(raster = 1) {
+function farm(raster = 1, appearance = "off") {
   const N = 512, c = canvas(N, raster), g = c.getContext("2d"), r = rng(7177);
-  const crops = [[214, 190, 108], [176, 186, 92], [200, 164, 96], [226, 210, 150], [150, 172, 86], [188, 150, 104], [222, 196, 120]];
+  const crops = appearance === "winter" ? [[206,215,215],[181,194,191],[168,155,139],[221,225,221]] :
+    appearance === "spring" ? [[137,174,91],[167,192,115],[156,132,96],[194,180,130]] :
+    appearance === "autumn" ? [[184,141,79],[159,111,74],[207,177,104],[146,126,83]] :
+    [[214,190,108],[176,186,92],[200,164,96],[226,210,150],[150,172,86],[188,150,104],[222,196,120]];
   // rows of fields of varying depth, each row split into fields of varying width (seamless in both directions)
   let y = 0;
   while (y < N) {
@@ -334,10 +362,10 @@ function urban(raster = 1) {
 
 const MAKERS = { conifer, broadleaf, farm, rock, wet, heath, urban };
 function pattern(key, raster = 1) {
-  const id = key + ":" + raster;
+  const id = seasonalPatternKey(key, raster);
   let c = cache.get(id);
   if (c) { cache.delete(id); cache.set(id, c); return c; }
-  c = MAKERS[key](raster);
+  c = MAKERS[key](raster, SEASONAL_CLASSES.has(key) ? season : "off");
   const pixels = c.width * c.height;
   while (cache.size && cachedPixels + pixels > PATTERN_BUDGET) {
     const old = cache.keys().next().value, cv = cache.get(old);
@@ -431,7 +459,7 @@ export function drawIllustration(L, vp, devPerKm) {
     else if (quality.tier === 1 && quality.cost < 35) quality.tier = 2;
     else if (quality.tier === 1 && quality.cost > 200) quality.tier = 0;
   }
-  lastStats = { ms: Math.round(ms), classes: drawn, tier: quality.tier, zoom: vp.s, kmPerPx, raster, cachedPixels, at: Math.round(performance.now()) };
+  lastStats = { ms: Math.round(ms), classes: drawn, tier: quality.tier, zoom: vp.s, kmPerPx, raster, cachedPixels, season, at: Math.round(performance.now()) };
   return true;
 }
 

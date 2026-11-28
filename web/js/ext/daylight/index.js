@@ -5,6 +5,7 @@ import {
 } from "../../util/solar.js";
 import { icon } from "../../ui/icon.js";
 import { daylightLayer } from "./light.js";
+import { seasonForMonth, setIllustrationSeason } from "../../render/art/illustrate.js";
 import { SEASON_DATES, seasonalLight, seasonInstant, AURORA_FORECAST } from "./seasons.js";
 
 const COUNTRY = { NO: "Norway", SE: "Sweden", DK: "Denmark" };
@@ -78,6 +79,8 @@ export function install(app) {
       <p class="muted small">Compare the same local time in different seasons (${referenceYear}).</p>
       <div class="chips">${SEASON_DATES.map(s => `<button type="button" class="chip" data-season="${s.id}">${s.label}</button>`).join("")}</div>
       <div class="chips"><button type="button" class="chip" data-season-hour="12:00">Noon</button><button type="button" class="chip" data-season-hour="00:00">Midnight</button></div>
+      <label><input type="checkbox" data-season-art> Seasonal landscape artwork</label>
+      <p class="muted small">Changes trees and fields as you zoom in. Illustrations, not current snow or weather.</p>
     </details>
     <p class="daylight-local muted">Pick a municipality for local times.</p>
     <button type="button" class="link daylight-local-link" hidden>See local times</button>`;
@@ -162,7 +165,15 @@ export function install(app) {
     if (city && box?.dataset.daylightCity === city.id) box.innerHTML = citySummary(city);
   }
 
+  function refreshArtwork() {
+    const appearance = mode && parameters && find("[data-season-art]").checked
+      ? seasonForMonth(zonedParts(parameters.ms, selectedZone()).month) : "off";
+    if (setIllustrationSeason(appearance)) app.invalidate();
+  }
+  find("[data-season-art]").addEventListener("change", refreshArtwork);
+
   function refresh(fill = false) {
+    refreshArtwork();
     const city = app.state.selectedCity;
     if (!parameters) { refreshCity(); return; }
     const zone = selectedZone();

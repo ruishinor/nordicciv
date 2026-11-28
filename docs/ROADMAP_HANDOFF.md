@@ -80,3 +80,12 @@ Remaining work: independent parser/contract tests (missing/duplicate/invalid cel
 8. Environmental baseline already includes climate normals, CORINE changes, glacier history and NVE southeast flood pilot. Further Swedish/Danish hazards remain optional source-led expansion, not completed in this session.
 9. Resolve source validation findings, then run `scripts/validate.ps1 -Mode built -Browser -Port 8767 -Python <configured-python>`, source mode, `tests/visual_states.py`, `tests/perf.py`, and candidate-bound release validation. Batch related fixes before expensive reruns. Do not claim release readiness while sources or candidate evidence fail.
 10. Prepare/update the integration draft PR. No merge to main, release promotion or deployment is authorized.
+
+
+## Continuation after recovery
+
+- e08db6b integrated 40 Danish aviation and selected ferry observations, map and panels, filters, Discover and source checks.
+- 3950385: local source validation passed (210 checks, zero failures/warnings/skips; 1,198 downloads). All 43 economic regions reconciled; 555 Norwegian shelter identifiers and source catalogue were updated without substantive record changes.
+- Optional Daylight seasonal artwork uses existing masks and bounded cache. Swedish shelter wording now explains the 1.5 km assignment rule. New browser and unit assertions require validation.
+- Nordic Statistics COMP53 reuse terms (https://nordicstatistics.org/about/) cover personal use, internal information and news media; public interactive redistribution is not clearly covered. Keep the recovered data local until permission or a reusable alternative is verified. COMP53 covers the Øresund region, not all Scandinavian commuting.
+- Full candidate browser tests, representative visual/performance review, Swedish shelter source reproducibility and release gates remain outstanding.
