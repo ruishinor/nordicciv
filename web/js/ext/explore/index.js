@@ -3,10 +3,13 @@
 // panel, and a short, dismissible first-run hint. Facts and rules: ../../explore.js.
 import { FACETS, discoveries } from "../../explore.js";
 import { esc } from "../../format.js";
+import { buildJourneys, contextLinks, resolveJourney } from "./journeys.js";
 
 export function install(app) {
   const { cities, nation } = app.data;
   const all = discoveries(cities, nation);
+  const journeys = buildJourneys(app.data);
+  let active = null, moving = false;
   let order = shuffle(all.map((_, k) => k), Date.now() % 100000);
   let pos = 0;
 
@@ -40,10 +43,84 @@ export function install(app) {
   card.setAttribute("aria-label", "Discovery");
   document.body.appendChild(card);
 
+  const focusDiscover = () => (btn.getClientRects().length ? btn : mnav?.querySelector('[data-mnav="discover"]'))?.focus();
+  function clearJourney() {
+    if (!active) return;
+    active = null;
+    delete card.dataset.journeys;
+    app.hash.soon();
+  }
+  function closeCard() {
+    clearJourney();
+    card.hidden = true;
+    delete card.dataset.journeys;
+    focusDiscover();
+  }
+  function menu() {
+    clearJourney();
+    card.dataset.journeys = "menu";
+    card.innerHTML = '<h2 class="disc-t" tabindex="-1">Explore a journey</h2><p class="muted small">Follow a theme across places. These are map tours, not travel directions.</p><div class="journey-list">' +
+      journeys.map(j => '<button type="button" class="chip" data-journey="' + esc(j.id) + '">' + esc(j.title) + ' · ' + j.stops.length + ' stops</button>').join("") +
+      '</div><div class="chips"><button type="button" class="chip" data-d="next">Surprise me</button><button type="button" class="chip" data-d="close">Close</button></div>';
+    card.hidden = false;
+    card.querySelectorAll("[data-journey]").forEach(b => b.onclick = () => step(b.dataset.journey, 0));
+    card.querySelector('[data-d="next"]').onclick = surprise;
+    card.querySelector('[data-d="close"]').onclick = closeCard;
+    card.querySelector("h2").focus({preventScroll: true});
+  }
+  function step(id, index, navigate = true) {
+    const journey = journeys.find(j => j.id === id);
+    const stop = journey?.stops[index], city = app.cityById.get(stop?.city);
+    if (!city || (!navigate && app.state.selectedCity?.id !== city.id)) return false;
+    active = {id, index, city: city.id};
+    if (navigate) {
+      moving = true;
+      try {
+        app.selectCity(city, {fly: true});
+        app.setLens(stop.lens || null);
+        app.setHighlight({cities: new Set([city.id]), cells: new Set(), color: "#ffe08a"});
+        if (stop.hydro) app.setShowResources(true);
+        if (stop.daylight) app.panels.element.querySelector('[data-cptab="Daylight"]')?.click();
+      } finally { moving = false; }
+    }
+    card.dataset.journeys = "step";
+    card.innerHTML = '<div class="disc-k">' + esc(journey.title) + ' · ' + (index + 1) + ' of ' + journey.stops.length + '</div>' +
+      '<h2 class="disc-t" tabindex="-1">' + esc(city.name) + '</h2><p>' + esc(stop.text) + '</p><p class="muted small">' + esc(stop.source) + '</p>' +
+      '<div class="chips"><button type="button" class="chip" data-d="prev"' + (index === 0 ? ' disabled' : '') + '>Previous</button>' +
+      '<button type="button" class="chip" data-d="forward">' + (index + 1 === journey.stops.length ? 'Finish' : 'Next stop ›') + '</button>' +
+      '<button type="button" class="chip" data-d="journeys">Journeys</button><button type="button" class="chip" data-d="close">Close</button></div>';
+    card.hidden = false;
+    card.querySelector('[data-d="prev"]').onclick = () => step(id, index - 1);
+    card.querySelector('[data-d="forward"]').onclick = () => index + 1 < journey.stops.length ? step(id, index + 1) : menu();
+    card.querySelector('[data-d="journeys"]').onclick = menu;
+    card.querySelector('[data-d="close"]').onclick = closeCard;
+    if (navigate) { card.querySelector("h2").focus({preventScroll: true}); app.hash.soon(); }
+    return true;
+  }
+  app.hash.register("journey", {
+    get: () => active ? active.id + ":" + active.index : null,
+    set(value) {
+      const parsed = resolveJourney(journeys, value);
+      if (parsed && step(parsed.id, parsed.index, false)) return;
+      if (active) { active = null; card.hidden = true; delete card.dataset.journeys; }
+    },
+  });
+  app.on("select", () => {
+    if (active && !moving && app.state.selectedCity?.id !== active.city) {
+      clearJourney(); card.hidden = true;
+    }
+  });
+  app.addCitySections(city => {
+    const html = contextLinks(city);
+    return html ? [{tab: "Overview", title: "Weather and satellite imagery", html}] : [];
+  });
+
   const showers = new Map(); // key → (d) => void, for discoveries contributed by other extensions
   function show(d) {
     const c = app.cityById.get(d.city);
     if (!c) return;
+    clearJourney();
+    delete card.dataset.journeys;
     app.selectCity(c, { fly: true });
     const custom = showers.get(d.key);
     const hl = { cities: new Set([c.id]), cells: new Set(), color: "#ffe08a" };
@@ -56,10 +133,12 @@ export function install(app) {
     card.innerHTML = `<div class="disc-k">Discovery ${pos}/${all.length}</div>
       <p class="disc-t">${esc(d.text)}</p>
       ${def ? `<p class="muted small">${esc(def)}</p>` : d.group ? `<p class="muted small">Location quotient: the industry's share of local jobs ÷ its share in the three countries combined. Concentration, not output.</p>` : ""}
-      <div class="chips"><button class="chip" data-d="next">Another ›</button><button class="chip" data-d="close">Close</button></div>`;
+      <div class="chips"><button class="chip" data-d="next">Another ›</button>${journeys.length ? '<button class="chip" data-d="journeys">Journeys</button>' : ""}<button class="chip" data-d="close">Close</button></div>`;
     card.hidden = false;
     card.querySelector('[data-d="next"]').onclick = () => surprise();
-    card.querySelector('[data-d="close"]').onclick = () => { card.hidden = true; btn.focus(); };
+    const journeysButton = card.querySelector('[data-d="journeys"]');
+    if (journeysButton) journeysButton.onclick = menu;
+    card.querySelector('[data-d="close"]').onclick = closeCard;
     if (custom) setTimeout(() => custom(d), 0);
   }
   /** Other extensions add discoveries of their own kind (same card); onShow(d) runs after the place is selected. */
@@ -109,7 +188,7 @@ export function install(app) {
     app.on("lens", off);
   }
 
-  app.explore = { discoveries: all, surprise, show, addDiscoveries };
+  app.explore = { discoveries: all, surprise, show, addDiscoveries, journeys };
 }
 
 function shuffle(a, seed) {

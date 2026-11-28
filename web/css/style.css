@@ -857,3 +857,9 @@ a.maps-open svg { flex-shrink: 0; }
 .site.has-maps > span:first-child { white-space: normal; overflow: visible; }
 .site.has-maps > .muted { grid-column: 1; max-width: none; text-align: left; white-space: normal; font-size: 12px; }
 .site.has-maps > a.maps-open { grid-column: 2; grid-row: 1 / span 2; margin-left: 0; }
+
+/* Connected discoveries use the existing compact card. */
+.discovery[data-journeys] { max-height: calc(100dvh - var(--topbar-h) - 80px); overflow-y: auto; }
+.journey-list { display: grid; gap: 6px; margin: 10px 0; }
+.journey-list button { text-align: left; white-space: normal; }
+.discovery[data-journeys] .chips { flex-wrap: wrap; }
