@@ -41,7 +41,7 @@ URL = _pos[0] if _pos else "http://127.0.0.1:8765/"
 CANDIDATE = Path(_arg("--candidate", str(ROOT))).resolve()
 OUT = Path(_arg("--out", str(ROOT / "tests" / "results"))).resolve()
 # every journey must run and pass for a release (journey ids are the leading numbers of the names below)
-MANDATORY = [str(i) for i in range(0, 58)]  # 51 NVE, 52–53 commuting, 54–55 close zoom.
+MANDATORY = [str(i) for i in range(0, 60)]  # 51 NVE, 52–53 commuting, 54–55 close zoom.
 AXE = ROOT / "tests" / ".node" / "node_modules" / "axe-core" / "axe.min.js"
 AXE_ALT = Path(os.environ.get("NORDICCIV_AXE", "/nonexistent"))
 
@@ -714,6 +714,9 @@ async def main():
         await run_close_zoom(b, URL, ok, errors, OUT)
         from journeys_transport import run as run_transport
         await run_transport(b, URL, ok, errors)
+
+        from journeys_atlas_ui import run as run_atlas_ui
+        await run_atlas_ui(b, URL, ok, errors, OUT)
 
         ok("20 no console errors", not errors, errors[:3])
         await b.close()

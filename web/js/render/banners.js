@@ -24,7 +24,7 @@ import { compact, popShort } from "../util/fmt.js"; // format.js plus a 1000K â†
 import { isCapital } from "../world.js";
 import { cityIsDot } from "./art/city.js";
 
-const SERIF = '"Palatino Linotype", Palatino, "Book Antiqua", Georgia, serif';
+const SERIF = '"Constantia", "Cambria", Georgia, serif';
 const SANS = "-apple-system, system-ui, sans-serif";
 
 // Two layouts: the full plate, and a compact one for the national view where plates crowd each other.
@@ -53,8 +53,8 @@ const EDGE = 8; // plates of on-screen cities stay this far inside the screen ed
 const FOCUS_FADE = 0.35; // alpha of the other banners while state.bannerFocus is set
 
 // Frame metals: [top, middle, bottom]
-const BRONZE = ["#ecd08a", "#a8833f", "#4f3a1b"];
-const GOLD = ["#fff4c4", "#e6bd55", "#8d6418"];
+const BRONZE = ["#b1cbc5", "#668c89", "#30494c"];
+const GOLD = ["#edf4da", "#a5c8b5", "#507a72"];
 const INK = "rgba(6,8,12,0.75)";
 
 // Industry â†’ icon (+ medallion colour) for the "most specialised industry" badge. An `i-<industry>` icon from
@@ -310,11 +310,11 @@ function paintTab(ctx, ox, oy, W, badge) {
   ctx.shadowBlur = 3;
   ctx.shadowOffsetY = 1;
   roundRect(ctx, x, y, tw, TAB_H + 4, 3.5);
-  ctx.fillStyle = vGrad(ctx, y, y + TAB_H + 4, BRONZE);
+  ctx.fillStyle = css(shade(col,-0.35));
   ctx.fill();
   ctx.restore();
   roundRect(ctx, x + 1.2, y + 1.2, tw - 2.4, TAB_H + 2, 2.6);
-  ctx.fillStyle = vGrad(ctx, y, y + TAB_H, [css(shade(col, 0.22)), css(col), css(shade(col, -0.35))]);
+  ctx.fillStyle = css(shade(col,-0.35));
   ctx.fill();
   ctx.save();
   roundRect(ctx, x + 1.2, y + 1.2, tw - 2.4, TAB_H - 1.2, 2.6);
@@ -341,7 +341,7 @@ function paintBanner(ctx, ox, oy, W, m, L, col, { selected, showYields, ptr = nu
   // soft drop shadow for both tiers and the pointer
   ctx.save();
   ctx.shadowColor = "rgba(0,0,0,0.6)";
-  ctx.shadowBlur = 5;
+  ctx.shadowBlur = 2;
   ctx.shadowOffsetY = 2;
   ctx.fillStyle = "rgba(0,0,0,0.9)";
   roundRect(ctx, ox, oy, W, NH, 5);
@@ -355,7 +355,7 @@ function paintBanner(ctx, ox, oy, W, m, L, col, { selected, showYields, ptr = nu
   if (selected) {
     ctx.save();
     ctx.shadowColor = "rgba(255,214,110,0.95)";
-    ctx.shadowBlur = 7;
+    ctx.shadowBlur = 3;
     ctx.strokeStyle = "rgba(255,226,140,0.9)";
     ctx.lineWidth = 2;
     roundRect(ctx, ox - 1, oy - 1, W + 2, NH + 2, 6);
@@ -595,6 +595,7 @@ export function drawBanners(ctx, cam, w, state, yields, nation = state.nation) {
   const Rpx = grid.R * cam.scale;
   const minPop = popFloor(Rpx, (nation || state.nation)?.banner_floors);
   const phoneClose = cam.w <= 700 && cam.scale >= 6;
+  const close = cam.scale >= 6;
   const showYields = Rpx > 24 && !phoneClose;
   const L = Rpx < 8 || phoneClose ? LAYOUTS.compact : LAYOUTS.full;
   // count budget: about 0.3 plates per plate-sized patch of screen (the plates themselves stay well under that)
@@ -629,7 +630,7 @@ export function drawBanners(ctx, cam, w, state, yields, nation = state.nation) {
     const focused = focus == null || inFocus(focus, city, sel);
     const m = measure(ctx, city, yields, nation, L);
     // the yield tier: the selected and hovered cities, then the biggest few in view (or the focus cities)
-    const tierOk = pinned || city === hov || (focus != null ? focused : tiers < tierMax);
+    const tierOk = pinned || city === hov || (!close && (focus != null ? focused : tiers < tierMax));
     let tiered = showYields && m.parts.length > 0 && tierOk;
     const badge0 = badges && showYields ? badgeFor(badges, city) : null;
     let width, height, x, y, rect, ptr, tab;

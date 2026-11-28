@@ -14,7 +14,7 @@ const TOGGLES = [
   { id: "roads", label: "Roads", icon: "t-road", def: true, title: "Motorways and major roads (Natural Earth, as map art)", layers: ["roads"] },
   { id: "rail", label: "Railways", icon: "t-rail", def: true, title: "Main and secondary rail lines (Natural Earth, as map art)", layers: ["rail"] },
   { id: "hubs", label: "Ports & airports", icon: "d-harbor", def: true, title: "Main ports by goods handled and airports by passengers (Eurostat 2024)", layers: ["hubs"] },
-  { id: "wonders", label: "Wonders", icon: "w-landmark", def: true, title: "World Heritage Sites, large national parks, major universities and long fixed links", layers: ["wonders", "protected", "plates"] },
+  { id: "wonders", label: "Wonders & landmarks", icon: "w-landmark", def: false, title: "World Heritage Sites, large national parks, major universities and long fixed links", layers: ["wonders", "protected", "plates"] },
 ];
 
 export function install(app) {
@@ -29,7 +29,7 @@ export function install(app) {
       get: () => on[t.id],
       set: (v) => {
         on[t.id] = !!v;
-        app.requestDraw();
+        app.invalidate();
       },
     });
   }
