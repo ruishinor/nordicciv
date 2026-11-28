@@ -26,7 +26,8 @@ export function sourceRef(registry, country, table, label) {
 export function sourceLink(ref, label, note = "") {
   if (!ref) return "";
   const title = ref.titleVerified ? ref.label : `[${ref.label}]`;
-  const date = ref.retrieved ? ` Retrieved ${String(ref.retrieved).slice(0,10)}.` : "";
+  const retrieved = new Date(ref.retrieved || "");
+  const date = Number.isFinite(retrieved.getTime()) ? ` Retrieved ${new Intl.DateTimeFormat("en-US", { month: "long", day: "numeric", year: "numeric", timeZone: "UTC" }).format(retrieved)}.` : "";
   const citation = `${ref.publisher}. (n.d.). ${title} (Table ${ref.table}) [Data set].${date}`;
   return `<details class="metric-source"><summary aria-label="${esc(label)}" title="${esc(citation + (note ? " " + note : ""))}">*</summary><div class="metric-pop">${esc(ref.publisher)}. (n.d.). <a href="${esc(ref.url)}" target="_blank" rel="noopener noreferrer"><i>${esc(title)}</i> (Table ${esc(ref.table)})</a> [Data set].${esc(date)} ${esc(note)}</div></details>`;
 }

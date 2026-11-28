@@ -956,3 +956,7 @@ body.minimap-collapsed #lens-area { left:calc(64px + var(--dock-left, 0px)); }
 .lp-nm { white-space: normal; overflow: visible; text-overflow: clip; }
 .lp-pin { color: var(--gold-bright); font-weight: bold; }
 @container (max-width:560px) { .lens-quick .lens-btn span { display:none; } }
+
+.lp-group[data-group="base"] { grid-column: 1 / -1; }
+.lp-group[data-group="base"] .lp-tiles { max-width:235px; }
+.lp-tile:disabled { opacity:.45; cursor:default; }

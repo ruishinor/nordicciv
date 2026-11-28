@@ -102,7 +102,7 @@ export function initLensDock(opts) {
     const inRow = !active || recent.includes(active.id);
     moreBtn.classList.toggle("active", !inRow);
     moreBtn.innerHTML = `${icon("layers", "▤", { size: 15 })}<span>Lenses</span><span class="caret" aria-hidden="true">▾</span>`;
-    moreBtn.title = "All lenses (L cycles)";
+    moreBtn.title = active ? `Map lenses – active: ${active.name}` : "Map lenses – terrain";
     moreBtn.hidden = !lenses.length;
   }
 
@@ -110,12 +110,12 @@ export function initLensDock(opts) {
     const groups = [...(lensFile?.groups || [])];
     const known = new Set(groups.map((g) => g.id));
     if (lenses.some((l) => !known.has(l.group))) groups.push({ id: "__other", name: "Other" });
-    const tile = (l) => `<button class="lp-tile ${isActive(l) ? "active" : ""}" data-id="${esc(l.id ?? "")}" aria-pressed="${editingPins ? recent.includes(l.id) : isActive(l)}" ${editingPins && !l.id ? "disabled" : ""}
+    const tile = (l) => `<button class="lp-tile ${(editingPins ? recent.includes(l.id) : isActive(l)) ? "active" : ""}" data-id="${esc(l.id ?? "")}" aria-pressed="${editingPins ? recent.includes(l.id) : isActive(l)}" ${editingPins && (!l.id || (!recent.includes(l.id) && recent.length >= 3)) ? "disabled" : ""}
         title="${esc(l.description || l.name)}">
         <span class="lp-ic">${glyph(l, 20)}</span><span class="lp-nm">${esc(l.name)}</span>
         ${editingPins && l.id ? `<span class="lp-pin" aria-hidden="true">${recent.includes(l.id) ? "✓" : "+"}</span>` : ""}
       </button>`;
-    const sec = (g, items) => !items.length ? "" : `<section class="lp-group"><h4>${icon(g.icon || `g-${g.id}`, "", { size: 14 })}${esc(g.name)}</h4>
+    const sec = (g, items) => !items.length ? "" : `<section class="lp-group" data-group="${esc(g.id)}"><h4>${icon(g.icon || `g-${g.id}`, "", { size: 14 })}${esc(g.name)}</h4>
         <div class="lp-tiles">${items.map(tile).join("")}</div></section>`;
     picker.innerHTML = `<div class="lp-head"><span>Map lenses</span><button type="button" class="chip" data-edit-pins aria-pressed="${editingPins}">${editingPins ? `Done (${recent.length}/3)` : "Edit shortcuts"}</button><button class="icon-btn lp-close" aria-label="Close lens picker">${icon("close", "✕", { size: 12 })}</button></div>
       <div class="lp-body">
@@ -152,7 +152,7 @@ export function initLensDock(opts) {
     if (!picker.hidden && !picker.contains(e.target) && !moreBtn.contains(e.target)) closePicker(false);
   });
   picker.addEventListener("keydown", (e) => {
-    const tiles = [...picker.querySelectorAll(".lp-tile")];
+    const tiles = [...picker.querySelectorAll(".lp-tile:not(:disabled)")];
     const i = tiles.indexOf(document.activeElement);
     if (i < 0) return;
     const step = { ArrowRight: 1, ArrowDown: 1, ArrowLeft: -1, ArrowUp: -1 }[e.key];

@@ -543,9 +543,9 @@ export function install(app) {
     const ps = peersOf(c);
     return `<h4>Similar to ${cityLink(c)}</h4>
       <div class="nc-filters" role="group" aria-label="Similarity criteria">${crit.map(([k, l]) => `<label><input type="checkbox" data-peer="${k}" ${peerCrit[k] ? "checked" : ""}> ${l}</label>`).join("")}</div>
-      <div class="chips">${ps.map(([x, d]) => `<button class="chip" data-addc="${esc(x.id)}" title="distance ${d.toFixed(2)} – add to comparison">${flag(x.country)} ${esc(x.name)} · ${popShort(x.population)}</button>`).join("") || `<span class="muted">Pick at least one criterion.</span>`}</div>
-      <p class="muted small">Method: the mean of the chosen differences, each scaled so 1 is a large gap – population (log, a doubling), density (log, ×4),
-      industry structure (sum of share differences across 14 groups, 0.4) and 65+ share (5 points). Click a name to add it.</p>`;
+      <div class="chips">${ps.map(([x, d]) => `<button class="chip" data-addc="${esc(x.id)}" title="Add ${esc(x.name)} to comparison">${flag(x.country)} ${esc(x.name)} · ${popShort(x.population)}</button>`).join("") || `<span class="muted">Pick at least one criterion.</span>`}</div>
+      <p class="muted small">Places are ordered by how similar they are on the selected measures. Select a place to add it to the comparison.</p>
+      <details class="muted small"><summary>How similarity is calculated</summary><p>We average the differences across the selected measures. A difference of 1 corresponds to twice the population, four times the population density, a combined industry-share difference of 40 percentage points across 14 groups, or a 5 percentage-point difference in the share of residents aged 65 or older.</p></details>`;
   }
 
   // ---- neighbours from the municipal polygons (shared boundary within 0.3 km) ----------------------------------------

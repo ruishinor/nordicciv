@@ -123,8 +123,7 @@ function rank(list, valueOf, { asc = false, min = 0, fmt = count3, exact = int, 
     });
 }
 
-// Which states the "States" rankings cover. states.json holds the states drawn on the map; when the U.S. total
-// includes people outside them (Alaska and Hawaii are not on the map), say so rather than imply all 50 are ranked.
+// National statistics and rankings may cover different geographic areas.
 function stateScope(n, st, country) {
   return { label: "Regions", note: "", country, name: SCOPE_NAME[country] };
 }
@@ -183,7 +182,10 @@ export function buildReport(key, { nation, states, cities, lenses, lensVintage, 
   if (key === "population") reportPopulation(rep, n, st, metros);
   else if (key === "unemployment") reportUnemployment(rep, n, st, metros);
   else if (def.unit === "usd" || def.unit === "eur") reportGold(rep, nation, n, st, metros);
-  else reportJobs(rep, def, nation, n, st, metros);
+  else {
+    reportJobs(rep, def, nation, n, st, metros);
+    if (!country || country === "NO") rep.context.push("Norwegian national totals include jobs outside mapped municipalities. Rankings cover mapped places only.");
+  }
   return rep;
 }
 
