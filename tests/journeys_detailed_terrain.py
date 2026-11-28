@@ -103,7 +103,7 @@ async def run(browser, url, ok, errors, out):
             [a.cam.x,a.cam.y]=a.cam.centerAt(c.x,c.y,a.cam.w/2,a.cam.h/2);a.invalidate();return [a.cam.w/2,a.cam.h/2];}""")
         await page.wait_for_timeout(250)
         await page.mouse.click(*point)
-        await page.wait_for_timeout(300)
+        await page.wait_for_function("() => __app.state.selectedCity?.name === 'Lillestrøm'", timeout=5000)
         state = await page.evaluate("""() => {const a=__app, selected=a.state.selectedCity?.name;
             a.setLens('density');const flat=a.cam.elevationAt===null;
             a.setLens(null);const restored=typeof a.cam.elevationAt==='function';
