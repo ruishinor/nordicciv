@@ -1,0 +1,33 @@
+name: D04 bounded acquisition
+on:
+  push:
+    branches: ['prep/d04-d05-intake']
+    paths:
+      - 'tools/d04_acquire_n50.py'
+      - '.github/workflows/d04-acquisition.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  norway:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        region: [aurland, oslo-lillestrom]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: pip install 'numpy>=1.26' 'pyproj>=3.6' 'shapely>=2.0' 'rasterio>=1.4,<2' 'fiona>=1.10,<2'
+      - name: Acquire and stage municipal N50 data
+        run: python tools/d04_acquire_n50.py --region ${{ matrix.region }} --out data/raw/d04-prep
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: d04-n50-${{ matrix.region }}
+          path: data/raw/d04-prep/n50/
+          retention-days: 30
+          if-no-files-found: warn
