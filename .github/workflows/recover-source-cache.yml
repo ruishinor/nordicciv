@@ -1,0 +1,25 @@
+name: Recover missing source snapshots
+on:
+  push:
+    branches: [recovery/source-cache-2026-11-28]
+    paths: [.github/workflows/recover-source-cache.yml, tools/recover_missing_sources.py]
+permissions:
+  contents: read
+jobs:
+  recover:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: pip install -r requirements.txt
+      - run: python -m tools.recover_missing_sources
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: missing-source-recovery
+          path: |
+            recovery-report.json
+            data/raw
