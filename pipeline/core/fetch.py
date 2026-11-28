@@ -50,7 +50,7 @@ def manifest_path(source_id: str) -> Path:
 def read_manifest(source_id: str) -> dict:
     p = manifest_path(source_id)
     if p.exists():
-        return json.loads(p.read_text())
+        return json.loads(p.read_text(encoding="utf-8"))
     return {"source": source_id, "files": {}}
 
 
@@ -81,7 +81,7 @@ def record(source_id: str, rel_path: str, url: str, data: bytes, *, method: str 
 def _queue(source_id: str, rel_path: str, url: str, method: str, body: str | None, headers: dict | None) -> None:
     RELAY.mkdir(parents=True, exist_ok=True)
     p = RELAY / "pending.json"
-    pending = json.loads(p.read_text()) if p.exists() else []
+    pending = json.loads(p.read_text(encoding="utf-8")) if p.exists() else []
     key = f"{source_id}/{rel_path}"
     pending = [r for r in pending if r["key"] != key]
     req = {"key": key, "url": url, "method": method}
@@ -175,7 +175,7 @@ def ingest_relay(results: dict) -> list[str]:
     import base64
 
     p = RELAY / "pending.json"
-    pending = json.loads(p.read_text()) if p.exists() else []
+    pending = json.loads(p.read_text(encoding="utf-8")) if p.exists() else []
     by_key = {r["key"]: r for r in pending}
     done, left = [], []
     for key, req in by_key.items():
