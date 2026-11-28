@@ -1,0 +1,45 @@
+# D04/D05 preparation and Codex handoff
+
+Prepared 2026-11-28 on the isolated D05 parent 0e2c2493374af915815ea103e1f46fa33797eac1. Main was a0f144548b9f99d2618ef319954edd4d2d26eea6 and D03R PR #17 was open at 37e08f4f45a25baccf3326c79eebbfa049d8ebe5. Do not merge this branch into the active D03R work.
+
+## Sources and what is actually available
+
+Gemini delivered D04 research and example queries, not acquired data or executable utilities. ChatGPT supplied tools/d05_landcover.py and docs/d05/{sources.json,README.md}; the prior author reported synthetic processing checks only. These three files are retained unchanged. The canonical D05 manifest is referenced rather than duplicated by sources.json in this directory.
+
+N50 (CC BY 4.0) is the primary water source in Norway; GeoDanmark (CC BY 4.0) in Denmark. Both licences were checked in official documentation. Swedish Topografi 50 (CC0) is a later expansion candidate, not a new pilot. ELVIS is optional for flow graphs or narrow streams; check licence on actual extract. Overture base ODbL is confirmed in its official terms; keep it isolated. EU-Hydro is a dated comparison source, not a default. No FKB-Vann or FKB-AR5 without access and reuse rights; no national downloads. Marker 2024 stays private pending official layer-specific redistribution terms.
+
+The Danish Dataforsyningen migration is scheduled 26 Nov 16:00–30 Nov 08:00; login/API access changes afterward. No live download succeeded in this session: source hosts were not resolvable in the execution environment. No geographic sample assets or transfer/geometry-size measurements are available. Provider catalogue checks are not API execution.
+
+## Shared geography and bounded preparation
+
+The D05 manifest matches web/terrain/index.json exactly: LAEA centred 63 N, 15 E, GRS80; map x = projected x − x0 and map y = y1 − projected y in km. GIS preparation uses the same projection in metres, not EPSG:3035. All foreign CRS (including ELVIS ETRS89-LAEA Europe) must be transformed. Terrain heights are EGM2008 GLO-30 surface heights, not bare earth; drop water vector Z values including undefined Danish Z. Do not introduce a new origin, tile system or runtime loader.
+
+Use the existing Python environment and D05 utilities. New tools/d04_water_prep.py imports the D05 grid and checksum functions. Plan exact and buffered bounds, then select relevant source layers with a GIS tool (e.g. ogr2ogr, where available) before clipping. Inspect actual schema first; never label arbitrary land polygons as water. The clip utility consumes one already-selected, bounded GeoJSON role, strips Z and properties, repairs invalid geometry, dissolves polygon seams and clips to exact pilot. It deliberately does not infer coverage or generate water masks. Default simplification is zero; choose a small tolerance only after checking lost narrow features and islands. Preserve raw selected features and IDs separately if needed for a network. Never merge different source licences with this tool.
+
+    python tools/d04_water_prep.py plan --region aurland
+    python tools/d04_water_prep.py clip --region aurland --source n50 --role water-area --input PATH_TO_SELECTED_WATER.geojson --input-crs EPSG:4326 --revision ACTUAL_EXTRACT_DATE
+    python tools/d05_landcover.py plan --region herning
+    python tools/d05_landcover.py worldcover --region herning
+    python tools/d05_landcover.py raster --region herning --source clms-tcd --year 2021 --input PATH_TO_NATIVE_TIF
+
+For N50, use capabilities/Atom or portal and intersect buffered bounds with all relevant municipalities, not just the named pilot city. Use local source selection to export only needed polygon/line classes and verify islands and river surfaces. GeoDanmark: use custom AOI GPKG after access resumes; validate water layer names, drop Z. Do not acquire all Sweden. For Overture fallback use the pinned release and bbox from plan (west,south,east,north); apply overlap predicates to bbox min/max, not containment. Select water subtypes ocean/lake/pond/reservoir/river/stream/water/canal; exclude physical named features and classify by actual geometry dimension; land requires subtype=land AND class=land. Use documented DuckDB httpfs/spatial access, s3_region=us-west-2, and spatially clip returned geometries; bbox filtering alone does not clip. See https://docs.overturemaps.org/getting-data/duckdb/ and https://docs.overturemaps.org/schema/reference/base/water/. CLI targets latest automatically, so record resolved release if used. No acquisition dependency installed here.
+
+## Reconciliation and integration
+
+D04 owns detailed water placement inside known source coverage. D03R owns terrain sampling and projection. D05 consumes the resulting water exclusion; its WorldCover water code is a coarse observation and mismatch diagnostic, not a second shoreline authority. Outside verified D04 coverage retain existing fallback with separate coverage status; never assume dry land from missing water. Distinguish mapped land, water, and unknown. Maintain separate source records and vintages. Resolve significant disagreements by inspecting source geometry and terrain, not by moving water to match a DEM contour or averaging coastlines. Preserve island holes and narrow inlets; avoid filling them by buffering. Suppress visible river strokes within water polygons, not the original graph edges. No artificial uniform river width presented as measured.
+
+D05: WorldCover 2021 baseline; CLMS 2021 TCD, DLT and grassland are independent supplements. Crop types/wetness optional with verified legends. Grassland is not pasture; canopy density is not tree count. Procedural trees/fields are illustrative, constrained by coverage and mapped surfaces. Marker field geometry is declared fields, not cadastral boundaries. AR50 optional regional cross-check, not field geometry. D04 water prevents vegetation and later buildings on known water; no changes to municipality IDs or statistical data.
+
+Prepare buffered vectors then clip final region; use the existing 3.84 km tile grid for runtime compilation after D03R defines interfaces. Simplify before tile clipping, inspect seam consistency. Keep native raster classes, nearest-neighbour sampling, valid zero, nodata 255 and provenance. 10 m pilot grid 3072x2304 + 1536x1536 twice = 11.25 MiB per uint8 layer; 30 m = 1.25 MiB; four 10 m bands = 45 MiB uncompressed. Measure actual compressed assets, coverage, acquisition bytes and active viewport budgets before shipping. Bounded local caches outside web and Git, no unrelated tests or deployments.
+
+## Acceptance
+
+D04: actual bounded inputs with version, rights, attribution, checksums and measured bytes; valid clipped geometry and documented coverage; Oslo/Aurland shoreline, island and inland-water checks, Herning lakes and streams; no virtual lines crossing lakes; tile seam inspection; fallback kept isolated. D05: actual bounded WorldCover/CLMS acquisition, exact alignment, valid codes and coverage, measured output sizes, no vegetation in known D04 water, source attribution, graceful coarse fallback, viewport loading. Compare fixed cameras against integrated D03R. Preserve existing interactions and physical LOD; no camera expansion. Use targeted checks only for changed functionality.
+
+## Codex continuation — D04
+
+Read docs/d04-d05/{README.md,sources.json}, tools/d04_water_prep.py and docs/d05/sources.json on prep/d04-d05-intake. After D03R integration, incorporate only preparatory paths into a new D04 branch. Acquire N50 bounded municipal extracts covering both Norwegian pilot footprints; inspect actual water schema and island topology. Obtain bounded GeoDanmark for Herning when access permits; use isolated Overture only if necessary and retain licence obligations. Reuse plan/clip and existing projection/tiles/caches. Build water surfaces and line treatment through the completed shared geographical surface interface, preserve unknown coverage and validate fixed-camera pilot details and seam behaviour. Record actual bytes, revisions, attribution and coverage. No D05 rendering, national downloads, camera change or parallel runtime.
+
+## Codex continuation — D05
+
+After D04 integration read docs/d04-d05/{README.md,sources.json}, docs/d05/{sources.json,README.md}, tools/d05_landcover.py. Reuse existing bounded acquisition, raster and field tools. First acquire pinned WorldCover for Herning and a Norwegian pilot; add TCD/DLT/grassland where available. Inspect actual coverage and class counts, align to existing grid and mask known D04 water using the integrated shared surface. Preserve separate thematic meanings and missing data; constrain illustrative vegetation to mapped classes. Publish Marker geometry only after official layer terms confirmed; do not use restricted AR5. Measure compressed tiles and viewport payload, check fixed-camera geography and loading, then complete remaining pilot. No repeat source discovery unless an actual blocker demands it; no D06–D10 work.

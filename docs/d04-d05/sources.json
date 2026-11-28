@@ -1,0 +1,157 @@
+{
+  "version": 1,
+  "reviewed": "2026-11-28",
+  "baselineCommit": "a0f144548b9f99d2618ef319954edd4d2d26eea6",
+  "d05Manifest": "../d05/sources.json",
+  "gridAuthority": "../../web/terrain/index.json",
+  "d05Utility": "../../tools/d05_landcover.py",
+  "status": "No actual source acquisition; official documentation checked selectively; live endpoints untested",
+  "sources": {
+    "n50": {
+      "rank": 1,
+      "coverage": "Norwegian mainland and territorial sea; both NO pilots",
+      "scale": "1:50000 cartographic, not positional accuracy",
+      "vintage": "weekly distribution; record exact extract date",
+      "crs": "EUREF89 UTM 32/33/35",
+      "formats": [
+        "FGDB",
+        "GML",
+        "SOSI"
+      ],
+      "classes": [
+        "Havflate",
+        "Innsjø",
+        "Arealdekke",
+        "HavInnsjøSperre",
+        "havElvSperre"
+      ],
+      "metadata": "https://kartkatalog.geonorge.no/metadata/uuid/ea192681-d039-42ec-b1bc-f3ce04c189ac",
+      "capabilities": "https://nedlasting.geonorge.no/api/capabilities/ea192681-d039-42ec-b1bc-f3ce04c189ac",
+      "atom": "http://nedlasting.geonorge.no/geonorge/ATOM-feeds/N50Kartdata_AtomFeedFGDB.xml",
+      "access": "Intersect all municipalities with buffered pilot; municipality extracts only; no national archive",
+      "license": "CC-BY-4.0",
+      "attribution": "Kartverket, N50 Kartdata, CC BY 4.0; indicate modifications",
+      "licenseStatus": "official catalogue confirmed",
+      "endpointStatus": "documented, not executed",
+      "limitations": "Inspect actual layer schema, inland river polygons and island holes; no extrapolation beyond territorial coverage."
+    },
+    "geodanmark": {
+      "rank": 1,
+      "coverage": "Denmark, Herning pilot",
+      "scale": "Vector; reported 10 cm urban XY does not establish rural accuracy",
+      "vintage": "weekly distribution; record actual extract date",
+      "crs": "ETRS89 UTM 32; DVR90 Z not used",
+      "formats": [
+        "GPKG"
+      ],
+      "classes": [
+        "søer",
+        "vandløbsflader",
+        "vandløbsmidte",
+        "vandløbskant"
+      ],
+      "portal": "https://dataforsyningen.dk/data/3563",
+      "terms": "https://www.klimadatastyrelsen.dk/om-klimadatastyrelsen/vilkaar-og-priser",
+      "migration": "https://www.klimadatastyrelsen.dk/data/dataforsyningen/vi-fremtidssikrer-dataforsyningen",
+      "access": "Draw buffered AOI, GPKG; authentication changes after scheduled outage 2026-11-26 16:00 to 2026-11-30 08:00; Datafordeler municipal alternative",
+      "license": "CC-BY-4.0",
+      "attribution": "GeoDanmark / Klimadatastyrelsen, CC BY 4.0; indicate modifications",
+      "licenseStatus": "official terms confirmed",
+      "endpointStatus": "documented outage; no live acquisition",
+      "limitations": "Inspect marine schema before coastal use; strip Z; verify stream polygon vs centreline classes."
+    },
+    "elvis": {
+      "rank": 2,
+      "coverage": "Norway",
+      "scale": "1:50000 network",
+      "vintage": "record source release",
+      "crs": "EUREF89 UTM or ETRS89-LAEA Europe; both require Nordic LAEA transformation",
+      "formats": [
+        "GML",
+        "SHP",
+        "SOSI"
+      ],
+      "metadata": "https://kartkatalog.geonorge.no/metadata/elvis-elvenett/3f95a194-0968-4457-a500-912958de3d39",
+      "portal": "https://nedlasting.nve.no/gis",
+      "access": "Municipal extract if available",
+      "classes": [
+        "directed river and lake centreline",
+        "strekn_lnr"
+      ],
+      "license": "NLOD (intake, confirm current distribution)",
+      "attribution": "NVE",
+      "endpointStatus": "documented, not executed",
+      "limitations": "Optional graph; not shoreline or measured width; hide virtual lines inside water polygons."
+    },
+    "topografi50": {
+      "rank": 1,
+      "coverage": "Sweden; later expansion, no Swedish pilot",
+      "scale": "1:15000–1:50000 generalized",
+      "vintage": "weekly changed index tiles",
+      "crs": "SWEREF 99 TM",
+      "formats": [
+        "GPKG"
+      ],
+      "classes": [
+        "Hydrografi",
+        "Strandlinje",
+        "vattendragsyta"
+      ],
+      "portal": "https://geotorget.lantmateriet.se/geodataprodukter/topografi-50-nedladdning-vektor",
+      "documentation": "https://geotorget.lantmateriet.se/dokument/projects/topografi-50-nedladdning-vektor/released/2026.05/",
+      "access": "Geotorget order; confirm bounded tile export and auth; no national download",
+      "license": "CC0",
+      "licenseStatus": "official product documentation confirmed",
+      "attribution": "Lantmäteriet (voluntary)",
+      "endpointStatus": "documented, not executed"
+    },
+    "overture": {
+      "rank": 3,
+      "coverage": "All pilots, global",
+      "scale": "Variable source accuracy, no uniform RMSE",
+      "vintage": "2026-11-18.0 pinned",
+      "crs": "WGS84 lon/lat",
+      "formats": [
+        "GeoParquet",
+        "GeoJSON"
+      ],
+      "catalog": "https://stac.overturemaps.org/catalog.json",
+      "s3": "s3://overturemaps-us-west-2/release/2026-11-18.0/theme=base/type={water|land}/*",
+      "documentation": "https://docs.overturemaps.org/guides/base/",
+      "terms": "https://docs.overturemaps.org/attribution/",
+      "license": "ODbL",
+      "licenseStatus": "official documentation confirmed",
+      "attribution": "Follow full release-specific Overture base attribution and OSM ODbL obligations",
+      "endpointStatus": "documented, not executed",
+      "access": "DuckDB bbox intersection and spatial clipping; no entire theme; public anonymous S3",
+      "limitations": "Isolated fallback only; land mask subtype=land AND class=land; water physical named features are not surface masks; no automatic merge into permissive national datasets."
+    },
+    "eu-hydro": {
+      "rank": 4,
+      "coverage": "EEA39",
+      "vintage": "2006–2012 imagery; v1.3",
+      "metadata": "https://www.eea.europa.eu/en/datahub/datahubitem-view/2e782ca5-c7b2-4b48-8928-03031b642176",
+      "endpointStatus": "intake only, untested",
+      "license": "Copernicus open access; exact notice pending",
+      "limitations": "Legacy comparison, not preferred for pilot, avoid large basin downloads."
+    }
+  },
+  "excluded": {
+    "FKB-Vann": "restricted access reported",
+    "N250": "coarser than N50",
+    "SVAR-water": "view-only geometry reported",
+    "Hydrografi-Nedladdning": "special terms not cleared",
+    "GISCO": "too coarse",
+    "EuroRegionalMap": "coarse and bulky",
+    "HydroRIVERS": "line only and coarse",
+    "OSMCoastline/Geofabrik": "ODbL and oversized archives for bounded pilots; Overture preferred"
+  },
+  "policy": {
+    "water": "Selected D04 polygon source controls mapped water only inside verified coverage; preserve unresolved areas and coarse fallback separately",
+    "lines": "Never infer area from centreline; suppress visible line where it intersects water polygon, retain network separately",
+    "landcover": "WorldCover and CLMS are independent classifications, not authoritative shoreline or surveyed trees; do not treat grassland as pasture",
+    "licenses": "Separate ODbL processing and outputs; Marker publication held until official layer terms confirmed; no restricted AR5",
+    "missing": "Unknown remains unknown; valid zero is not missing",
+    "storage": "D05 10 m uint8 all pilots = 11.25 MiB per band, 30 m = 1.25 MiB; vector transfer and compressed bytes unmeasured"
+  }
+}
