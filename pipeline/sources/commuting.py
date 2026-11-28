@@ -16,6 +16,7 @@ from .stats import _q
 YEAR = "2024"
 MIN_COMMUTERS = 25
 BATCH = 50
+DESTINATION_BATCH = 150
 BASE = "https://data.ssb.no/api/pxwebapi/v2/tables/03321"
 SOURCE = "https://www.ssb.no/en/statbank/table/03321/"
 
@@ -77,11 +78,13 @@ class Commuting(Source):
         codes = municipality_codes()
         for start in range(0,len(codes),BATCH):
             origins = codes[start:start+BATCH]
-            dims = {"valueCodes[ArbstedKomm]": ",".join(codes),
-                    "valueCodes[Bokommuen]": ",".join(origins),
-                    "valueCodes[ContentsCode]": "Sysselsatte",
-                    "valueCodes[Tid]": YEAR}
-            yield File(f"ssb-{start:03}.json", BASE+"/data?lang=en&outputFormat=json-stat2&"+_q(dims)), origins, codes
+            for dest_start in range(0,len(codes),DESTINATION_BATCH):
+                destinations = codes[dest_start:dest_start+DESTINATION_BATCH]
+                dims = {"valueCodes[ArbstedKomm]": ",".join(destinations),
+                        "valueCodes[Bokommuen]": ",".join(origins),
+                        "valueCodes[ContentsCode]": "Sysselsatte",
+                        "valueCodes[Tid]": YEAR}
+                yield File(f"ssb-{start:03}-{dest_start:03}.json", BASE+"/data?lang=en&outputFormat=json-stat2&"+_q(dims)), origins, destinations
 
     def files(self):
         return [File("metadata.json",BASE+"/metadata?lang=en")]+[f for f,_,_ in self.batches()]
