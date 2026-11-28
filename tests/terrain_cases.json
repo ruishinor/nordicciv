@@ -1,0 +1,6 @@
+[
+  {"id": "oslo", "name": "Oslo", "lon": 10.7522, "lat": 59.9139},
+  {"id": "lillestrom", "name": "Lillestrøm", "lon": 11.0492, "lat": 59.9559},
+  {"id": "aurland", "name": "Aurland mountains", "lon": 7.236, "lat": 60.909},
+  {"id": "herning", "name": "Herning", "lon": 8.973, "lat": 56.139}
+]

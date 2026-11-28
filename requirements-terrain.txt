@@ -1,0 +1,3 @@
+# Optional, only for the bounded Copernicus tile builder. The browser needs no packages.
+-r requirements.txt
+rasterio>=1.4,<2
